@@ -175,7 +175,6 @@
 		public function load()
 		{
 			$objectName = mb_convert_case($this->objectName, MB_CASE_TITLE);
-			
 			if ($this->properties['identifier'])
 			{        
 				$cache = $this->application->{$this->objectName . 'Cache'}->getObject($this->properties['identifier'], $this->objectName, $this->fieldsToSQL());

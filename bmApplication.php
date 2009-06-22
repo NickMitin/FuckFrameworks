@@ -105,7 +105,8 @@
 		public function __get($propertyName)
 		{
 			$className = 'bm' . ucfirst($propertyName);
-			if (file_exists(documentRoot . '/lib/' . $className . '.php') || file_exists(projectRoot . '/lib/' . $className . '.php')) {
+			if (class_exists($className))
+      {
 				if (!$this->propertyExists($propertyName)) {
 					$this->addProperty($propertyName, new $className($this));
 				}
