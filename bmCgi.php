@@ -52,7 +52,8 @@
     }
 
     public function getCookie($name, $defaultValue = '') {
-      $value = array_key_exists($name, $_COOKIE) ? $_COOKIE[$name] : $defaultValue; 
+      //$value = array_key_exists($name, $_COOKIE) ? $_COOKIE[$name] : $defaultValue; 
+      return array_key_exists($name, $_COOKIE) ? $_COOKIE[$name] : $defaultValue; 
     }
     
     public function getGPC($name, $defaultValue, $type = BM_VT_ANY) {
