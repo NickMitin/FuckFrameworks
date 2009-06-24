@@ -26,6 +26,9 @@
   * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	* 
 	*/
+  
+  define('E_SUCCESS', 0);
+  define('E_DATA_OBJECT_NOT_EXISTS', 106);   
 	
 	define('BM_VT_ANY', 0);
 	define('BM_VT_STRING', 1);
