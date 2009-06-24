@@ -67,6 +67,10 @@
 					$this->load();
 				}                                                                 
 			}
+      else
+      {
+        $this->dirty['store'] = true;
+      }
 		}
 		
 	 protected function formatProperty($propertyName, $dataType, $value)
