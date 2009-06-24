@@ -52,6 +52,7 @@
     }
 
     public function getCookie($name, $defaultValue = '') {
+      throw new Exception('Do not use this function. Use getGPC instead');
       //$value = array_key_exists($name, $_COOKIE) ? $_COOKIE[$name] : $defaultValue; 
       return array_key_exists($name, $_COOKIE) ? $_COOKIE[$name] : $defaultValue; 
     }
