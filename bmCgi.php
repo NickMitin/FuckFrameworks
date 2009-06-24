@@ -50,12 +50,6 @@
         unset($_COOKIE[$name]);
       }
     }
-
-    public function getCookie($name, $defaultValue = '') {
-      throw new Exception('Do not use this function. Use getGPC instead');
-      //$value = array_key_exists($name, $_COOKIE) ? $_COOKIE[$name] : $defaultValue; 
-      return array_key_exists($name, $_COOKIE) ? $_COOKIE[$name] : $defaultValue; 
-    }
     
     public function getGPC($name, $defaultValue, $type = BM_VT_ANY) {
       $value = array_key_exists($name, $_GET) ? $_GET[$name] : (array_key_exists($name, $_POST) ? $_POST[$name] : (array_key_exists($name, $_COOKIE) ? $_COOKIE[$name] : $defaultValue)); 
