@@ -35,8 +35,8 @@
 		public function __construct($application, $parameters = array())
 		{
 			parent::__construct($application, $parameters);
-			require_once(projectRoot . '/contollers/error.php');
-			require_once(projectRoot . '/contollers/error_message_ru.php');
+			require_once(projectRoot . '/conf/errors.conf');
+			require_once(projectRoot . '/locale/' . $application->locale . '/error_messages.php');
 		}
 		
 		public function add($errorNumber)

@@ -46,11 +46,12 @@
 		public $user = null;		
 		public $session = null;
 		public $debug = false;
-		public $debugUserId = null;
+    public $locale = ''; 
 		
 		public function __construct($application, $parameters = null)
 		{
-			parent::__construct($application, $parameters);
+			$this->locale = LOCALE;
+      parent::__construct($application, $parameters);
 			$this->action = $this->cgi->getGPC('action', '');
 			
 			$this->dataLink = new bmMySQLLink($this);
@@ -159,7 +160,7 @@
 			return $string;
 		}
 
-		public function getTemplate($templateName, $escape = true, $read = false, $path = documentRoot)
+		public function getTemplate($templateName, $escape = true, $read = false, $path = projectRoot)
 		{
 			$template = $this->debug ?  false : $this->cacheLink->get(templatePrefix . $templateName);
 			
