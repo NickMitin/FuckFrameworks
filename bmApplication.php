@@ -65,11 +65,6 @@
 			register_shutdown_function(array($this, 'save'));
 		}
 		
-		function getReferer($defaultValue)
-		{
-			return array_key_exists('HTTP_REFERER', $_SERVER) ? $_SERVER['HTTP_REFERER'] : $defaultValue; 
-		}
-		
 		/**
 		* Выполняет авторизацию пользователя. 
 		* В случае, если проверка пары email/пароль прошла успешно, то функция обновляет $this->user и сохраняет информацию о пользователе в $this->session
