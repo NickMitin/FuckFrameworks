@@ -25,8 +25,19 @@
       {
         if (preg_match($route, $path, $matches))
         {
+          
           require_once(documentRoot . $routeData['route'] . 'index.php');
-          $page = new $routeData['class']($this->application, array('userData' => $matches));
+          $parameters = array();
+          if (count($matches) > 1)
+          {
+            $i = 1;
+            foreach ($routeData['parameters'] as $name => $type)
+            {
+              $parameters[$name] = $this->application->validateValue($matches[$i], $type);
+              $i++;
+            }
+          }
+          $page = new $routeData['class']($this->application, $parameters);
           $result = $page->generate();
           break;
         }
