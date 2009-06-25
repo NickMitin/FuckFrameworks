@@ -26,10 +26,23 @@
   * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	* 
 	*/
-	
+
+	/**
+	* Класс, используемый для получения специфической информации о клиенте
+	* @package FF
+	*/
   class bmCGI extends bmFFObject
   {
-    
+    /**
+    * Отправляет пользователю cookie
+    * 
+    * @param string $name имя отправляемого cookie
+    * @param mixed $value значение отпрвляемого cookie
+    * @param bool $persistent cookie должен быть постоянным
+    * @param string $path путь cookie
+    * @param string $domain домен cookie
+    * @param int $expire время истечения cookie
+    */
     public function addCookie($name, $value = '', $persistent = true, $path = '/', $domain = '', $expire = 0) 
     {
       if ($expire == 0)
@@ -48,6 +61,13 @@
       $_COOKIE[$name] = $value;
     }
     
+    /**
+    * Удаляет cookie пользователя
+    * 
+    * @param string $name имя удаляемого cookie
+    * @param string $domain домен удаляемого cookie
+    * @param string $path путь удаляемого cookie
+    */
     public function deleteCookie($name, $domain = '', $path = '/') 
     {
       setcookie($name, '', -100000, $path, $domain);
@@ -57,6 +77,14 @@
       }
     }
     
+    /**
+    * Возвращает значение одного из следующих массивов: $_GET, $_POST, $_COOKIE
+    * 
+    * @param string $name
+    * @param mixed $defaultValue
+    * @param mixed $type
+    * @return string
+    */
     public function getGPC($name, $defaultValue, $type = BM_VT_ANY) 
     {
       $value = array_key_exists($name, $_GET) ? $_GET[$name] : (array_key_exists($name, $_POST) ? $_POST[$name] : (array_key_exists($name, $_COOKIE) ? $_COOKIE[$name] : $defaultValue)); 
@@ -76,11 +104,21 @@
       return $value;
     }
 
+    /**
+    * Возвращает значение $_SERVER['HTTP_REFERER'] или, если он не установлен, то переданное значение по умолчанию
+    * 
+    * @param mixed $defaultValue значение по умолчанию
+    * @return string
+    */
     public function getReferer($defaultValue = '') 
     {
       return array_key_exists('HTTP_REFERER', $_SERVER) ? $_SERVER['HTTP_REFERER'] : $defaultValue; 
     }
     
+    /**
+    * Возвращает IP-адрес клиента (с учетом заголовка HTTP_X_FORWARDED_FOR)
+    * @return string IP-адрес клиента.
+    */
     public function getIPAddress() 
     {
       $result = false;
@@ -95,6 +133,10 @@
       return $result;
     }
     
+    /**
+    * Возвращает информацию об используемом клиентом браузере (имя, движок, "свежесть", ссылка на сайт производителя)
+    * 
+    */
     public function getBrowser() 
     {
       
