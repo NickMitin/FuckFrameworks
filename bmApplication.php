@@ -58,11 +58,6 @@
 			register_shutdown_function(array($this, 'save'));
 		}
 		
-		function getReferer($defaultValue)
-		{
-			return array_key_exists('HTTP_REFERER', $_SERVER) ? $_SERVER['HTTP_REFERER'] : $defaultValue; 
-		}
-		
 		public function login($email, $password)
 		{
 			$result = false;
