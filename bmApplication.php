@@ -72,9 +72,10 @@
 		* 
 		* @param string $email e-mail пользователя
 		* @param string $password пароль пользователя в открытом виде
+		* @param bool $isMD5 флаг, указывающий на тип параметра $password - plaintext или md5
 		* @return bool флаг успеха авторизации
 		*/
-		public function login($email, $password)
+		public function login($email, $password, $isMD5 = false)
 		{
 			$result = false;
 			if (($this->session->userId != C_DEFAULT_USER_ID) && ($this->session->userId != 0))
@@ -85,14 +86,22 @@
 				$this->user->store();
 			}
 			
+			
 			$dataLink = $this->dataLink;
+			
+			$password = $dataLink->formatInput($password);
+			if(!$isMD5)
+			{
+				$password = md5($password);
+			}
+			
 			$sql = "SELECT 
 								`id` AS `id`
 							FROM
 								`user`
 							WHERE
 								`email` = '" . $dataLink->formatInput($email) . "' AND 
-								`password` = '" . md5($dataLink->formatInput($password)) . "'
+								`password` = '" . $password . "'
 							LIMIT 1;";
 			$user = $dataLink->getObject($sql);
 			if ($user)
