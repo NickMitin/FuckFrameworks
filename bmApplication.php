@@ -74,14 +74,22 @@
 				$this->user->store();
 			}
 			
+			
 			$dataLink = $this->dataLink;
+			
+			$password = $dataLink->formatInput($password);
+			if(!$isMD5)
+			{
+				$password = md5($password);
+			}
+			
 			$sql = "SELECT 
 								`id` AS `id`
 							FROM
 								`user`
 							WHERE
 								`email` = '" . $dataLink->formatInput($email) . "' AND 
-								`password` = '" . md5($dataLink->formatInput($password)) . "'
+								`password` = '" . $password . "'
 							LIMIT 1;";
 			$user = $dataLink->getObject($sql);
 			if ($user)
