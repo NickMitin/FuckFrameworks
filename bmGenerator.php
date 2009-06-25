@@ -37,8 +37,15 @@
               $i++;
             }
           }
-          $page = new $routeData['class']($this->application, $parameters);
-          $result = $page->generate();
+          $entity = new $routeData['class']($this->application, $parameters);
+          if ($entity instanceof bmCustomRemoteProcedure)
+          {
+            $result = $entity->execute();
+          }
+          else
+          {
+            $result = $entity->generate();
+          }
           break;
         }
       }
