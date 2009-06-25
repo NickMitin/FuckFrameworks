@@ -267,6 +267,22 @@
 			}
 			return $result;
 		}
+    
+    public function validateValue($value, $type = BM_VT_ANY) {
+      switch ($type) {
+        case BM_VT_INTEGER:
+          $value = intval($value);
+        break;
+        
+        case BM_VT_FLOAT:
+          $value = floatval($value);
+        break;
+        case BM_VT_STRING:
+          $value = trim($value);
+        break;
+      }
+      return $value;
+    }
 
 	}
 	
