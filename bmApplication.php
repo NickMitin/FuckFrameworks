@@ -48,6 +48,13 @@
 		public $debug = false;
     public $locale = ''; 
 		
+		/**
+		* Конструктор класса
+		* 
+		* @param bmApplication $application указатель на приложение. должен быть null
+		* @param array $parameters параметры, необходимые для инициализации экземпляра приложения
+		* @return bmApplication
+		*/
 		public function __construct($application, $parameters = null)
 		{
 			$this->locale = C_LOCALE;
@@ -63,6 +70,15 @@
 			return array_key_exists('HTTP_REFERER', $_SERVER) ? $_SERVER['HTTP_REFERER'] : $defaultValue; 
 		}
 		
+		/**
+		* Выполняет авторизацию пользователя. 
+		* В случае, если проверка пары email/пароль прошла успешно, то функция обновляет $this->user и сохраняет информацию о пользователе в $this->session
+		* -
+		* 
+		* @param string $email e-mail пользователя
+		* @param string $password пароль пользователя в открытом виде
+		* @return bool флаг успеха авторизации
+		*/
 		public function login($email, $password)
 		{
 			$result = false;
@@ -150,6 +166,12 @@
  
 		}
 
+		/**
+		* Выплоняет конвертацию переданной строки в UTF-8 
+		* 
+		* @param string $string исходная строка
+		* @return string результат конвертации переданной строки
+		*/
 		public function decodeUrl($string)
 		{
 			$encoding = mb_detect_encoding($string, 'UTF-8, CP1251');
@@ -257,6 +279,12 @@
 			}
 		}
 		
+		/**
+		* Создает stdObject по переданному ассоциативному массиву
+		* 
+		* @param array $parameters 
+		* @return stdClass
+		*/		
 		public function createObject($parameters)
 		{
 			$result = new stdClass();
@@ -268,6 +296,13 @@
 			return $result;
 		}
     
+    /**
+    * Выполняет фильтрацию(валидацию) переданного значения в соответствии с его типом
+    * 
+    * @param string $value значение, подлежащее конвертации
+    * @param mixed $type код типа значения
+    * @return string
+    */
     public function validateValue($value, $type = BM_VT_ANY) {
       switch ($type) {
         case BM_VT_INTEGER:
