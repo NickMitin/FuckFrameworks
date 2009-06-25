@@ -12,6 +12,7 @@
       if ($this->routes == false)
       {
         require_once(projectRoot . '/conf/generator.conf');
+        $application->cacheLink->set(C_CACHE_PREFIX . 'sitePages', $this->routes);
       }
     }
     
@@ -27,6 +28,7 @@
           require_once(documentRoot . $routeData['route'] . 'index.php');
           $page = new $routeData['class']($this->application, array('userData' => $matches));
           $result = $page->generate();
+          break;
         }
       }
       if ($result == '')
