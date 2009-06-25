@@ -50,7 +50,7 @@
 		
 		public function __construct($application, $parameters = null)
 		{
-			$this->locale = LOCALE;
+			$this->locale = C_LOCALE;
       parent::__construct($application, $parameters);
 			$this->action = $this->cgi->getGPC('action', '');
 			
@@ -168,7 +168,7 @@
 			{
 				$template = trim(file_get_contents($path . '/templates/' . $templateName . '.html'));
 
-				$this->cacheLink->set(templatePrefix . $templateName, $template);
+				$this->cacheLink->set(C_TEMPLATE_PREFIX . $templateName, $template);
 				$this->updateTemplateStack($templateName);
 			}
 			if ($escape)
