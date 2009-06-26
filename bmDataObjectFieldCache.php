@@ -9,20 +9,17 @@
       $sql = "
         SELECT 
           `link_dataObjectMap_dataObjectField`.`dataObjectMapId` AS `dataObjectMapId`,
-          `link_dataObjectMap_dataObjectField`.`brickColorId` AS `brickColorId`,
-          `link_set_brick`.`quantity` AS `quantity`
+          `link_dataObjectMap_dataObjectField`.`type` AS `type`
         FROM 
-          `link_set_brick` JOIN `set` ON (`link_set_brick`.`setId` = `set`.`id`)
-          JOIN `brickColor` ON (`link_set_brick`.`brickColorId` = `brickColor`.`id`)
+          `link_dataObjectMap_dataObjectField`
         WHERE 
-          `link_set_brick`.`brickId` = " . $brick->identifier . $typeFilter . "
-        ORDER BY " . $orderBy . "
-        ;
+          `link_dataObjectMap_dataObjectField`.`dataObjectFieldId` = " . $dataObjectField->identifier . "
+        LIMIT 1;
       ";
       
-      $map = array('set' => BM_VT_OBJECT, 'brickColor' => BM_VT_OBJECT, 'quantity' => BM_VT_INTEGER);
+      $map = array('dataObjectMap' => BM_VT_OBJECT, 'type' => BM_VT_INTEGER);
       
-      return $this->getComplexLinks($sql, $cacheKey, $map, E_BRICKS_SETS_NOT_FOUND, $load);
+      return $this->getComplexLinks($sql, $cacheKey, $map, E_DATAOBJECTMAP_NOT_FOUND, $load);
     }
   }
 

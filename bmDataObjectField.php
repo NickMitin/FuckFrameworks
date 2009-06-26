@@ -1,6 +1,6 @@
 <?php
 
-  final class bmDataObjectMap extends bmDataObject
+  final class bmDataObjectField extends bmDataObject
   {
     
     public function __construct($aplication, $parameters = array())
@@ -60,30 +60,36 @@
       }
     }
     
-    public function setDataObjectMap($dataObjectMapId)
+    public function setDataObjectMap($dataObjectMapId, $type)
     {
       $this->dirty['saveDataObjectMap'] = true;
-      $this->properties['dataObjectMapId'] = $dataObjectMapId;
+      $item = new stdClass();
+      $item->dataObjectMapId = $dataObjectMapId;
+      $item->type = $type;
+      $this->properties['dataObjectMapId'][] = $item;
     }
     
-    private function saveDataObjectMap()
+    public function saveDataObjectMap()
     {
-      if (array_key_exists('dataObjectMapId', $this->properties))
-      {
-        $objectDataMapId = $this->properties['dataObjectMapId'];
-        $sql = "DELETE FROM `link_dataObjectMap_dataObjectField` WHERE `dataObjectMapId` = " . $this->application->dataLink->formatInput($this->identifier, BM_VT_INTEGER);
-        $this->application->dataLink->query($sql);
       
-        foreach($categoryIds['categoryIds'] as $order => $categoryId)
-        {
-          $sql = "INSERT INTO `link_brickCategory_brick` (`brickId`, `brickCategoryId`, `type`) VALUES (" . $this->application->dataLink->formatInput($this->identifier, BM_VT_INTEGER) . ", " . $this->application->dataLink->formatInput($categoryId, BM_VT_INTEGER) . ", " . $this->application->dataLink->formatInput($categoryIds['types'][$order], BM_VT_INTEGER) . ");";
-          $this->application->dataLink->query($sql);
-        }
+      $cacheLink = $this->application->cacheLink;
+      $dataLink = $this->application->dataLink;
       
-        $this->application->cacheLink->delete('brickCategories_' . $this->identifier);
-        $this->application->cacheLink->delete('brickCategory_' . $this->identifier);
-        $this->application->cacheLink->delete('categoryBricks_' . $this->identifier);
-      }
+      $objectDataMapId = $this->properties['dataObjectMapId'];
+      $sql = "DELETE FROM `link_dataObjectMap_dataObjectField` WHERE `dataObjectMapId` = " . $dataLink->formatInput($this->identifier, BM_VT_INTEGER);
+      $dataLink->query($sql);
+      
+      $sql = "INSERT IGNORE INTO
+                `link_dataObjectMap_dataObjectField`
+                (`dataObjectFieldId`, `dataObjectMapId`, `type`)  
+                VALUES
+                  (" . $this->properties['identifier'] . ", " . $dataLink->formatInput($objectDataMapId[0]->dataObjectMapId, BM_VT_INTEGER) . ", " . $dataLink->formatInput($objectDataMapId[0]->type, BM_VT_INTEGER) . ");";
+                  
+      $dataLink->query($sql);
+      
+      $cacheLink->delete('dataObjectField_dataObjectMap_' . $this->properties['identifier']);
+      $cacheLink->delete('dataObjectField_dataObjectMap_' . $this->properties['identifier'] . '_objectArrays');
+      $this->dirty['saveDataObjectMap'] = false;      
     }
     
   }
