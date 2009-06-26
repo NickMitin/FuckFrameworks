@@ -41,6 +41,10 @@
           if ($entity instanceof bmCustomRemoteProcedure)
           {
             $result = $entity->execute();
+            if ($result == '')
+            {
+              $result = 'OK';
+            }
           }
           else
           {
@@ -51,6 +55,8 @@
       }
       if ($result == '')
       {
+        #HTTP/1.1 200 OK
+        header('HTTP/1.1 404 Not Found', true, 404);
         $result = '<h1>404</h1>';
         $status = 404;
       }

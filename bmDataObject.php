@@ -339,6 +339,20 @@
 		{
 			$this->updateCount = 0;
 		}
+    
+    protected function itemExists($key, $propertyName, &$collection)
+    {
+      $result = false;
+      foreach ($collection as $item)
+      {
+        if ($collection->$propertyName == $key)
+        {
+          $result = true;
+          break;
+        }
+      }
+      return $result;
+    }
 		
 	}
 ?>
