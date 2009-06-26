@@ -199,7 +199,7 @@
       
     }
     
-    public function __construct($application, $parameters = null) {
+    public function __construct($application, $parameters = array()) {
       
       if (!function_exists('curl_init'))
       {

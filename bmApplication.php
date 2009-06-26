@@ -57,7 +57,7 @@
 		* @param array $parameters параметры, необходимые для инициализации экземпляра приложения
 		* @return bmApplication
 		*/
-		public function __construct($application, $parameters = null)
+		public function __construct($application, $parameters = array())
 		{
 			$this->locale = C_LOCALE;
       parent::__construct($application, $parameters);
@@ -128,6 +128,12 @@
 			return $result;
 		}
 		
+		/**
+		* Выполняет деавторизацию пользователя.
+		* Сбрасывает $this->user в гостя
+		* 
+		* @return bool флаг успеха: false, если пользователь является гостем, иначе true
+		*/
 		public function logout()
 		{
 			$result = false;

@@ -1,6 +1,16 @@
 <?php
+	/**
+	* Класс, реализующий сессию с чтением/сохранением идентификатора из cookies
+	*/
   class bmCustomWebSession extends bmCustomSession
   {
+  	/**
+  	* Конструктор класса. Для загрузки сессии требуется в $parameters передать параметр 'load'=true
+  	* 
+  	* @param bmApplication $application экземпляр текущего приложения
+  	* @param array $parameters параметры, используемые для инициализации сессии (для загрузки сесии необходимо передать 'load'=>true)
+  	* @return bmCustomWebSession
+  	*/
 		public function __construct($application, $parameters = array())
 		{
       $load = array_key_exists('load', $parameters);
