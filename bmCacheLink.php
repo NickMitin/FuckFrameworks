@@ -141,8 +141,6 @@
     */
     public function delete($key)
     {
-    	//TODO
-    	//функция _всегда_ возвращает false?
       if ($this->cacherExists) 
       {
         $key = C_CACHE_PREFIX . $key;
