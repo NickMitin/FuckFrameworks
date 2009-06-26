@@ -31,16 +31,41 @@
    define('BM_CACHE_MIDDLE_TTL', 3600);
    define('BM_CACHE_LONG_TTL', 86400);
 
+   
+   /**
+   * Класс, инкапсулирующий работу с кешем
+   * В случае, если:
+   * - в системе нет поддерживаемого кешера 
+   * - приложение находится в режиме отладки (определяется через $application->debug)
+   * то все обращения к функциям класса будут завершаться неудачей.
+   */
   class bmCacheLink extends bmFFObject {
     
     private $cacherExists = false;
     
+    /**
+    * Конструктор класса
+    * 
+    * @param bmApplication $application экземпляр текущего приложения
+    * @param array $parameters параметры, необходимые для инициализации экземпляра приложения
+    * @return bmCacheLink
+    */
     public function __construct($application, $parameters = array())
     {
       parent::__construct($application, $parameters);
       $this->cacherExists = function_exists('xcache_isset');
     }
     
+    /**
+    * Возвращает значение из кеша по ключу.
+    * Возвращает false в одном из следующих случаев:
+    * - не установлен поддерживаемый кешер
+    * - приложение находится в режиме отладки
+    * - данные с указанным ключом не обнаружены
+    * 
+    * @param mixed $key ключ
+    * @return mixed значение, сохраненное в кеше или false в случае неудачи
+    */
     public function get($key)
     {
       $key = C_CACHE_PREFIX . $key;
@@ -55,6 +80,15 @@
       return false;
     }
 
+    /**
+    * Сохраняет значение в кеш с указанным ключем и временем жизни
+    * Функция завершится неудачей, если не установлен поддерживаемый кешер
+    * 
+    * @param mixed $key ключ
+    * @param mixed $value значение
+    * @param int $expire время жизни объекта в кеше в секундах. 0 для бесконечного времени жизни.
+    * @return bool флаг успеха. true, если все ок. false, если не установлен поддерживаемый кешер.
+    */
     public function set($key, $value, $expire = 0)
     { 
       if ($this->cacherExists) 
@@ -99,8 +133,16 @@
       }
     }
 
+    /**
+    * Функция удаляет значение с указанным ключем из кеша
+    * 
+    * @param mixed $key ключ
+    * @return bool результат выполнения функции
+    */
     public function delete($key)
     {
+    	//TODO
+    	//функция _всегда_ возвращает false?
       if ($this->cacherExists) 
       {
         $key = C_CACHE_PREFIX . $key;
