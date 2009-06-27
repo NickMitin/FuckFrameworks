@@ -47,6 +47,10 @@
   define('FIREFOX_HTTP_ACCEPT_ENCODING', 'gzip,deflate');
   define('FIREFOX_HTTP_ACCEPT_CHARSET', 'windows-1251,utf-8;q=0.7,*;q=0.7');
 
+  /**
+  * Класс, инкапсулирующий работу с библиотекой cURL
+  * Требует для своей работы соответствующее расширение php
+  */
   class bmCurl extends bmFFObject {
     
     private $headers = array();
@@ -64,22 +68,54 @@
     public $acceptCookies = true;
     public $outputMethod = CURL_RETURN;
     
+    /**
+    * Функция обратного вызова, использующаяся для приема данных
+    * 
+    * @param resource $curl идентификатор используемой сессии
+    * @param mixed $data данные
+    * @return int длина записанных данных в байтах
+    */
     private function onCurlWrite($curl, $data) {
       $result = strlen($data);
       $this->buffer .= $data;
       return $result;
     }
     
+    /**
+    * Возвращает значение заголовка
+    *
+    * @todo ревью документации
+    */
     private function getHeader($key) {
       return array_key_exists($key, $_SERVER) ? $_SERVER[$key] : defined('DEFAULT_' . $key) ? constant('DEFAULT_' . $key) : '';
     }
     
-    private function setHeader($key, $name, $value, $forse = true) {
-      if (!array_key_exists($key, $this->headers) || $forse) {
+    /**
+    * Устанавливает значение заголовка
+    *
+    * @param string $key ключ (внутреннее имя заголовка)
+    * @param string $name имя заголовка
+    * @param string $value значение заголовка
+    * @param bool $force необходимо ли переустановить значение, если оно уже сохранено
+    * @todo ревью документации
+    */
+    private function setHeader($key, $name, $value, $forсe = true) {
+      if (!array_key_exists($key, $this->headers) || $forсe) {
         $this->headers[$key] = $name . ': ' . $value;
       }
     }
     
+    /**
+    * Выполняет запрос по указанному URL
+    * Функция может выполнить как GET, так и POST запросы. 
+    * В случае, если выполняется POST запрос, в качестве данных запроса используется параметр $data.
+    * В случае, если свойства $this->emulate установлена в CURL_EMULATE_FIREFOX, то функция передает соответствующие заголовки.
+    * 
+    * @param string $url адрес, по которому необходимо выполнить запрос
+    * @param string $method етод запроса, может быть: "GET", "POST"
+    * @param array|string $data данные, передаваемые в теле POST запросе
+    * @return string результат выполнения запроса
+    */
     public function execute($url, $method = 'GET', $data = null) {
       if (!$this->hasCurl) {
         return false;
@@ -160,6 +196,12 @@
       return $this->buffer;
     }
     
+    /**
+    * Псевдоним для функции {@link execute()}, выполняющий GET запрос
+    *
+    * @param string $url адрес, по которому выполняется запрос
+    * @return string|bool результат выполнения запроса или false в случае неудачи
+    */
     public function get($url) {
       if (!$this->hasCurl) {
         return false;
@@ -167,6 +209,13 @@
       return $this->execute($url, 'GET');
     }
     
+    /**
+    * Псевдоним для функции {@link execute()}, выполняющий POST запрос
+    *
+    * @param string $url адрес, по которому выполняется запрос
+    * @param arrray|string $data данные, передаваемые в теле POST запроса
+    * @return string|bool результат выполнения запроса или false в случае неудачи
+    */
     public function post($url, $data) {
       if (!$this->hasCurl) {
         return false;
@@ -174,6 +223,12 @@
       return $this->execute($url, 'POST', $data);
     }
     
+    /**
+    * Выполняет проверку существования указанного адреса
+    *
+    * @param string $url адрес, существование которого проверяется
+    * @return bool результат выполнения функции
+    */
     public function fileExists($url) {
       if (!$this->hasCurl) {
         return false;
@@ -186,6 +241,13 @@
       return $result;
     }
     
+    /**
+    * Производит загрузку с указанного адреса в файл
+    *
+    * @param string $url адрес с которого выполнется загрузка
+    * @param string $fileName имя файла в локальной файловой системе, куда выполняется загрузка
+    * @return string|bool результат выполнения запроса или false в случае неудачи
+    */
     public function getFile($url, $fileName) {
       if (!$this->hasCurl) {
         return false;
@@ -199,7 +261,13 @@
       
     }
     
-    public function __construct($application, $parameters = null) {
+    /**
+    * Конструктор класса. Выполняет проверку на поддержку библиотеки cURL
+    *
+    * @param bmApplication $application экземпляр текущего приложения
+    * @param array $parameters параметры, необходимые для инициализации экземпляра класса
+    */
+    public function __construct($application, $parameters = array()) {
       
       if (!function_exists('curl_init'))
       {

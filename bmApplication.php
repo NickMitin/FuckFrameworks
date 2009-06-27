@@ -27,18 +27,40 @@
 	* 
 	*/
   
+  /**
+  * Операция завершилась успешно
+  * @name E_SUCCESS
+  */
   define('E_SUCCESS', 0);
   define('E_DATA_OBJECT_NOT_EXISTS', 106);   
   define('E_DATAOBJECTMAP_NOT_FOUND', 107);   
   define('E_DATAOBJECTFIELDS_NOT_FOUND', 108);   
 	
 	define('BM_VT_ANY', 0);
+	/**
+	* Строка
+	*/
 	define('BM_VT_STRING', 1);
+	/**
+	* Целое число
+	*/
 	define('BM_VT_INTEGER', 2);
+	/**
+	* Число с плавающей запятой
+	*/
 	define('BM_VT_FLOAT', 3);
+	/**
+	* Дата
+	*/
 	define('BM_VT_DATETIME', 4);
+	/**	
+	* Объект
+	*/
 	define('BM_VT_OBJECT', 5);
 	
+	/**
+	* Базовый класс приложений
+	*/
 	abstract class bmApplication extends bmFFObject
 	{
 		public $templatecache = array();
@@ -57,7 +79,7 @@
 		* @param array $parameters параметры, необходимые для инициализации экземпляра приложения
 		* @return bmApplication
 		*/
-		public function __construct($application, $parameters = null)
+		public function __construct($application, $parameters = array())
 		{
 			$this->locale = C_LOCALE;
       parent::__construct($application, $parameters);
@@ -128,6 +150,12 @@
 			return $result;
 		}
 		
+		/**
+		* Выполняет деавторизацию пользователя.
+		* Сбрасывает $this->user в гостя
+		* 
+		* @return bool флаг успеха: false, если пользователь является гостем, иначе true
+		*/
 		public function logout()
 		{
 			$result = false;
@@ -167,13 +195,17 @@
 			return parent::__get($propertyName);
 		}
 		
+		/**
+		* Сохраняет состояние объекта. Не реализована.
+		* @todo определить необходимость присутствия этой функции
+		*/
 		public function save()
 		{
  
 		}
 
 		/**
-		* Выплоняет конвертацию переданной строки в UTF-8 
+		* Выполняет конвертацию переданной строки в UTF-8 
 		* 
 		* @param string $string исходная строка
 		* @return string результат конвертации переданной строки
@@ -187,7 +219,17 @@
 			}
 			return $string;
 		}
-
+  
+    /**
+    * Возвращает содержимое шаблона
+    * Функция пытается прочесть шаблон из кеша, если невозможно, то (если это разрешено параметром $read), читает с диска
+    * 
+    * @param string $templateName имя шаблона
+    * @param bool $escape необходимо ли выполнить экранирование. по умолчанию - true
+    * @param bool $read разрешено ли чтение шаблона с диска. по умолчанию - false
+    * @param string $path путь к корню проекта. по умолчанию - значение константы projectRoot
+    * @todo проверить логику функции
+    */
 		public function getTemplate($templateName, $escape = true, $read = false, $path = projectRoot)
 		{
 			$template = $this->debug ?  false : $this->cacheLink->get(templatePrefix . $templateName);
@@ -206,6 +248,16 @@
 			return $template;
 		}
 		
+    /**
+    * Возвращает (если возможно - кешированный) результат выполнения указанной функции.
+    * Функция пытается вернуть кешированный результат выполнения метода. Если это невозможно, выполняет метод и сохраняет его в кеше.
+    * В роли кешера выступает файловая система (статический кеш). 
+    * 
+    * @param string $cacheName имя метода класса генератора (по совместительству - кешированной страницы)
+    * @param string $generator имя класса генератора
+    * @param int $TTL время жизни кешированной страницы
+    * @return string результат выполнения генератора
+    */
 		public function getStaticCache($cacheName, $generator, $TTL = 0)
 		{
 			$cachePath = contentRoot . 'cache/' . $cacheName . '.html';
@@ -224,18 +276,36 @@
 			return $result;
 		}
 		
+    /**
+    * Возвращает, если возможно, сохраненное в кеше значение 
+    * Функция вернет false, если в кеше нет значения с переданным ключем, а также если приложение находится в режиме отладки
+    * 
+    * @param string $cacheName ключ 
+    * @return mixed кешированное значение или false в случае неудачи
+    */
 		public function getHTMLCache($cacheName) 
 		{
 			$result = $this->debug ? false : $this->cacheLink->get($cacheName);
 			return $result;
 		}
 		
+    /**
+    * Сохраняет в кеше переданное значение с указанным ключем и временем жизни объекта равным значению константы BM_CACHE_MIDDLE_TTL
+    *
+    * @param string $cacheName ключ
+    * @param mixed $content значение
+    */
 		public function setHTMLCache($cacheName, $content) 
 		{
 			$this->cacheLink->set($cacheName, $content, BM_CACHE_MIDDLE_TTL);
 		}
 		
-		
+		/**
+    * Удаляет значение из статического кеша
+    * В роли кешера используется файловая система.
+    *
+    * @param string $cacheName ключ
+    */
 		public function removeStaticCache($cacheName)
 		{
 			$cachePath = contentRoot . 'cache/' . $cacheName . '.html';
@@ -245,6 +315,12 @@
 			}
 		}
 		
+    /**
+    * Возвращает содержимое шаблона, выполняя над ним необходимые преобразования.
+    * 
+    * @param string $templateName имя шаблона
+    * @todo необходимые - это какие?
+    */
 		public function getClientTemplate($templateName)
 		{
 
@@ -259,6 +335,12 @@
 			return $this->template;
 		}
 		
+    /**
+    * Обновляет стек шаблонов
+    * 
+    * @param string $templateName имя шаблона
+    * @todo обязательное ревью документации
+    */
 		private function updateTemplateStack($templateName)
 		{
 			$templateStack = $this->cacheLink->get('templateStack');
@@ -270,6 +352,11 @@
 			$this->cacheLink->set('templateStack', $templateStack);
 		}
 		
+    /**
+    * Обновляет в кеше, находящиеся в стеке шаблоны.
+    *
+    * @todo обязательное ревью документации
+    */
 		public function updateTemplates()
 		{
 			$templateStack = $this->cacheLink->get('templateStack');

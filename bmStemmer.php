@@ -45,7 +45,7 @@
 
     private $stemCache = array();
     
-    public function __construct($application, $parameters = null)
+    public function __construct($application, $parameters = array())
     {
       
       parent::__construct($application, $parameters);
