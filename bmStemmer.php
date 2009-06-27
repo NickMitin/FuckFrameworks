@@ -1,12 +1,12 @@
 <?php
-/**
-	* Copyright (c) 2009, "The Blind Mice Studio"
-	* All rights reserved.
-	* 
-	* Redistribution and use in source and binary forms, with or without
-	* modification, are permitted provided that the following conditions are met:
-	* - Redistributions of source code must retain the above copyright
-	*   notice, this list of conditions and the following disclaimer.
+  /*
+  * Copyright (c) 2009, "The Blind Mice Studio"
+  * All rights reserved.
+  * 
+  * Redistribution and use in source and binary forms, with or without
+  * modification, are permitted provided that the following conditions are met:
+  * - Redistributions of source code must retain the above copyright
+  *   notice, this list of conditions and the following disclaimer.
   * - Redistributions in binary form must reproduce the above copyright
   *   notice, this list of conditions and the following disclaimer in the
   *   documentation and/or other materials provided with the distribution.
@@ -24,8 +24,9 @@
   * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
   * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
   * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-	* 
-	*/
+  * 
+  */
+
 	
   define('STEMMER_VOWEL_RU', '/аеиоуыэюя/u');
   define('STEMMER_PERFECTIVEGROUND_RU', '/((ив|ивши|ившись|ыв|ывши|ывшись)|((?<=[ая])(в|вши|вшись)))$/u');
