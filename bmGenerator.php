@@ -26,7 +26,7 @@
         if (preg_match($route, $path, $matches))
         {
           
-          require_once(documentRoot . $routeData['route'] . 'index.php');
+          require_once(documentRoot . $routeData['route']);
           $parameters = array();
           if (count($matches) > 1)
           {
