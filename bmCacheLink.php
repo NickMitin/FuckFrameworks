@@ -47,7 +47,7 @@
     * Конструктор класса
     * 
     * @param bmApplication $application экземпляр текущего приложения
-    * @param array $parameters параметры, необходимые для инициализации экземпляра приложения
+    * @param array $parameters параметры, необходимые для инициализации класса
     * @return bmCacheLink
     */
     public function __construct($application, $parameters = array())
