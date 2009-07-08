@@ -118,6 +118,30 @@ class bmMySQLLink extends bmFFObject {
 	public function formatInput($value) {
 		return mysql_real_escape_string($value, $this->linkId);
 	}
+  
+  public function ffTypeToNativeType($type, $defaultValue = '') 
+  {
+    $defaultValue = $this->formatInput($defaultValue, $type);
+    switch ($type)
+    {
+      case BM_VT_STRING:
+        $result = " VARCHAR(255) NOT NULL DEFAULT '" . $defaultValue . "'";
+      break;
+      case BM_VT_INTEGER:
+        $result = " INT(10) UNSIGNED NOT NULL DEFAULT '" . $defaultValue . "'";
+      break;
+      case BM_VT_FLOAT:
+        $result = " DOUBLE NOT NULL DEFAULT '" . $defaultValue . "'";
+      break;
+      case BM_VT_DATETIME:
+        $result = " DATETIME NOT NULL DEFAULT '" . $defaultValue . "'";
+      break;
+      default:
+        $result = " VARCHAR(255) NOT NULL DEFAULT '" . $this->formatInput($defaultValue) . "'";
+      break;
+    }
+    return $result;
+  }
 
 	
 	public function rowCount($cursor) {

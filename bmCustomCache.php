@@ -226,7 +226,7 @@
         
         $dateTimePropertyNames = array();
         
-        foreach($map as $propertyName => $type)
+        /*foreach($map as $propertyName => $type)
         {
           if ($type == BM_VT_DATETIME)
           {
@@ -243,7 +243,8 @@
               $result[$key]->$dateTimePropertyName = new bmDateTime($result[$key]->$dateTimePropertyName);
             }
           }
-        }
+        }*/
+        
           
         
         if ($load)

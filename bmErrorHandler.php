@@ -36,7 +36,6 @@
 		public function __construct($application, $parameters = array())
 		{
 			parent::__construct($application, $parameters);
-			require_once(projectRoot . '/conf/errors.conf');
 			require_once(projectRoot . '/locale/' . $application->locale . '/error_messages.php');
 		}
 		

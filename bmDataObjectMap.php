@@ -91,20 +91,31 @@
       $this->dirty['saveFields'] = true;
     }
     
-    public function deleteField($fieldId)
+    public function removeFields()
+    {
+      foreach ($this->fields as $item)
+      { 
+        $item->dataObjectField->delete();
+      }
+      $this->properties['fieldIds'] = array();
+      
+      $this->application->cacheLink->delete('dataObjectMap_dataObjectFields_' . $this->properties['identifier']);
+      $this->dirty['saveFields'] = true;
+    }
+    
+    public function removeField($fieldId)
     {
       
     }
     
     protected function saveFields()
     {
-      
       $dataLink = $this->application->dataLink;
       $cacheLink = $this->application->cacheLink;
       
       $sql = "DELETE FROM `link_dataObjectMap_dataObjectField` WHERE `dataObjectMapId` = " . $this->properties['identifier'] . ";";
       $dataLink->query($sql);
-      
+      $insertStrings = array();
       foreach ($this->properties['fieldIds'] as $item)
       { 
         $insertStrings[] = "(" . $dataLink->formatInput($this->properties['identifier'], BM_VT_INTEGER) . ", " . $dataLink->formatInput($item->dataObjectFieldId, BM_VT_INTEGER) . ", " . $dataLink->formatInput($item->type, BM_VT_INTEGER) . ")";
@@ -238,9 +249,19 @@
         $dataField->fieldName = $tableField->Field;
         $dataField->type = constant($tableField->FFType);
         $dataField->defaultValue = $tableField->FFDefault;
-        $dataField->setDataObjectMap($this->properties['identifier'], 1);
+        $dataField->setDataObjectMap($this->properties['identifier'], $tableField->Property == 'identifier' ? 1 : 0);
         unset($dataField);
       }
+    }
+    
+    public function delete()
+    {
+      $this->removeFields();
+      $this->checkDirty();
+      $this->dirty = array();
+      $sql = "DELETE FROM `" . $this->objectName . "` WHERE `id` = " . $this->properties['identifier'] . ";";
+      $this->application->dataLink->query($sql);
+      
     }
     
   }

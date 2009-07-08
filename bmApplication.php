@@ -84,6 +84,7 @@
 		{
 			$this->locale = C_LOCALE;
       parent::__construct($application, $parameters);
+      require_once(projectRoot . '/conf/errors.conf'); 
 			$this->action = $this->cgi->getGPC('action', '');
 			
 			$this->dataLink = new bmMySQLLink($this);
@@ -186,14 +187,29 @@
 		
 		public function __get($propertyName)
 		{
-			$className = 'bm' . ucfirst($propertyName);
-			if (class_exists($className))
+		  switch ($propertyName)
       {
-				if (!$this->propertyExists($propertyName)) {
-					$this->addProperty($propertyName, new $className($this));
-				}
-			}
-			return parent::__get($propertyName);
+        case 'dataObjectMapIds':
+          if (!array_key_exists('dataObjectMapIds', $this->properties))
+          {
+            $this->properties['dataObjectMapIds'] = $this->applicationCache->getDataObjectMaps($this, false);
+          }
+          return $this->properties['dataObjectMapIds'];
+        break;
+        case 'dataObjectMaps':
+          return $this->applicationCache->getDataObjectMaps($this);
+        break;
+        default:
+          $className = 'bm' . ucfirst($propertyName);
+          if (class_exists($className))
+          {
+            if (!$this->propertyExists($propertyName)) {
+              $this->addProperty($propertyName, new $className($this));
+            }
+          }
+          return parent::__get($propertyName);
+        break;
+      }
 		}
 		
 		/**
@@ -233,7 +249,7 @@
     */
 		public function getTemplate($templateName, $escape = true, $read = false, $path = projectRoot)
 		{
-			$template = $this->debug ?  false : $this->cacheLink->get(templatePrefix . $templateName);
+			$template = $this->debug ?  false : $this->cacheLink->get(C_TEMPLATE_PREFIX . $templateName);
 			
 			if ($template === false || $read !== false)
 			{

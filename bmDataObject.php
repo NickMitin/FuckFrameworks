@@ -39,7 +39,7 @@
 		public $runningCheckDirty = false;
 		
 		
-		public function __construct($application, $parameters = array())
+		public function __construct(bmApplication $application, $parameters = array())
 		{
 			
       $this->events = array('save', 'load', 'delete');
@@ -48,6 +48,7 @@
 			{
 				$this->properties[$propertyName] = $this->formatProperty($propertyName, $property['dataType'], $property['defaultValue']);
 			}
+      
 			parent::__construct($application, $parameters);
 			
 			foreach($this->map as $propertyName => $property)
@@ -346,7 +347,7 @@
       $result = false;
       foreach ($collection as $item)
       {
-        if ($collection->$propertyName == $key)
+        if ($item->$propertyName == $key)
         {
           $result = true;
           break;

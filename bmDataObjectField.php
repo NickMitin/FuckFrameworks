@@ -119,6 +119,13 @@
       $this->dirty['saveDataObjectMap'] = false;      
     }
     
+    public function delete()
+    {
+      $this->dirty = array();
+      $sql = "DELETE FROM `" . $this->objectName . "` WHERE `id` = " . $this->properties['identifier'] . ";";
+      $this->application->dataLink->query($sql);
+    }
+    
   }
   
 ?>

@@ -41,7 +41,7 @@
         'identifier' => array(
           'fieldName' => 'id',
           'dataType' => BM_VT_INTEGER,
-          'defaultValue' => C_DEFAULT_USER_ID
+          'defaultValue' => 0
         ),
         'passwordHash' => array(
           'fieldName' => 'password',
@@ -51,7 +51,7 @@
         'email' => array(
           'fieldName' => 'email',
           'dataType' => BM_VT_STRING,
-          'defaultValue' => 'guest@bricks'
+          'defaultValue' => ''
         ),
         'homePage' => array(
           'fieldName' => 'homePage',
@@ -66,7 +66,7 @@
         'name' => array(
           'fieldName' => 'name',
           'dataType' => BM_VT_STRING,
-          'defaultValue' => 'Гость'
+          'defaultValue' => ''
         ),
         'firstName' => array(
           'fieldName' => 'firstname',
@@ -80,8 +80,8 @@
         ),
         'birthday' => array(
           'fieldName' => 'birthday',
-          'dataType' => BM_VT_STRING,
-          'defaultValue' => '0000-00-00'
+          'dataType' => BM_VT_DATETIME,
+          'defaultValue' => '0000-01-01 00:00:00'
         ),
         'sex' => array(
           'fieldName' => 'sex',
@@ -105,17 +105,17 @@
         ),
         'joinDate' => array(
           'fieldName' => 'joinDate',
-          'dataType' => BM_VT_STRING,
+          'dataType' => BM_VT_DATETIME,
           'defaultValue' => '0000-00-00 00:00:00'
         ),
         'lastActivity' => array(
           'fieldName' => 'lastActivity',
-          'dataType' => BM_VT_STRING,
+          'dataType' => BM_VT_DATETIME,
           'defaultValue' => '0000-00-00 00:00:00'
         ),
         'lastVisit' => array(
           'fieldName' => 'lastVisit',
-          'dataType' => BM_VT_STRING,
+          'dataType' => BM_VT_DATETIME,
           'defaultValue' => '0000-00-00 00:00:00'
         )
       ));
