@@ -55,7 +55,7 @@
 		
 			parent::__construct($application, $parameters);
 			
-			$application->cgi->addCookie(C_SESSION_COOKIE_NAME, $this->identifier, false, '/', '', time() + 900);
+			$application->cgi->addCookie(C_SESSION_COOKIE_NAME, $this->identifier, false, '/', '', time() + C_SESSION_LIFE_TIME);
 		}
   }
 ?>
