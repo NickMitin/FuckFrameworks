@@ -35,6 +35,10 @@
     
     public function __construct($time)
     {
+    	if(is_int($time))
+    	{
+    		$time = date(DATE_RFC822, $time);
+    	}
       $this->dateTime = new DateTime($time);
     }
     
