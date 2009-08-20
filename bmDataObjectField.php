@@ -56,6 +56,11 @@
           'dataType' => BM_VT_STRING,
           'defaultValue' => ''
         ),
+        'localName' => array(
+          'fieldName' => 'localName',
+          'dataType' => BM_VT_STRING,
+          'defaultValue' => ''
+        ),
         'defaultValue' => array(
           'fieldName' => 'defaultValue',
           'dataType' => BM_VT_STRING,
@@ -80,6 +85,13 @@
         break;
         case 'dataObjectMap':
           $this->properties['dataObjectMap'] = $this->application->dataObjectFieldCache->getDataObjectMap($this);
+        break;
+        case 'localNames':
+          if (!array_key_exists('localNames', $this->properties))
+          {
+            $this->properties['localNames'] = unserialize($this->properties['localName']);
+          }
+          return $this->properties['localNames'];
         break;
         default:
           return parent::__get($propertyName);

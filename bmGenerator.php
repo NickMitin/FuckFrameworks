@@ -32,6 +32,30 @@
     
     private $routes = array();
     
+    private function ffTypeToString($type)
+    {
+      $result = 'BM_VT_ERROR';
+      switch ($type)
+      {
+        case BM_VT_INTEGER: 
+          $result = 'BM_VT_INTEGER';
+        break;
+        case BM_VT_FLOAT: 
+          $result = 'BM_VT_FLOAT';
+        break;
+        case BM_VT_DATETIME: 
+          $result = 'BM_VT_DATETIME';
+        break;
+        case BM_VT_STRING: 
+          $result = 'BM_VT_STRING';
+        break;
+        case BM_VT_ANY: 
+          $result = 'BM_VT_ANY';
+        break;
+      }
+      return $result;
+    }
+    
     public function __construct($application, $parameters = array())
     {
       parent::__construct($application, $parameters);
@@ -41,6 +65,41 @@
         require_once(projectRoot . '/conf/generator.conf');
         $application->cacheLink->set(C_CACHE_PREFIX . 'sitePages', $this->routes);
       }
+    }
+    
+    public function addRoute($uri, $handlerFile, $handlerClassName, $parameters = array())
+    {
+      $route = array();
+      $route['route'] = $handlerFile;
+      $route['class'] = $handlerClassName;
+      if (count($parameters) > 0)
+      {
+        $route['parameters'] = $parameters;
+      }
+      $this->routes[$uri] = $route;
+    }
+    
+    public function serialize()
+    {
+      $routes = array();
+      foreach ($this->routes as $uri => $route)
+      {
+        $routeString = "  '" . $uri . "' => array\n  (\n    'route' => '" . $route['route'] . "',\n    'class' => '" . $route['class'] . "'";
+        if (array_key_exists('parameters', $route))
+        {
+          $parameters = array();
+          foreach ($route['parameters'] as $name => $type)
+          {
+            $parameters[] = "      '" . $name . "' => " . $this->ffTypeToString($type);
+          }
+          $routeString .= ",\n    'parameters' => array\n    (\n" . implode(",\n", $parameters) . "\n    )";
+          
+        }
+        $routeString .= "\n  )";
+        $routes[] = $routeString;
+      }
+      $routes = "<?php\n\n\$this->routes = array\n(\n" . implode(",\n", $routes) . "\n);";
+      file_put_contents(projectRoot . '/conf/generator.conf', $routes);
     }
     
     public function generate($path)

@@ -34,8 +34,6 @@
 		public function __construct($application, $parameters)
 		{                                                
       
-      $this->objectName = 'user';
-      
       $this->map = array_merge($this->map, array
       (
         'identifier' => array(

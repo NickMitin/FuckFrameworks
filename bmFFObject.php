@@ -143,7 +143,6 @@
     
     protected function triggerEvent($eventName, $parameters = array())
     {
-      
       $eventHanlders = &$this->eventHandlers;
       if (in_array($eventName, $this->events) && array_key_exists($eventName, $eventHanlders))
       {

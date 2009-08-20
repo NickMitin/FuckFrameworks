@@ -428,6 +428,14 @@
       }
       return $value;
     }
+    
+    public function getObjectIdByFieldName($objectName, $fieldName, $value)
+    {
+      $sql = "SELECT `id` AS `identifier` FROM `" . $objectName . "` WHERE `" . $fieldName . "` = '" . $this->dataLink->formatInput($value, BM_VT_STRING) . "';";
+      $result = $this->dataLink->getValue($sql);
+      return ($result != null) ? $result : 0;
+    }
+    
 
 	}
 	

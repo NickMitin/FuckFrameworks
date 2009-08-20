@@ -82,7 +82,8 @@
 
     public function addScript($source)
     {
-      $this->addHTMLMetaDatum('scripts', $source, '<script type="text/javascript" src="' . $this->application->contentProvider->getStaticServer() . '/scripts/' . $source . '.js"></script>');
+      $src = mb_strpos($source, 'http') === 0 ? $source : $this->application->contentProvider->getStaticServer() . '/scripts/' . $source . '.js';
+      $this->addHTMLMetaDatum('scripts', $source, '<script type="text/javascript" src="' . $src . '"></script>');
     }
     
     public function addScripts($scripts)

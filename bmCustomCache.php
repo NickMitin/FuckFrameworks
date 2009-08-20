@@ -97,7 +97,7 @@
         {                    
           $this->application->cacheLink->set($objectName . $object->identifier, $object, BM_CACHE_SHORT_TTL);  
           $object->load = false;
-          
+                                                                                                                          
           foreach ($objectsFilter as $order => $objectId) 
           {
             if ($objectId == $object->identifier)

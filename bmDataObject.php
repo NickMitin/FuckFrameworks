@@ -38,11 +38,10 @@
 		public $updateCount = 0;
 		public $runningCheckDirty = false;
 		
-		
 		public function __construct(bmApplication $application, $parameters = array())
 		{
 			
-      $this->events = array('save', 'load', 'delete');
+      $this->events = array('save', 'load', 'delete', 'propertyChange');
       
       foreach($this->map as $propertyName => $property)
 			{
@@ -57,11 +56,12 @@
 				{
 					if (!property_exists($this, $propertyName))
 					{
-						$this->properties[$propertyName] = $this->formatProperty($propertyName, $property['dataType'], $parameters[$propertyName]);
+
+            $this->properties[$propertyName] = $this->formatProperty($propertyName, $property['dataType'], $parameters[$propertyName]);
 					}
 				}
 			}
-			
+      
 			if (array_key_exists('identifier', $parameters) && ($parameters['identifier'] !== 0 && $parameters['identifier'] != ''))
 			{           
 				if (!array_key_exists('load', $parameters) || $parameters['load'] != false)
@@ -73,13 +73,14 @@
       {
         $this->dirty['store'] = true;
       }
+
 		}
 		
 	 protected function formatProperty($propertyName, $dataType, $value)
 	 {
 			switch ($dataType)
 			{
-				case BM_VT_DATETIME:        
+				case BM_VT_DATETIME:       
 					$result = new bmDateTime($value);
 				break;
 				
@@ -188,13 +189,15 @@
 			{
 				if ($this->map[$propertyName]['dataType'] == BM_VT_DATETIME)
 				{
-					$this->properties[$propertyName] = new bmDateTime($value);
+					$value = new bmDateTime($value);
 				}
-				else
-				{
-					$this->properties[$propertyName] = $value;          
-				}
-				$this->dirty['store'] = true;
+				if ((string)$this->properties[$propertyName] != (string)$value)
+        {
+          $this->triggerEvent('propertyChange', array('identifier' => $this->properties['identifier'], 'propertyName' => $propertyName, 'oldValue' => $this->properties[$propertyName], 'newValue' => $value));
+          $this->properties[$propertyName] = $value;
+          $this->dirty['store'] = true;
+        }
+				
 			}
 		}
 		
@@ -207,7 +210,7 @@
 		
 		public function load()
 		{
-			$objectName = mb_convert_case($this->objectName, MB_CASE_TITLE);
+      $objectName = mb_convert_case($this->objectName, MB_CASE_TITLE);
 			if ($this->properties['identifier'])
 			{        
 				$cache = $this->application->{$this->objectName . 'Cache'}->getObject($this->properties['identifier'], $this->objectName, $this->fieldsToSQL());
@@ -216,6 +219,7 @@
 			{
 				$cache = false;
 			}
+      
 			
 			if ($cache != false) 
 			{

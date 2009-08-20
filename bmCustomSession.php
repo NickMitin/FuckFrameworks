@@ -84,7 +84,6 @@
         )
       ));
       
-      
       $load = array_key_exists('load', $parameters);
       $identifier = array_key_exists('identifier', $parameters) ? $parameters['identifier'] : '';
       
@@ -131,6 +130,7 @@
       }      
       
       $this->ipAddress = $this->application->cgi->getIPAddress();
+            
       $this->userAgent = $_SERVER['HTTP_USER_AGENT'];
       $this->location = $_SERVER['REQUEST_URI'];
       $this->lastActivity = time();

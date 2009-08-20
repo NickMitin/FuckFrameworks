@@ -41,6 +41,7 @@
   	*/
 		public function __construct($application, $parameters = array())
 		{
+      
       $load = array_key_exists('load', $parameters);
       $identifier = array_key_exists('identifier', $parameters) ? $parameters['identifier'] : '';
       
