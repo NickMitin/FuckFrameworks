@@ -134,10 +134,11 @@
     
     /**
     * Выполняет sql запрос и загружает объект с идентификатором, полученным в результате выполнения запроса
+    * В зависимости от параметра $load, функция или возвращает идентификатор объекта или загруженный объект со всеми полями
     * 
     * @param mixed $sql sql запрос, возвращающий идентификатор загружаемого объекта
-    * @param mixed $cacheKey ключ кеша, по которому должен быть сохранен объект
-    * @param mixed $objectName имя загружаемого объекта
+    * @param mixed $cacheKey ключ кеша, по которому должен быть сохранен полученный идентификатор объекта
+    * @param mixed $objectName имя загружаемого дата объекта
     * @param mixed $errorCode код ошибки, возвращаемый в случае неудачи
     * @param mixed $load флаг, указывающий необходимо ли загружать полученные объекты
     */
@@ -171,15 +172,16 @@
     }    
     
     /**
-    * put your comment there...
+    * Выполняет sql запрос и загружает объекты с идентификаторами, полученными в результате выполнения запроса
+    * В зависимости от параметра $load, функция или возвращает идентификаторы объектов или загруженные объекты со всеми полями
     * 
-    * @param mixed $sql
-    * @param mixed $cacheKey
-    * @param mixed $objectName
-    * @param mixed $errorCode
-    * @param mixed $load
-    * @param mixed $limit
-    * @param mixed $offset
+    * @param string $sql sql запрос, возвращающий идентификаторы загружаемых объектов
+    * @param string $cacheKey ключ кеша, по которому должны быть сохранены полученные идентификаторы объектов
+    * @param string $objectName имя загружаемого дата объекта
+    * @param mixed $errorCode код ошибки, возвращаемый в случае неудачи
+    * @param boolean $load флаг, указывающий необходимо ли загружать полученные объекты
+    * @param int $limit количество загружаемых объектов
+    * @param int $offset смещение, с которого нужно начать загрузку объектов
     */
     public function getSimpleLinks($sql, $cacheKey, $objectName, $errorCode, $load, $limit = 0, $offset = 0)
     {
@@ -226,13 +228,13 @@
     }
     
     /**
-    * put your comment there...
+    * Функция возвращает TODO
     * 
-    * @param mixed $sql
-    * @param mixed $cacheKey
-    * @param mixed $map
-    * @param mixed $errorCode
-    * @param mixed $load
+    * @param mixed $sql запрос, возвращающий идентификаторы загружаемых связанных объектов
+    * @param mixed $cacheKey ключ кеша, по которому производится сохранение результатов выборки
+    * @param mixed $map структура возвращаемого 
+    * @param mixed $errorCode возвращаемый в случае ошибки код неудачи
+    * @param mixed $load 
     * @param mixed $limit
     * @param mixed $offset
     * @return array
