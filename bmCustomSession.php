@@ -27,9 +27,19 @@
   * 
   */
 
+  /**
+  * Базовый класс сессии 
+  * (дата объект!!)
+  */
   abstract class bmCustomSession extends bmDataObject implements IDataObject 
   {
-    
+    /**
+    * Конструктор
+    * 
+    * @param bmApplication $application экземпляр текущего выполняющегося приложения
+    * @param array $parameters параметры
+    * @return bmCustomSession
+    */
     public function __construct($application, $parameters = array()) 
     {
       $this->map = array_merge($this->map, array
