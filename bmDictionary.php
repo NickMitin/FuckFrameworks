@@ -27,7 +27,11 @@
   * 
   */
 
-	
+	/**
+  * Не реализован
+  * @todo documentation
+  * @todo update code, now not working
+  */
   class bmDictionary extends bmFFObject
   {
     
