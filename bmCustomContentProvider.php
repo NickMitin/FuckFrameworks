@@ -54,8 +54,8 @@
     /**
     * Собирает CSS в единый файл
     * Функция собирает файлы, указанные в conf/css.conf в результирующий css/global.css
-    * 
-    * @param boolean $tudy TODO черт его знает что
+    * @todo documentation
+    * @param boolean $tudy
     */
     public function compileCSS($tudy = false)
     {
