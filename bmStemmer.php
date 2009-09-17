@@ -40,12 +40,23 @@
   
   define('STEMMER_CONSONANT_EN', '(?:[bcdfghjklmnpqrstvwxz]|(?<=[aeiou])y|^y)');
   define('STEMMER_VOWEL_EN', '(?:[aeiou]|(?<![aeiou])y)');
-
+                           
+  /**
+  * Класс реализует стемминг (поиск основы слова)
+  * Поддерживаемые языки: русский, английский
+  */
   class bmStemmer extends bmFFObject  
   {
 
     private $stemCache = array();
     
+    /**
+    * Конструктор
+    * Производит попытку загрузить stemCache из кешера предоставляемого приложением
+    * @param bmApplicaton $application экземпляр текущего выполняющегося приложения
+    * @param array $parameters массив параметров
+    * @return bmStemmer
+    */
     public function __construct($application, $parameters = array())
     {
       
@@ -58,11 +69,23 @@
       
     }
     
+    /**
+    * Деструктор
+    * Выполняет сохранение stemCache в кешере предоставляемом приложением
+    */
     public function __destruct()
     {
       $this->application->cacheLink->set('stemCache', $this->stemCache, BM_CACHE_LONG_TTL);
     }
   
+    /**
+    * Производит проверку замены
+    * 
+    * @param mixed $source исходная строка 
+    * @param mixed $expression заменяющее регулярное выражение 
+    * @param mixed $replacement заменяющая строка
+    * @return boolean true если исходная строка не совпадает с результирующей, false если иначе
+    */
     private function testReplace(&$source, $expression, $replacement)
     {
       $original = $source;
@@ -72,7 +95,13 @@
       return $original !== $source;
 
     }
-
+    
+    /**
+    * Выявляет основу слова русского языка
+    * Сохраняет полученный результат в stemCache (но не читает его!!)
+    * @param string $word исходное слово
+    * @return string основа слова или исходное слово
+    */
     public function stemRussianWord($word)
     {
       
@@ -132,6 +161,12 @@
 
     }
  
+    /**
+    * Выявляет основу слова английского языка
+    * (Не сохраняет полученный результат в кешере и не проверяет его наличие!)
+    * @param string $word исходное слово
+    * @return string 
+    */
     public function stemEnglishWord($word)
     {
       $word = preg_replace('/[\d]+/Su', '', $word);  
@@ -305,6 +340,13 @@
       return $word;
     }
     
+    /**
+    * Выполняет поиск основы слова
+    * Поддерживается русский и английский языки
+    * Проверяет наличие результата в кешере и по возможности возвращает его
+    * @param string $word исходное слово
+    * @return string основа слова
+    */
     public function stemWord($word) {
       
       $word = mb_strtolower($word);    
@@ -328,6 +370,14 @@
     
     }
 
+    /**
+    * TODO
+    * @todo documentation
+    * @param mixed $subject
+    * @param mixed $search
+    * @param mixed $replacement
+    * @param mixed $count
+    */
     private function replaceEN(&$subject, $search, $replacement, $count = null)
     {
       $length = 0 - mb_strlen($search);
@@ -342,11 +392,25 @@
       return false;
     }
 
+    /**
+    * TODO
+    * @todo documentation
+    * @param mixed $subject
+    * @param mixed $expression
+    * @return int
+    */
+    
     private function matchRU($subject, $expression)
     {
       return preg_match($expression, $subject);
     }
 
+    /**
+    * TODO
+    * @todo documentation
+    * @param mixed $subject
+    * @return int
+    */
     private function matchEN($subject)
     {
 
@@ -358,11 +422,23 @@
       return count($matches[1]);
     }
 
+    /**
+    * Проверяет наличие в слове двойной согласной (английский язык)
+    * 
+    * @param mixed $subject
+    * @return int
+    */
     private function doubleConsonant($subject)
     {
       return preg_match('/' . STEMMER_CONSONANT_EN . '{2}$/u', $subject, $matches) && ($matches[0]{0} == $matches[0]{1});
     }
 
+    /**
+    * TODO
+    * @todo documentation
+    * @param mixed $subject
+    * @return int
+    */
     private function cvc($subject)
     {
       return preg_match('/(' . STEMMER_CONSONANT_EN . STEMMER_VOWEL_EN . STEMMER_CONSONANT_EN . ')$/', $subject, $matches) && (strlen($matches[1]) == 3) && ($matches[1]{2} != 'w') && ($matches[1]{2} != 'x') && ($matches[1]{2} != 'y');
