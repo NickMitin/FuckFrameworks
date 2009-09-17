@@ -27,7 +27,9 @@
   * 
   */
 
-		
+	/**
+  * Базовый класс для дата объектов
+  */
 	abstract class bmFFObject
 	{
 		protected $application = null;
@@ -35,6 +37,13 @@
     protected $events = array();
     protected $eventHandlers = array();
 		
+    /**
+    * Конструктор
+    * 
+    * @param bmApplication $application экземпляр класса текущего приложения
+    * @param array $parameters параметры
+    * @return bmFFObject
+    */
 		public function __construct($application, $parameters = array())
 		{
 			$this->application = $application;
@@ -53,6 +62,14 @@
 			}
 		}
 
+    /**
+    * Возвращает элемент массива с заданным ключом или значение по умолчанию
+    * 
+    * @param array $parameters массив
+    * @param mixed $parameter ключ элемента
+    * @param mixed $defaultValue значение по умолчанию
+    * @return mixed
+    */
 		protected function getParameter(&$parameters, $parameter, $defaultValue = null)
 		{
 			if (array_key_exists($parameter, $parameters))
@@ -65,6 +82,12 @@
 			}
 		}
 		
+    /**
+    * Добавляет свойство в объект
+    * Добавление производится в том случае, если в объекте нет свойства с заданным именем
+    * @param mixed $propertyName имя добавляемого свойства
+    * @param mixed $value значение
+    */
 		protected function addProperty($propertyName, $value = null) 
 		{
 			if (!array_key_exists($propertyName, $this->properties)) 
@@ -73,12 +96,24 @@
 			}
 		}
 		
+    /**
+    * Проверяет существование свойства у объекта
+    * 
+    * @param mixed $propertyName имя свойства
+    * @return bool true, если свойство существует
+    */
 		protected function propertyExists($propertyName) {
 		
 			return array_key_exists($propertyName, $this->properties);
 			
 		}
 		
+    /**
+    * Магический метод, возвращает свойство с заданным именем
+    * Обеспечивает синтаксис $object->propertyName
+    * @param mixed $propertyName имя свойства
+    * @return mixed значение свойства
+    */
 		public function __get($propertyName)
 		{
 			if (array_key_exists($propertyName, $this->properties)) 
@@ -87,6 +122,12 @@
 			}
 		}
     
+    /**
+    * Добавляет обработчик события
+    *
+    * @param string $eventName имя события
+    * @param array $handler массив, содержащий пару объект-метод - обработчик события. Метод должен принимать 1 параметр = массив аргументов.
+    */
     public function addEventListener($eventName, $handler)
     {
       $handlerObject = $handler[0];
@@ -117,6 +158,12 @@
       return $result;
     }
     
+    /**
+    * Удаляет обработчик события
+    * 
+    * @param string $eventName имя события
+    * @param array $handler массив, содержащий пару объект-метод - обработчик события.
+    */
     public function removeEventListener($eventName, $handler)
     {
       $handlerObject = $handler[0];
@@ -141,6 +188,12 @@
       return $result;      
     }
     
+    /**
+    * Запускает обработку события
+    * 
+    * @param string $eventName имя события
+    * @param array $parameters параметры, передаваемые обработчикам события
+    */
     protected function triggerEvent($eventName, $parameters = array())
     {
       $eventHanlders = &$this->eventHandlers;
