@@ -40,7 +40,7 @@
     * @param array $parameters массив параметров
     * @return bmCustomUser
     */
-		public function __construct($application, $parameters)
+		public function __construct($application, $parameters = array())
 		{                                                
       
       $this->map = array_merge($this->map, array
