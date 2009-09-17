@@ -39,7 +39,7 @@
     * функция получает его из БД и помещает в кеш
     * 
     * @param mixed $objectId идентификатор экземпляра объекта
-    * @param string $objectName имя дата обхекта (имя таблицы)
+    * @param string $objectName имя дата объекта (имя таблицы)
     * @param string $fields список извлекаемы из БД полей (через запятую)
     */
     public function getObject($objectId, $objectName, $fields)
