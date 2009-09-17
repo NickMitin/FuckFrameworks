@@ -27,7 +27,9 @@
   * 
   */
 
-	  
+	/**
+  * @todo documentation
+  */
   abstract class bmCustomContentProvider extends bmFFObject
   {
     protected $staticServers = null;
@@ -36,12 +38,25 @@
     protected $contentRoot = null;
     protected $templatePrefixes = null;
 
+    /**
+    * Конструктор
+    * 
+    * @param bmApplication $application экземпляр текущего выполняющегося приложения
+    * @param array $parameters массив параметров
+    * @return bmCustomContentProvider
+    */
     public function __construct($application, &$parameters = array())
     {
       parent::__construct($application, $parameters);
       require_once(projectRoot . 'conf/contentProvider.conf');
     }
     
+    /**
+    * Собирает CSS в единый файл
+    * Функция собирает файлы, указанные в conf/css.conf в результирующий css/global.css
+    * 
+    * @param boolean $tudy TODO черт его знает что
+    */
     public function compileCSS($tudy = false)
     {
       require_once(serverRoot . 'conf/css.conf');
@@ -60,21 +75,37 @@
       file_put_contents(documentRoot . 'css/global.css', $result);
     }
     
+    /**
+    * Возвращает контент-сервер
+    * В этой реализации возвращается первый элемент из списка
+    */
     public function getContentServer()
     {
       return $this->contentServers[0];
     }
     
+    /**
+    * Возвращает статический сервер
+    * В этой реализации возвращается первый элемент из списока
+    */
     public function getStaticServer()
     {
       return $this->staticServers[0];
     }
         
+    /**
+    * Возвращает путь к корню сайта
+    * В этой реализации возвращается первый элемент из списка
+    */
     public function getDocumentRoot()
     {
       return $this->documentRoot[0];
     } 
        
+    /**
+    * Возвращает путь к корню контента сайта
+    * В этой реализации возвращается первый элемент из списка
+    */
     public function getContentRoot()
     {
       return $this->contentRoot[0];
