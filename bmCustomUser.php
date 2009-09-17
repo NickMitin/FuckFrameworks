@@ -27,10 +27,19 @@
   * 
   */
 
-		
+	/**
+  * Базовый класс пользователя
+  * (дата объект)
+  */
 	abstract class bmCustomUser extends bmDataObject
 	{  
-
+    /**
+    * Конструктор
+    * 
+    * @param bmApplication $application экземпляр текущего выполняющегося приложения
+    * @param array $parameters массив параметров
+    * @return bmCustomUser
+    */
 		public function __construct($application, $parameters)
 		{                                                
       
