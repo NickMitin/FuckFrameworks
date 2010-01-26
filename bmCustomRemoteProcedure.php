@@ -26,12 +26,21 @@
   * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   * 
   */
+  
+  define('BM_RP_TYPE_CUSTOM', 1);
+  define('BM_RP_TYPE_JSON', 2);
+  define('BM_RP_TYPE_JSONP', 3);
+  define('BM_RP_TYPE_XML', 4);
+  define('BM_RP_TYPE_RAW', 5);
 
 	
   abstract class bmCustomRemoteProcedure extends bmFFObject
   {
     
     protected $returnTo = '';
+    protected $output = '';
+    protected $type = BM_RP_TYPE_CUSTOM;
+    public $forceEmpty = false;
     
     public function __construct($application, $parameters = array())
     {
@@ -42,7 +51,22 @@
     
     public function execute() 
     {
-      header('location: ' . $this->returnTo, true);
+      if ($this->returnTo != '' && $this->type == BM_RP_TYPE_CUSTOM)
+      {
+        header('location: ' . $this->returnTo, true);
+      }
+      else
+      {
+        switch ($this->type)
+        {
+          case BM_RP_TYPE_JSON:
+            return json_encode($this->output);
+          break;
+          case BM_RP_TYPE_RAW:
+            return $this->output;
+          break;
+        } 
+      }
     }   
   }
 ?>

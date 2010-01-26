@@ -26,7 +26,7 @@
   * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   * 
   */
-	
+  
   class bmDateTime
   {
     
@@ -35,10 +35,10 @@
     
     public function __construct($time)
     {
-    	if(is_int($time))
-    	{
-    		$time = date(DATE_RFC822, $time);
-    	}
+      if(is_int($time))
+      {
+        $time = date(DATE_RFC822, $time);
+      }
       $this->dateTime = new DateTime($time);
     }
     
@@ -61,6 +61,11 @@
     public function getValue()
     {
       return $this->dateTime;
+    }
+    
+    public function format($format)
+    {
+      return $this->dateTime->format($format);
     }
 
   }

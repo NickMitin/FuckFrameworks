@@ -107,11 +107,13 @@
       $result = '';
       $status = 200;
       $routes = $this->routes;
+      $forceEmpty = false;
       foreach ($routes as $route => $routeData)
       {
+        
         if (preg_match($route, $path, $matches))
         {
-          
+        
           require_once(documentRoot . $routeData['route']);
           $parameters = array();
           if (count($matches) > 1)
@@ -127,7 +129,8 @@
           if ($entity instanceof bmCustomRemoteProcedure)
           {
             $result = $entity->execute();
-            if ($result == '')
+            $forceEmpty = $entity->forceEmpty;
+            if ($result == '' && !$forceEmpty)
             {
               $result = 'OK';
             }
@@ -139,7 +142,7 @@
           break;
         }
       }
-      if ($result == '')
+      if ($result == '' && !$forceEmpty)
       {
         #HTTP/1.1 200 OK
         header('HTTP/1.1 404 Not Found', true, 404);

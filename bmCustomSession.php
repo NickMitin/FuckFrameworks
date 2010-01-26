@@ -135,6 +135,7 @@
       $this->location = $_SERVER['REQUEST_URI'];
       $this->lastActivity = time();
       $this->application->user = new bmUser($this->application, array('identifier' => $this->properties['userId'], 'load' => true));
+      
     }   
   }
 

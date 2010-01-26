@@ -436,6 +436,13 @@
       return ($result != null) ? $result : 0;
     }
     
+    public function getObjectIdBySynonym($objectName, $synonym)
+    {
+      $sql = "SELECT `" . $objectName . "Id` AS `identifier` FROM `" . $objectName . "_synonym` WHERE `synonym` = '" . $this->dataLink->formatInput($synonym, BM_VT_STRING) . "';";
+      $result = $this->dataLink->getValue($sql);
+      return ($result != null) ? $result : 0;
+    }
+    
 
 	}
 	

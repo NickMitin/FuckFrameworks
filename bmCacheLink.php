@@ -70,7 +70,7 @@
     public function get($key)
     {
       $key = C_CACHE_PREFIX . $key;
-      if ($this->application->debug && $this->cacherExists)
+      if ($this->application->debug || !$this->cacherExists)
       {
         return false;
       }
@@ -92,7 +92,7 @@
     */
     public function set($key, $value, $expire = 0)
     { 
-      if ($this->cacherExists) 
+      if (!$this->application->debug && $this->cacherExists) 
       {
         $key = C_CACHE_PREFIX . $key;
         $result = true;
@@ -142,7 +142,7 @@
     */
     public function delete($key)
     {
-      if ($this->cacherExists) 
+      if (!$this->application->debug && $this->cacherExists)
       {
         $key = C_CACHE_PREFIX . $key;
         $result = false; 

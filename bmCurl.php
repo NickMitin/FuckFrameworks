@@ -59,7 +59,7 @@
     private $curl = null;
     private $fileName = '';
     private $history = array();
-    private $info = null;
+    public $info = array();
     
     private $buffer = '';
     
@@ -82,28 +82,36 @@
       return $result;
     }
     
+    private function onGetHeader($curl, $header)
+    {
+      if (preg_match('/attachment; filename="(.+?)"/', $header, $matches))
+      {
+        $this->info['filename'] = trim($matches[1]);
+      }
+      return strlen($header);
+    }
+    
     /**
     * Возвращает значение заголовка
     *
     * @todo ревью документации
     */
-    private function getHeader($key) {
+    private function getHeader($key) 
+    {
       return array_key_exists($key, $_SERVER) ? $_SERVER[$key] : defined('DEFAULT_' . $key) ? constant('DEFAULT_' . $key) : '';
     }
     
     /**
     * Устанавливает значение заголовка
     *
-    * @param string $key ключ (внутреннее имя заголовка)
     * @param string $name имя заголовка
     * @param string $value значение заголовка
     * @param bool $force необходимо ли переустановить значение, если оно уже сохранено
     * @todo ревью документации
     */
-    private function setHeader($key, $name, $value, $forсe = true) {
-      if (!array_key_exists($key, $this->headers) || $forсe) {
-        $this->headers[$key] = $name . ': ' . $value;
-      }
+    private function setHeader($name, $value) 
+    {
+        $this->headers[$name] = $name . ': ' . $value;
     }
     
     /**
@@ -117,7 +125,9 @@
     * @param array|string $data данные, передаваемые в теле POST запросе
     * @return string результат выполнения запроса
     */
-    public function execute($url, $method = 'GET', $data = null) {
+    public function execute($url, $method = 'GET', $data = null, $headers = null) {
+      $this->headers = array();
+      $this->info = array();
       if (!$this->hasCurl) {
         return false;
       }
@@ -127,44 +137,89 @@
         case 'GET':
           curl_setopt($this->curl, CURLOPT_HTTPGET, true);
         break;
+        case 'DELETE':
+          curl_setopt($this->curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        break;
         case 'POST':
           curl_setopt($this->curl, CURLOPT_POST, true);
-          curl_setopt($this->curl, CURLOPT_POSTFIELDS, $data);
+          $postFields = $data;
+          $multipart = false;
+          if (is_array($data))
+          {
+            foreach($data as $datum)
+            {
+              if (mb_strlen($datum) > 0 && $datum[0] == '@')
+              {
+                $multipart = true;
+              }
+            }
+          }
+          if (!$multipart)
+          {
+            $postFields = array();
+            if (is_array($data))
+            {
+              foreach($data as $key => $value)
+              {
+                $postFields[] = $key . '=' . urlencode($value);
+              }
+              $postFields = join('&', $postFields);
+            }
+            else
+            {
+              $postFields = $data;    
+            }
+          }
+          curl_setopt($this->curl, CURLOPT_POSTFIELDS, $postFields);
         break;
       }
       
       switch ($this->emulate) {
         case CURL_EMULATE_FIREFOX:
-          $this->setHeader('HTTP_USER_AGENT', 'User-Agent', FIREFOX_HTTP_USER_AGENT);
-          $this->setHeader('HTTP_ACCEPT', 'Accept', FIREFOX_HTTP_ACCEPT);
-          $this->setHeader('HTTP_ACCEPT_LANGUAGE', 'Accept-Language', FIREFOX_HTTP_ACCEPT_LANGUAGE);
-          $this->setHeader('HTTP_ACCEPT_ENCODING', 'Accept-Encoding', FIREFOX_HTTP_ACCEPT_ENCODING);
-          $this->setHeader('HTTP_ACCEPT_CHARSET', 'Accept-Charset', FIREFOX_HTTP_ACCEPT_CHARSET);
+          $this->setHeader('User-Agent', FIREFOX_HTTP_USER_AGENT);
+          $this->setHeader('Accept', FIREFOX_HTTP_ACCEPT);
+          $this->setHeader('Accept-Language', FIREFOX_HTTP_ACCEPT_LANGUAGE);
+          $this->setHeader('Accept-Encoding', FIREFOX_HTTP_ACCEPT_ENCODING);
+          $this->setHeader('Accept-Charset', FIREFOX_HTTP_ACCEPT_CHARSET);
         default:
-          $this->setHeader('HTTP_USER_AGENT' , 'User-Agent', $this->getHeader('HTTP_USER_AGENT'));
-          $this->setHeader('HTTP_ACCEPT', 'Accept', $this->getHeader('HTTP_ACCEPT'));
-          $this->setHeader('HTTP_ACCEPT_LANGUAGE', 'Accept-Language', $this->getHeader('HTTP_ACCEPT_LANGUAGE'));
-          $this->setHeader('HTTP_ACCEPT_ENCODING', 'Accept-Encoding', $this->getHeader('HTTP_ACCEPT_ENCODING'));
-          $this->setHeader('HTTP_ACCEPT_CHARSET', 'Accept-Charset', $this->getHeader('HTTP_ACCEPT_CHARSET'));
+          $this->setHeader('User-Agent', $this->getHeader('HTTP_USER_AGENT'));
+          $this->setHeader('Accept', $this->getHeader('HTTP_ACCEPT'));
+          $this->setHeader('Accept-Language', $this->getHeader('HTTP_ACCEPT_LANGUAGE'));
+          $this->setHeader('Accept-Encoding', $this->getHeader('HTTP_ACCEPT_ENCODING'));
+          $this->setHeader('Accept-Charset', $this->getHeader('HTTP_ACCEPT_CHARSET'));
         break;
       }
+      
       if ($this->keepAlive > 0) {
-        $this->setHeader('KEEP_ALIVE', 'Keep-Alive', $this->keepAlive);
-        $this->setHeader('KEEP_ALIVE', 'Connection', 'keep-alive');
+        $this->setHeader('Keep-Alive', $this->keepAlive);
+        $this->setHeader('Connection', 'keep-alive');
       } else {
-        $this->setHeader('KEEP_ALIVE', 'Connection', 'close');
+        $this->setHeader('Connection', 'close');
       }
+      
+      if ($headers != null)
+      {
+        foreach ($headers as $name => $value)
+        {
+          $this->setHeader($name, $value);
+        }
+      }
+      
       if ($this->acceptCookies) {
         curl_setopt($this->curl, CURLOPT_COOKIEFILE, '/tmp/curl_cookiefile');  
         curl_setopt($this->curl, CURLOPT_COOKIEJAR, '/tmp/curl_cookiefile');  
       }
+      
+      curl_setopt($this->curl, CURLOPT_URL, $url);
       curl_setopt($this->curl, CURLOPT_URL, $url);
       curl_setopt($this->curl, CURLOPT_HTTPHEADER, $this->headers);
       curl_setopt($this->curl, CURLOPT_FOLLOWLOCATION, true);
       curl_setopt($this->curl, CURLOPT_AUTOREFERER, true);
-      if (count($this->history) > 0) {
+      if (count($this->history) > 0) 
+      {
         curl_setopt($this->curl, CURLOPT_REFERER, end($history));
       }
+      curl_setopt($this->curl, CURLOPT_HEADERFUNCTION, array($this, 'onGetHeader'));
       
       switch ($this->outputMethod) {
         case CURL_RETURN:
@@ -178,12 +233,12 @@
       }
       
       if ($this->debug) {
-        curl_setopt($curl, CURLOPT_VERBOSE, 1);
+        curl_setopt($this->curl, CURLOPT_VERBOSE, 1);
         //curl_setopt($curl, CURLOPT_WRITEHEADER, $headFile);
         //curl_setopt($curl, CURLOPT_STDERR, $errFile);
       }
       curl_exec($this->curl);
-      $this->info = curl_getinfo($this->curl);
+      $this->info = array_merge(curl_getinfo($this->curl), $this->info);
       $error = curl_errno($this->curl);
    
       switch ($this->outputMethod) {
@@ -203,11 +258,11 @@
     * @param string $url адрес, по которому выполняется запрос
     * @return string|bool результат выполнения запроса или false в случае неудачи
     */
-    public function get($url) {
+    public function get($url, $headers = null) {
       if (!$this->hasCurl) {
         return false;
       }
-      return $this->execute($url, 'GET');
+      return $this->execute($url, 'GET', '', $headers);
     }
     
     /**
@@ -217,11 +272,18 @@
     * @param arrray|string $data данные, передаваемые в теле POST запроса
     * @return string|bool результат выполнения запроса или false в случае неудачи
     */
-    public function post($url, $data) {
+    public function post($url, $data, $headers = null) {
       if (!$this->hasCurl) {
         return false;
       }
-      return $this->execute($url, 'POST', $data);
+      return $this->execute($url, 'POST', $data, $headers);
+    }
+    
+    public function delete($url, $headers = null) {
+      if (!$this->hasCurl) {
+        return false;
+      }
+      return $this->execute($url, 'DELETE', '', $headers);
     }
     
     /**

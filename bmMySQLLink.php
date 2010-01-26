@@ -199,7 +199,15 @@ class bmMySQLLink extends bmFFObject {
 		}
 		$this->free($cursor);
 		return $result;
-	}   
+	}
+  
+  public function tableExists($tableName)
+  {
+    $cursor = $this->query("SHOW TABLES LIKE '" . $this->formatInput($tableName) . "';");
+    $result = (mysql_num_rows($cursor) > 0);
+    $this->free($cursor);
+    return $result;
+  }   
 
 }
 

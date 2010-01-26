@@ -41,6 +41,7 @@
 		public function __construct(bmApplication $application, $parameters = array())
 		{
 			
+      
       $this->events = array('save', 'load', 'delete', 'propertyChange');
       
       foreach($this->map as $propertyName => $property)
@@ -56,7 +57,7 @@
 				{
 					if (!property_exists($this, $propertyName))
 					{
-
+            
             $this->properties[$propertyName] = $this->formatProperty($propertyName, $property['dataType'], $parameters[$propertyName]);
 					}
 				}
@@ -66,7 +67,8 @@
 			{           
 				if (!array_key_exists('load', $parameters) || $parameters['load'] != false)
 				{
-					$this->load();
+					
+          $this->load();
 				}                                                                 
 			}
       else
@@ -156,18 +158,14 @@
 		
 		public function __get($propertyName)
 		{ 
-			$this->checkDirty();
+      $this->checkDirty();
 			$result = parent::__get($propertyName);
 			if (array_key_exists($propertyName, $this->map))
 			{
 				switch ($this->map[$propertyName]['dataType'])
 				{
 					case BM_VT_DATETIME:
-            if (get_class($result) == "DateTime") {
-              return $result;
-            } else {
-						  return $result->getValue();
-            }
+            return $result;
 					break;
 					default:
 						return $result;
@@ -255,7 +253,7 @@
 		
 		public function store() 
 		{
-			$saveIdentifier = $this->properties['identifier'];
+      $saveIdentifier = $this->properties['identifier'];
 			$dataLink = $this->application->dataLink;
 			if ( ($this->properties['identifier'] === 0) || ($this->properties['identifier'] == '') ) 
 			{
@@ -302,7 +300,7 @@
 			$fields = implode(',', $fields);
 			
 		
-			$sql = "INSERT INTO `" . $this->objectName . "` SET " . $fields . " ON DUPLICATE KEY UPDATE " . $fields . ";"; 
+			$sql = "INSERT INTO `" . $this->objectName . "` SET " . $fields . " ON DUPLICATE KEY UPDATE " . $fields . ";";
 			
 			$objectId = $this->application->dataLink->query($sql);
 			if (($objectId = $this->application->dataLink->insertId()) != 0)
