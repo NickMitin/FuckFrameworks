@@ -65,7 +65,87 @@
     
     public function format($format)
     {
-      return $this->dateTime->format($format);
+      if ($format == 'human')
+      {
+        return $this->formatHuman();
+      }
+      else
+      {
+        return $this->dateTime->format($format);
+      }
+    }
+    
+    private function formatHuman()
+    {
+      
+      $result = '';
+      $date = $this->dateTime->format('U');      
+      $months = array('в этом месяце', 'в прошлом месяце');
+      $yearMonths = array(1 => 'в январе', 'в феврале', 'в марте', 'в апреле', 'в мае', 'в июне', 'в июле', 'в августе', 'в сентябре', 'в октябре', 'в ноябре', 'в декабре');
+      $days = array('сегодня', 'вчера', 'позавчера');
+      $weekDays = array(1 => 'в понедельник', 'во вторник', 'в среду', 'в четверг', 'в пятницу', 'в субботу', 'в воскресенье');
+      $today = time();
+      
+      $todayInfo = getdate($today);
+      $dateInfo = getdate($date);
+      $this->fixSunday($todayInfo);
+      $this->fixSunday($dateInfo);
+      
+      $dayOffset = $todayInfo['yday'] - $dateInfo['yday'];
+      $monthOffset = $todayInfo['mon'] - $dateInfo['mon'];
+      $yearOffset = $todayInfo['year'] - $dateInfo['year'];
+      
+      if ($today < $date) {
+        
+        $result = 'В будущем';
+        
+      } elseif ($yearOffset == 0) {
+        if ($dayOffset < 3) {
+
+          
+          $hour = date("H", $date);
+          $hourString = 'ночью';
+          if(($hour >= 6) && ($hour < 11))
+          {
+            $hourString = 'утром';
+          }
+          if(($hour >= 11) && ($hour < 17))
+          {
+            $hourString = 'днем';
+          }  
+          if(($hour >= 17) && ($hour < 23))
+          {
+            $hourString = 'вечером';
+          }
+          $result = $days[$dayOffset] . ' ' . $hourString;
+          
+        } elseif ($dayOffset < $todayInfo['wday'] + 7) {
+        
+          if ($dayOffset < $todayInfo['wday']) {
+            $result = $weekDays[$dateInfo['wday']];
+          } else {
+            $result = 'на прошлой неделе';
+          }
+          
+        } elseif ($monthOffset < 2) {
+          $result = $months[$monthOffset];
+        } else {
+          $result = $yearMonths[$dateInfo['mon']];
+        }
+      } elseif ($yearOffset == 1) {
+        $result = 'в прошлом году';
+      } else {
+        $result = $yearOffset . ' ' . $this->declineNumber($yearOffset, array('год', 'года', 'лет')) . ' назад';
+      }
+      return $result;
+      
+    }
+    
+    private function fixSunday(&$dateInfo)
+    {
+      if ($dateInfo['wday'] == 0) {
+        $dateInfo['wday'] = 7;
+      }
     }
 
   }
