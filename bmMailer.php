@@ -28,8 +28,19 @@
   */
 
 	  
+  /**
+  * Класс реализует отправку электронной почты
+  */
   class bmMailer extends bmFFObject
   { 
+    /**
+    * Функция выполняет отправку писем (см)
+    * Внимание! В текущей реализации функция отправит только ОДНО письмо! Нужно исправить или поведение функции или имя параметра и документацию.
+    * @todo check code & correct!!
+    * @param string $subject тема отправляемых писем
+    * @param array $messages массив сообщений (email адресата => тело письма)
+    * @return boolean результат отправки
+    */
     public function send($subject, $messages)
     {               
       if (count($messages) > 0)
@@ -53,7 +64,13 @@
         }
       }
     }
-       
+    
+    /**
+    * Выполняет проверку адреса электронной почтына корректность
+    * 
+    * @param string $address адрес электронной почты, подлежащий проверке
+    * @return boolean корректность переданного адреса электронной почты
+    */
     private function validate($address)
     {
       return (filter_var($address, FILTER_VALIDATE_EMAIL));    

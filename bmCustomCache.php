@@ -27,10 +27,25 @@
   * 
   */
 
+<<<<<<< HEAD:bmCustomCache.php
   
+=======
+	/**
+  * Базовый класс для кеширующих прослоек дата-объектов
+  */
+>>>>>>> fc8cd48656423530b1c4f541c7532781b28ed87f:bmCustomCache.php
   class bmCustomCache extends bmFFObject
   {
     
+    /**
+    * Функция возвращает дата объект по идентификатору 
+    * При обращении функция пытается "достать" объект из кеша, в случае, если объект отсутствует в кеше
+    * функция получает его из БД и помещает в кеш
+    * 
+    * @param mixed $objectId идентификатор экземпляра объекта
+    * @param string $objectName имя дата объекта (имя таблицы)
+    * @param string $fields список извлекаемы из БД полей (через запятую)
+    */
     public function getObject($objectId, $objectName, $fields)
     {                                             
       $result = $this->application->cacheLink->get($objectName . $objectId); 
@@ -54,6 +69,14 @@
       return $result;
     }
     
+    /**
+    * Функция возвращает коллекцию объектов заданного типа по коллекции идентификаторов
+    * Функция изначально пытается получить данные из кеша, после этого обращается к БД
+    * 
+    * @param mixed $objectIds
+    * @param string $objectName имя объекта
+    * @param boolean $load
+    */
     public function getObjects($objectIds, $objectName, $load = true) // TODO: $load - неиспользуемый параметр
     {
       $objectsFilter = array();
@@ -113,7 +136,18 @@
       return $result;
     }
     
-    public function getSimpleLink($sql, $cacheKey, $objectName, $errorCode, $load) {
+    /**
+    * Выполняет sql запрос и загружает объект с идентификатором, полученным в результате выполнения запроса
+    * В зависимости от параметра $load, функция или возвращает идентификатор объекта или загруженный объект со всеми полями
+    * 
+    * @param mixed $sql sql запрос, возвращающий идентификатор загружаемого объекта
+    * @param mixed $cacheKey ключ кеша, по которому должен быть сохранен полученный идентификатор объекта
+    * @param mixed $objectName имя загружаемого дата объекта
+    * @param mixed $errorCode код ошибки, возвращаемый в случае неудачи
+    * @param mixed $load флаг, указывающий необходимо ли загружать полученные объекты
+    */
+    public function getSimpleLink($sql, $cacheKey, $objectName, $errorCode, $load)
+    {
       
       $result = $this->application->cacheLink->get($cacheKey);
       
@@ -141,7 +175,20 @@
       return $result; 
     }    
     
-    public function getSimpleLinks($sql, $cacheKey, $objectName, $errorCode, $load, $limit = 0, $offset = 0) {
+    /**
+    * Выполняет sql запрос и загружает объекты с идентификаторами, полученными в результате выполнения запроса
+    * В зависимости от параметра $load, функция или возвращает идентификаторы объектов или загруженные объекты со всеми полями
+    * 
+    * @param string $sql sql запрос, возвращающий идентификаторы загружаемых объектов
+    * @param string $cacheKey ключ кеша, по которому должны быть сохранены полученные идентификаторы объектов
+    * @param string $objectName имя загружаемого дата объекта
+    * @param mixed $errorCode код ошибки, возвращаемый в случае неудачи
+    * @param boolean $load флаг, указывающий необходимо ли загружать полученные объекты
+    * @param int $limit количество загружаемых объектов
+    * @param int $offset смещение, с которого нужно начать загрузку объектов
+    */
+    public function getSimpleLinks($sql, $cacheKey, $objectName, $errorCode, $load, $limit = 0, $offset = 0)
+    {
       
       $result = $this->application->cacheLink->get($cacheKey);
 
@@ -184,6 +231,18 @@
       return $result; 
     }
     
+    /**
+    * Функция возвращает TODO
+    * 
+    * @param mixed $sql запрос, возвращающий идентификаторы загружаемых связанных объектов
+    * @param mixed $cacheKey ключ кеша, по которому производится сохранение результатов выборки
+    * @param mixed $map структура возвращаемого 
+    * @param mixed $errorCode возвращаемый в случае ошибки код неудачи
+    * @param mixed $load 
+    * @param mixed $limit
+    * @param mixed $offset
+    * @return array
+    */
     protected function getComplexLinks($sql, $cacheKey, $map, $errorCode, $load, $limit = 0, $offset = 0)
     {
       $result = $this->application->cacheLink->get($cacheKey);

@@ -27,8 +27,11 @@
   * 
   */
 
-
-	abstract class bmDataObject extends bmFFObject implements IDataObject {
+  /**
+  * Базовый класс для дата объектов
+  */
+	abstract class bmDataObject extends bmFFObject implements IDataObject
+  {
 		
 		public $map = array();
 		public $objectName = '';
@@ -38,6 +41,13 @@
 		public $updateCount = 0;
 		public $runningCheckDirty = false;
 		
+    /**
+    * Конструктор
+    * 
+    * @param bmApplication $application экземпляр текущего приложения
+    * @param array $parameters массив параметров
+    * @return bmDataObject
+    */
 		public function __construct(bmApplication $application, $parameters = array())
 		{
 			
@@ -78,6 +88,14 @@
 
 		}
 		
+    /**
+    * Форматирует\фильтрует значение в соответствии с переданным типом
+    * 
+    * @param mixed $propertyName имя свойства [не используется]
+    * @param mixed $dataType типа данных
+    * @param mixed $value значение, подлежащее фильтрации\форматированию
+    * @return float
+    */
 	 protected function formatProperty($propertyName, $dataType, $value)
 	 {
 			switch ($dataType)
@@ -100,7 +118,11 @@
 			}
 			return $result;
 	 } 
-		
+		                       
+   /**
+   * Деструктор
+   * Выполняет автосейв
+   */
 		public function __destruct()
 		{ 
 			$this->invalidate();
@@ -108,6 +130,10 @@
 			$this->checkDirty();
 		}
 		
+    /**
+    * Выполняет поставленные в очередь методы автосейва
+    * 
+    */
 		protected function checkDirty()
 		{  
 			if (!$this->runningCheckDirty)
@@ -151,11 +177,22 @@
 			}
 		}
 		
+    /**
+    * Добавляет метод в очередь автосейва
+    * 
+    * @param mixed $method 
+    */
 		public function makeDirty($method)
 		{
 			$this->dirtyQueue[$method] = true;
 		}
 		
+    /**
+    * Magic method. Возвращает значение свойства с заданным именем
+    * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
+    * @param string $propertyName имя свойства                                
+    * @return mixed значение свойства
+    */
 		public function __get($propertyName)
 		{ 
       $this->checkDirty();
@@ -181,6 +218,15 @@
 			}
 		}
 		
+    /**
+    * Метод производит установку значения свойства с заданным именем
+    * В случае, если у объекта есть свойство с заданным именем, метод:
+    * -вызывает обработчик события propertyChange
+    * -устанавливает новое значение свойства
+    * -ставит метод store в очередь на автосейв
+    * @param string $propertyName имя свойства
+    * @param mixed $value новое значение свойства
+    */
 		public function __set($propertyName, $value)
 		{
 			if (array_key_exists($propertyName, $this->map))
@@ -199,6 +245,13 @@
 			}
 		}
 		
+    /**
+    * Функция производит поиск в хранилище данных объекта с заданным значением поля и возвращает его идентификатор
+    * 
+    * @param string $fieldName имя поля 
+    * @param mixed $value  значение поля
+    * @return mixed идентификатор найденного объекта или 0
+    */
 		public function getObjectIdByField($fieldName, $value)
 		{
 			$sql = "SELECT `id` AS `identifier` FROM `" . $this->objectName . "` WHERE `" . $fieldName . "` = '" . $value . "';";
@@ -206,6 +259,12 @@
 			return ($result != null) ? $result : 0;
 		}
 		
+    /**
+    * Выполняет загрузку объекта из хранилища данных
+    * В процессе загрузки функция использует значение свойства identifier.
+    * В случае успешного выполнения, ф-я устанавливает код последней ошибки в E_SUCCESS,
+    * в ином случае - в E_DATA_OBJECT_NOT_EXISTS
+    */
 		public function load()
 		{
       $objectName = mb_convert_case($this->objectName, MB_CASE_TITLE);
@@ -235,6 +294,10 @@
 			} 
 		}
 		
+    /**
+    * Формирует для данного объекта фрагмент SQL запроса, указывающего какие поля необходимо загрузить из БД
+    * @return string фрагмент SQL запроса
+    */
 		public function fieldsToSQL()
 		{
 			
@@ -251,6 +314,10 @@
 			
 		}
 		
+    /**
+    * Метод выполняет сохранение полей объекта в хранилище данных
+    * В основном используется для автосейва
+    */
 		public function store() 
 		{
       $saveIdentifier = $this->properties['identifier'];
@@ -317,33 +384,61 @@
 			$this->application->cacheLink->set($this->objectName . $this->properties['identifier'], $cacheObject, BM_CACHE_SHORT_TTL);
 		}
 		
+    /**
+    * Функция инициирует процесс сохранения объекта
+    * После выполнения сохранения объекта метод инициирует событие save
+    */
 		public function save() 
 		{ 
       $this->checkDirty();
       $this->triggerEvent('save', array('identifier' => $this->properties['identifier']));
 		}
 		
+    /**
+    * Функция выполняет удаление объекта
+    * В текущей реализации переводит объект в режим "только для чтения", т.о. отключая сохранение (в т.ч. и автосейв)
+    * Затем инициирует событие delete
+    */
 		public function delete()
 		{
 			$this->readonly = true;
       $this->triggerEvent('delete', array('identifier' => $this->properties['identifier']));
 		}
 		
+    /**
+    * Увеличивает счетчик текущих обновлений объекта, временно запрещая тем самым его автосохранение.
+    * Используется для проведения масштабных обновлений объекта, автосейв не выполняется до тех пор, пока счетчик не будет равен 0.
+    */
 		public function beginUpdate()
 		{
 			++$this->updateCount;
 		}
 		
+    /**
+    * Уменьшает счетчик текущих обновлений объекта.
+    */
 		public function endUpdate()
 		{
 			$this->updateCount = $this->updateCount == 0 ? 0 : --$this->updateCount;
 		}
 		
+    /**
+    * Сбрасывает счетчик текущих обновлений объекта в 0
+    * 
+    */
 		public function invalidate()
 		{
 			$this->updateCount = 0;
 		}
     
+    /**
+    * Функция ыполняет проверку существования в массиве объекта, свойство которого равно заданному ключу
+    * 
+    * @param mixed $key искомое значение свойства
+    * @param mixed $propertyName имя свойства
+    * @param mixed $collection исходный массив
+    * @return boolean true, если в объекте существует объект, удовлетворяющий условию
+    */
     protected function itemExists($key, $propertyName, &$collection)
     {
       $result = false;

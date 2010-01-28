@@ -27,18 +27,32 @@
   * 
   */
 
-		
+	/**
+  * Реализует функционал по регистрации и обработке ошибок приложения
+  */
 	class bmErrorHandler extends bmFFObject
 	{
 		protected $stack = array();
 		protected $errors = array();
 		
+    /**
+    * Конструктор
+    * 
+    * @param bmApplication $application экхемпляр текущего выполняющегося приложения
+    * @param array $parameters массив параметров
+    * @return bmErrorHandler
+    */
 		public function __construct($application, $parameters = array())
 		{
 			parent::__construct($application, $parameters);
 			require_once(projectRoot . '/locale/' . $application->locale . '/error_messages.php');
 		}
 		
+    /**
+    * Добавляет код ошибки в стек
+    * Стек ошибок может содержать до 20 кодов ошибок. В случае, если размер стека равен 20, при добавлении самый старый код удаляется.
+    * @param int $errorNumber добавляемый код ошибки
+    */
 		public function add($errorNumber)
 		{
       if (count($this->stack) > 20)
@@ -48,6 +62,10 @@
 			$this->stack[] = $errorNumber;
 		}
 		
+    /**
+    * Возвращает код последней ошибки
+    * @return int код последней ошибки
+    */
 		public function getLast()
 		{
 			$output = E_SUCCESS;
@@ -58,6 +76,13 @@
 			return $output;
 		}
 		
+    /**
+    * Возвращает сообщение для переданного аргументов или последнего зарегистрированного кода ошибки
+    * Если параметр errorCode не равен null, функция возвращает текстовое описание переданного кода ошибки.
+    * В ином случае, ф-я получает код последней ошибки и возвращает его текстовое описание
+    * @param int $errorCode код ошибки или null
+    * @return string текстовое описание ошибки
+    */
 		public function getMessage($errorCode = null)
 		{
 			if ($errorCode === null)
@@ -67,6 +92,10 @@
 			return $this->errors[$errorCode];
 		}
 		
+    /**
+    * Возвращает текстовое представление стека ошибок
+    * @return string текстовое представление стека ошибок
+    */
 		public function stackToString()
 		{
 			$output = '';

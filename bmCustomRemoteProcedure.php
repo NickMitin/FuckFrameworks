@@ -33,15 +33,29 @@
   define('BM_RP_TYPE_XML', 4);
   define('BM_RP_TYPE_RAW', 5);
 
-	
+	/**
+  * Класс, являющийся базовым для удаленных процедур
+  */
   abstract class bmCustomRemoteProcedure extends bmFFObject
   {
-    
+    /**
+    * Закрытое поле, определяющее куда будет направлен пользователь после выполнения процедуры
+    * 
+    * @var string
+    */
     protected $returnTo = '';
     protected $output = '';
     protected $type = BM_RP_TYPE_CUSTOM;
     public $forceEmpty = false;
     
+    /**
+    * Конструктор класса
+    * Заполняет поле returnTo значением, переданным в $parameters или же параметром HTTP
+    * 
+    * @param bmApplication $application экземпляр текущего выполняющегося приложения
+    * @param array $parameters массив параметров
+    * @return bmCustomRemoteProcedure
+    */
     public function __construct($application, $parameters = array())
     {
       parent::__construct($application, $parameters);
@@ -49,6 +63,12 @@
 
     }
     
+    /**
+    * Переопределяемый в наследниках метод.
+    * Наследник реализует в этом методе логику удаленной процедуры.
+    * В текущей реализации выполняет перевод пользователя на адрес, указанный в returnTo
+    * Наследующий метод должен в конце своей работы вызвать этот метод. 
+    */
     public function execute() 
     {
       if ($this->returnTo != '' && $this->type == BM_RP_TYPE_CUSTOM)

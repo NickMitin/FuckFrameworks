@@ -27,9 +27,18 @@
   * 
   */
 
-		  
-  abstract class bmCustomTextProcessor extends bmFFObject {
-    
+	/**
+  * @todo document
+  */
+  abstract class bmCustomTextProcessor extends bmFFObject
+  {
+    /**
+    * @todo document
+    * 
+    * @param mixed $value
+    * @param mixed $strings
+    * @return mixed
+    */
     public function declineNumber($value, $strings)
     {
       

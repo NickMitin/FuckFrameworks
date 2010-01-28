@@ -27,7 +27,9 @@
   * 
   */
 
-	
+	/**
+  * Базовый класс для реализации страниц
+  */
   abstract class bmHTMLPage extends bmPage
   {
     
@@ -46,6 +48,11 @@
     protected $clientTemplates = '';
     protected $pageTemplate = '';
     
+    /**
+    * Генерация страницы
+    * Добавляет в страницу meta, js скрипты, css, rss
+    * @return возвращает doctype страницы
+    */
     public function generate() {
       
       $this->metaData = implode("\n", $this->meta) . "\n" . implode("\n", $this->scripts) . "\n" . implode("\n", $this->CSS) . "\n" . implode("\n", $this->RSSLinks) . "\n";
@@ -54,6 +61,13 @@
       
     }
     
+    /**
+    * Добавляет в страницу данные
+    * //TODO change!!
+    * @param mixed $dataType тип данных
+    * @param mixed $source url источника
+    * @param mixed $path добавляемый в страницу код
+    */
     public function addHTMLMetaDatum($dataType, $source, $path)
     {
       if (!array_key_exists($source, $this->$dataType)) {
@@ -61,6 +75,11 @@
       }
     }
     
+    /**
+    * Отрисовывает в страницу переданные шаблоны
+    * 
+    * @param mixed $templateNames имя шаблона или массив имен шаблонов
+    */
     public function getClientTemplates($templateNames)
     {
       if (!is_array($templateNames))
@@ -80,12 +99,22 @@
       eval('$this->clientTemplates = "' . $templateSet . '";');
     }
 
+    /**
+    * Добавляет к странице инклюд внешнего js скрипта
+    * 
+    * @param string $source url скрипта
+    */
     public function addScript($source)
     {
       $src = mb_strpos($source, 'http') === 0 ? $source : $this->application->contentProvider->getStaticServer() . '/scripts/' . $source . '.js';
       $this->addHTMLMetaDatum('scripts', $source, '<script type="text/javascript" src="' . $src . '"></script>');
     }
     
+    /**
+    * Добавляет к странице инклюды внешних js скриптов
+    * 
+    * @param mixed $scripts url (или массив url) скрипта
+    */
     public function addScripts($scripts)
     {
       if (!is_array($scripts))
@@ -99,11 +128,21 @@
       }
     }
     
+    /**
+    * Добавляет к странице инклюд внешнего css файла
+    * 
+    * @param string $source url css
+    */
     public function addCSS($source)
     {
       $this->addHTMLMetaDatum('CSS', $source, '<link rel="stylesheet" type="text/css" href="' . $this->application->contentProvider->getStaticServer() . '/styles/' . $source . '.css" />');
     }
     
+    /**
+    * Добавляет к страницы инклюды внешних css файлов
+    * 
+    * @param mixed $CSSs url (или массив url) css
+    */
     public function addCSSs($CSSs)
     {
       if (!is_array($CSSs))
@@ -117,11 +156,22 @@
       }
     }
     
+    /**
+    * Добавляет к странице поле meta
+    * 
+    * @param mixed $name имя поля
+    * @param mixed $content значение
+    */
     public function addMeta($name, $content)
     {
       $this->addHTMLMetaDatum('meta', $name, '<meta http-equiv="' . $name . '" content="' . $content . '" />');
     }
     
+    /**
+    * Добавляет к странице поля meta
+    * 
+    * @param array $meta массив полей (имя => значение)
+    */
     public function addMetas($meta)
     {
       foreach ($meta as $name => $content)
@@ -130,11 +180,22 @@
       }
     }
   
+    /**
+    * Добавляет к документу ссылку на rss поток
+    * 
+    * @param string $source url rss потоку
+    * @param string $title отображаемое имя потока
+    */
     public function addRSSLink($source, $title)
     {
       $this->addHTMLMetaDatum('RSSLinks', $source, '<link href="' . $source .'" title="' . $title . '" type="application/rss+xml" rel="alternate"/>');
     }
     
+    /**
+    * Добавляет к документу ссылки на rss потоки
+    * 
+    * @param array $links массив данных rss потоков (url потока => отображаемое имя потока )
+    */
     public function addRSSLinks($links)
     {
       if (!is_array($links))
