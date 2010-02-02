@@ -29,7 +29,13 @@
 
   final class bmDataObjectMap extends bmDataObject
   {
-    
+    /**
+    * Конструктор класса
+    * 
+    * @param bmApplication $application экземпляр текущего приложения
+    * @param array $parameters массив параметров, по умолчанию является пустым
+    * @return bmDataObjectMap
+    */       
     public function __construct($aplication, $parameters = array())
     {
       
@@ -55,7 +61,13 @@
       parent::__construct($aplication, $parameters);
       
     }
-    
+   
+    /**
+    * Возвращает значение свойства с заданным именем
+    * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
+    * @param string $propertyName имя свойства. 
+    * @return mixed значение свойства
+    */    
     public function __get($propertyName)
     {
       $this->checkDirty();
@@ -76,7 +88,12 @@
         break;
       }
     }
-    
+
+    /**
+    * Добавляет идентификатор поля и его тип в кэшОбъект и в свойства объекта в случае, если их там нет 
+    * Также метод saveFields ставится в очередь автосэйва  
+    * @param int $fieldId идентификатор поля. 
+    */      
     public function addField($fieldId, $type)
     {
       $fieldIds = $this->fieldIds;
@@ -90,7 +107,11 @@
       }
       $this->dirty['saveFields'] = true;
     }
-    
+
+    /**
+    * Удаляет поля из кэшОбъекта, из свойств объекта, из базы данных
+    * Также метод saveFields ставится в очередь автосэйва   
+    */       
     public function removeFields()
     {
       foreach ($this->fields as $item)
