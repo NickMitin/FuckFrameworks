@@ -90,9 +90,10 @@
     }
 
     /**
-    * Добавляет идентификатор поля и его тип в кэшОбъект и в свойства объекта в случае, если их там нет 
+    * Добавляет идентификатор поля и его тип в кэшОбъект и в свойства объекта в случае, если они отсутствуют 
     * Также метод saveFields ставится в очередь автосэйва  
     * @param int $fieldId идентификатор поля. 
+    * @param mixed $type тип поля. 
     */      
     public function addField($fieldId, $type)
     {
@@ -123,12 +124,17 @@
       $this->application->cacheLink->delete('dataObjectMap_dataObjectFields_' . $this->properties['identifier']);
       $this->dirty['saveFields'] = true;
     }
-    
+
+    /**
+    * Удаляет полe 
+    * @param int $fieldId идентификатор поля
+    */         
     public function removeField($fieldId)
     {
       
     }
-    
+
+ 
     protected function saveFields()
     {
       $dataLink = $this->application->dataLink;
