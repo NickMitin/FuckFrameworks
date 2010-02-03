@@ -134,7 +134,11 @@
       
     }
 
- 
+    /**
+    * Сохраняет поля в базу данных. 
+    * Удаляет поля из кэша, относящиеся к объекту с данным идентификатором.
+    * Убирает метод из очереди автосэйва.  
+    */  
     protected function saveFields()
     {
       $dataLink = $this->application->dataLink;
@@ -164,6 +168,11 @@
       
     }
     
+    /**
+    * Создает название типа данных ввиде строки. 
+    * @param int $dataType тип, название которого нужно получить в виде строки.
+    * @return string $result название типа данных ввиде строки.
+    */       
     private function dataTypeToString($dataType)
     {
       $result = 'BM_VT_ANY';
