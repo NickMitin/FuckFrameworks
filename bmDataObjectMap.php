@@ -63,7 +63,7 @@
     }
    
     /**
-    * Возвращает значение свойства с заданным именем
+    * Возвращает значение свойства с заданным именем. Метод является "магическим".
     * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
     * @param string $propertyName имя свойства. 
     * @return mixed значение свойства
@@ -195,7 +195,9 @@
     }
     
     /**
-    * Создает содержание класса в соответствии с свойствами объекта.
+    * Создает содержание класса в соответствии со свойствами объекта. 
+    * Помечает сгенерированное содержание метками FF::AC::MAPPING:: и  FF::AC::MAPPING::
+    * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
     * @return string $mapping содержание класса
     */        
     public function toMapping()
@@ -226,7 +228,8 @@
     }
    
     /**
-    * Создает класс в соответствии с свойствами объекта.
+    * Создает класс в соответствии со свойствами объекта.
+    * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
     * @return string $class созданный класс
     */       
     public function toClass()
@@ -236,7 +239,12 @@
       $class = "<?php\n" . $licence . "\n\n\n  final class bm" . ucfirst($this->properties['name']) . " extends bmDataObject\n  {\n\n    public function __construct(\$aplication, \$parameters = array())\n    {\n\n      " . $this->toMapping() . "\n\n      parent::__construct(\$aplication, \$parameters);\n    }\n\n  }\n?>";
       return $class;
     }
-    
+
+    /**
+    * Создает массив, содержащии строчку с существующими полями и с пустыми полями объекта.
+    * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
+    * @return array созданный массив
+    */     
     public function toEditorFields()
     {
       $this->checkDirty();
@@ -268,6 +276,12 @@
       return array($emptyFields, $existingFields);
     }
     
+   /**
+    * Метод генерирует класс, наследующий от заданного класса, в соответствии со свойствами объекта, его полями.
+    * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
+    * @param $ancestorClass заданный класс, потомок которого создается.
+    * @return string $editor сгенерированный класс.
+    */      
     public function toEditor($ancestorClass)
     {
       $this->checkDirty();
@@ -276,7 +290,13 @@
       $editor = "<?php\n" . $licence . "\n\n\n  final class bm" . ucfirst($this->properties['name']) . "EditPage extends " . $ancestorClass . "\n  {\n\n    public \$" . $this->properties['name'] . "Id = 0;\n\n\n    public function generate()\n    {\n\n      if (\$this->" . $this->properties['name'] . "Id == 0)\n      {\n\n        " . $emptyFields . "\n\n      }\n      else\n      {\n        \$" . $this->properties['name'] . " = new bm" . ucfirst($this->properties['name']) . "(\$this->application, array('identifier' => \$this->" . $this->properties['name'] . "Id));\n        if (\$this->application->errorHandler->getLast() != E_SUCCESS)\n        {\n          //TODO Error;\n          exit;\n        }\n\n        " . $existingFields . "\n\n      }\n      eval('\$this->content = \"' . \$this->application->getTemplate('/admin/" . $this->properties['name'] . "/" . $this->properties['name'] . "') . '\";');\n      \$page = parent::generate();\n      return \$page;\n    }\n  }\n?>";
       return $editor;
     }
+
     
+   /**
+    * Метод создает массив, содержащий cgi свойства и другие свойства объекта.
+    * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
+    * @return array массив, содержащий строки с cgi свойствами и другими свойствами объекта 
+    */      
     public function toSaveProcedureProperties()
     {
       $this->checkDirty();
@@ -307,7 +327,12 @@
       $objectProperies = "/*FF::SAVE::OBJECTPROPERTIES::{*/\n      " . implode("\n      ", $objectProperies) . "\n      /*FF::SAVE::OBJECTPROPERTIES::}*/";
       return array($cgiProperies, $objectProperies);
     }
-    
+ 
+   /**
+    * Метод изменяет файл projectRoot . '/templates/admin/code/save.php', подставляя в него имя объекта, его cgi и другие свойства, лицензию  
+    * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
+    * @return string содержание измененного файла.
+    */       
     public function toSaveProcedure()
     {
       $this->checkDirty();
@@ -317,7 +342,12 @@
       $saveProcedure = str_replace(array('%objectName%', '%upperCaseObjectName%', '%cgiProperties%', '%objectProperties%', '%licence%'), array($this->properties['name'], ucfirst($this->properties['name']), $cgiProperies, $objectProperies, $licence), $saveProcedure);
       return $saveProcedure;
     }
-    
+   
+    /**
+    * Метод изменяет файл шаблона projectRoot . '/templates/admin/code/textBox.html', подставляя в него заголовок, имя свойства, имя объекта для использования в методе toEditorTemplate().  
+    * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
+    * @return string содержание измененного файла.
+    */     
     public function toEditorTemplateEditors()
     {
       $this->checkDirty();
@@ -347,6 +377,11 @@
       return $editors;
     }
     
+   /**
+    * Метод изменяет файл шаблона projectRoot . '/templates/admin/code/edit.html', подставляя в него имя объекта, а также измененный файл projectRoot . '/templates/admin/code/textBox.html'.  
+    * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
+    * @return string содержание измененного файла.
+    */    
     public function toEditorTemplate()
     {
       $this->checkDirty();
@@ -355,14 +390,23 @@
       $editorTemplate = str_replace(array('%objectName%', '%upperCaseObjectName%', '%editors%'), array($this->properties['name'], ucfirst($this->properties['name']), $editors), $editorTemplate);
       return $editorTemplate;
     }
-    
+ 
+    /**
+    * Метод получает имя свойства объекта по имени поля.
+    * @return string $fieldName имя свойства.
+    */    
     private function getPropertyNameByFieldName($fieldName)
     {
 
       return $fieldName;
       
     }
-    
+
+    /**
+    * Метод переводит тип, используемый в базе данных, в тип, используемый в архитектуре проекта.
+    * @param string $mysqlType тип, используемый в базе данных.
+    * @return string $result тип, используемый в архитектуре проекта.
+    */     
     private function mysqlTypeToFFType($mysqlType)
     {
       if (mb_strpos($mysqlType, 'int') === 0)
@@ -393,6 +437,12 @@
       
     }
     
+    /**
+    * Метод генерирует поля путем создания объектов bmDataObjectField в соответствии с информацией, полученной из базы данных по имени объекта.
+    * Объекту присваиваются следующие свойства: имя свойства, имя поля, тип, значение по умолчанию.
+    * Также передается идентификатор в функцию для сохранения полей в кэш и базу данных.
+    * В случае, если не указано значение поля по умолчанию, то свойству объекта оно присваивается в соответствии с его типом.
+    */    
     public function generateFields()
     {
       $qTableFields = $this->application->dataLink->select("DESCRIBE `" . $this->name . "`;");
