@@ -26,7 +26,11 @@
   * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   * 
   */
-
+ 
+ /**
+  * Класс для работы с файловой структурой проекта, есть возможность генерировать, изменять и удалять файлы,
+  * генерировать классы, а также генерировать, добавлять, удалять и сохранять поля объекта.
+  */
   final class bmDataObjectMap extends bmDataObject
   {
     /**
