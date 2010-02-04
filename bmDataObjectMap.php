@@ -194,6 +194,10 @@
       return $result;
     }
     
+    /**
+    * Создает содержание класса в соответствии с свойствами объекта.
+    * @return string $mapping содержание класса
+    */        
     public function toMapping()
     {
       $this->checkDirty();
@@ -220,7 +224,11 @@
       $mapping = $mapping . "      /*FF::AC::MAPPING::}*/";
       return $mapping;
     }
-    
+   
+    /**
+    * Создает класс в соответствии с свойствами объекта.
+    * @return string $class созданный класс
+    */       
     public function toClass()
     {
       $this->checkDirty();
