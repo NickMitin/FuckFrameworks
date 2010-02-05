@@ -29,7 +29,13 @@
 
   final class bmDataObjectField extends bmDataObject
   {
-    
+    /**
+    * Конструктор класса
+    *
+    * @param bmApplication $application экземпляр текущего приложения
+    * @param array $parameters массив параметров, по умолчанию является пустым
+    * @return bmDataObjectField
+    */     
     public function __construct($aplication, $parameters = array())
     {
       
@@ -71,6 +77,12 @@
       
     }
     
+    /**
+    * Возвращает значение свойства с заданным именем. Метод является "магическим".
+    * Метод предварительно вызывает checkDirty для синхронизации объекта с БД.
+    * @param string $propertyName имя свойства.
+    * @return mixed значение свойства
+    */     
     public function __get($propertyName)
     {
       $this->checkDirty();
@@ -99,6 +111,12 @@
       }
     }
     
+    /**
+    * Устанавливает объект dataObjectMap с заданным идентификатором.
+    * Метод saveDataObjectMap ставится в очередь автосэйва.
+    * @param integer $dataObjectMapId идентификатор объекта.
+    * @param mixed $type тип объекта.
+    */      
     public function setDataObjectMap($dataObjectMapId, $type)
     {
       $this->dirty['saveDataObjectMap'] = true;
@@ -108,6 +126,11 @@
       $this->properties['dataObjectMapId'][] = $item;
     }
     
+    /**
+    * Сохраняет объект dataObjectMap с заданным идентификатором в кэш и базу данных.
+    * Удаляет данные из кэша, относящиеся к объекту с данным идентификатором.   
+    * Метод saveDataObjectMap убирается из очереди автосэйва после его выполнения. 
+    */    
     public function saveDataObjectMap()
     {
       
@@ -130,7 +153,10 @@
       $cacheLink->delete('dataObjectField_dataObjectMap_' . $this->properties['identifier'] . '_objectArrays');
       $this->dirty['saveDataObjectMap'] = false;      
     }
-    
+   
+    /**
+    * Удаляет из базы данных все данные, связанные с идентификатором объекта.
+    */       
     public function delete()
     {
       $this->dirty = array();
