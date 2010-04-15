@@ -41,9 +41,9 @@
           'dataType' => BM_VT_INTEGER,
           'defaultValue' => 0
         ),
-        'passwordHash' => array(
+        'password' => array(
           'fieldName' => 'password',
-          'dataType' => BM_VT_STRING,
+          'dataType' => BM_VT_PASSWORD,
           'defaultValue' => ''
         ),
         'email' => array(
@@ -66,12 +66,12 @@
           'dataType' => BM_VT_STRING,
           'defaultValue' => ''
         ),
-        'firstName' => array(
+        'firstname' => array(
           'fieldName' => 'firstname',
           'dataType' => BM_VT_STRING,
           'defaultValue' => ''
         ),
-        'lastName' => array(
+        'lastname' => array(
           'fieldName' => 'lastname',
           'dataType' => BM_VT_STRING,
           'defaultValue' => ''

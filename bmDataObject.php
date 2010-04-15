@@ -42,6 +42,7 @@
 		{
 			
       
+      
       $this->events = array('save', 'load', 'delete', 'propertyChange');
       
       foreach($this->map as $propertyName => $property)
@@ -65,7 +66,8 @@
       
 			if (array_key_exists('identifier', $parameters) && ($parameters['identifier'] !== 0 && $parameters['identifier'] != ''))
 			{           
-				if (!array_key_exists('load', $parameters) || $parameters['load'] != false)
+				
+        if (!array_key_exists('load', $parameters) || $parameters['load'] != false)
 				{
 					
           $this->load();
@@ -167,6 +169,9 @@
 					case BM_VT_DATETIME:
             return $result;
 					break;
+          case BM_VT_PASSWORD:
+            return '';
+          break;
 					default:
 						return $result;
 					break;
@@ -192,6 +197,23 @@
 				if ((string)$this->properties[$propertyName] != (string)$value)
         {
           $this->triggerEvent('propertyChange', array('identifier' => $this->properties['identifier'], 'propertyName' => $propertyName, 'oldValue' => $this->properties[$propertyName], 'newValue' => $value));
+          if ($this->map[$propertyName]['dataType'] == BM_VT_PASSWORD && $value == '')
+          {
+            return;
+          }
+          if ($this->map[$propertyName]['dataType'] == BM_VT_IMAGE)
+          {
+            if ($value != '')
+            {
+              
+            }
+            else
+            {
+              $fileName = (string)$this->properties[$propertyName];
+              unlink(documentRoot . '/images/' . $this->objectName . '/originals/' . mb_substr($fileName, 0, 2) . '/' . $fileName);
+              unlink(documentRoot . '/images/' . $this->objectName . '/admin/' . mb_substr($fileName, 0, 2) . '/' . $fileName);
+            }
+          }
           $this->properties[$propertyName] = $value;
           $this->dirty['store'] = true;
         }
@@ -283,6 +305,12 @@
 						case BM_VT_FLOAT:
 							$value = floatval($propertyValue);
 						break;
+            case BM_VT_PASSWORD:
+              $value = "'" . md5($propertyValue) . "'";
+            break;
+            case BM_VT_IMAGE:
+              $value = "'" . (string)$propertyValue . "'";
+            break;
 						case BM_VT_DATETIME:
 							$value = "'" . (string)$propertyValue . "'";
 						break;

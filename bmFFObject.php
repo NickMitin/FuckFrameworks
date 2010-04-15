@@ -29,7 +29,7 @@
 
 		
 	abstract class bmFFObject
-	{
+	{                                                                                                                   
 		protected $application = null;
 		protected $properties = array();
     protected $events = array();

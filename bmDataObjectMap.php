@@ -29,10 +29,17 @@
 
   final class bmDataObjectMap extends bmDataObject
   {
+    private $savedPropertyValues = array();
+    private $addedFieldIds = array();
+    private $droppedFieldIds = array();
+    
+    /**
+    * элемент массива - stdClass со свойствами fieldId, oldFieldName
+    */
+    private $renamedFields = array();
     
     public function __construct($aplication, $parameters = array())
     {
-      
       $this->objectName = 'dataObjectMap';
       
       $this->map = array(
@@ -52,13 +59,14 @@
           'defaultValue' => 0
         )
       );
-      parent::__construct($aplication, $parameters);
       
+      parent::__construct($aplication, $parameters);      
     }
     
     public function __get($propertyName)
     {
       $this->checkDirty();
+      
       switch ($propertyName)
       {
         case 'fieldIds':
@@ -77,6 +85,17 @@
       }
     }
     
+    public function __set($propertyName, $value)
+    {
+      if ($this->properties['name'] != '' && $propertyName == 'name' && $this->properties['name'] != $value)
+      {
+        $this->savedPropertyValues['name'] = $this->properties['name'];
+        $this->dirty['renameTable'] = true;                      
+      } 
+      
+      parent::__set($propertyName, $value);
+    }
+    
     public function addField($fieldId, $type)
     {
       $fieldIds = $this->fieldIds;
@@ -87,8 +106,40 @@
         $field->dataObjectFieldId = $fieldId;
         $field->type = $type;
         $this->properties['fieldIds'][] = $field;
+        
+        $this->addedFieldIds[] = $fieldId;
       }
+      
       $this->dirty['saveFields'] = true;
+      $this->dirty['updateTableFields'] = true;
+    }
+    
+    public function removeField($fieldId)
+    {
+      $fieldIds = $this->fieldIds;
+      
+      foreach ($fieldIds as $key => $item)
+      {
+        if ($item->dataObjectFieldId == $fieldId)
+        {
+          unset($this->properties['$fieldIds'][$key]);
+          $this->droppedFieldIds[] = $fieldId;
+        }
+      }
+      
+      $this->dirty['saveFields'] = true;
+      $this->dirty['updateTableFields'] = true;
+    }
+    
+    public function renameField($fieldId, $oldFieldName)
+    {
+      $item = new stdClass();
+      $item->fieldId = $fieldId;
+      $item->oldFieldName = $oldFieldName;
+      
+      $this->renamedFields[] = $item;
+      
+      $this->dirty['updateTableFields'] = true;
     }
     
     public function removeFields()
@@ -100,12 +151,9 @@
       $this->properties['fieldIds'] = array();
       
       $this->application->cacheLink->delete('dataObjectMap_dataObjectFields_' . $this->properties['identifier']);
-      $this->dirty['saveFields'] = true;
-    }
-    
-    public function removeField($fieldId)
-    {
       
+      $this->dirty['saveFields'] = true;
+      $this->dirty['updateTableFields'] = true;
     }
     
     protected function saveFields()
@@ -118,7 +166,10 @@
       $insertStrings = array();
       foreach ($this->properties['fieldIds'] as $item)
       { 
-        $insertStrings[] = "(" . $dataLink->formatInput($this->properties['identifier'], BM_VT_INTEGER) . ", " . $dataLink->formatInput($item->dataObjectFieldId, BM_VT_INTEGER) . ", " . $dataLink->formatInput($item->type, BM_VT_INTEGER) . ")";
+        if (!in_array($item->dataObjectFieldId, $this->droppedFieldIds))
+        {
+          $insertStrings[] = "(" . $dataLink->formatInput($this->properties['identifier'], BM_VT_INTEGER) . ", " . $dataLink->formatInput($item->dataObjectFieldId, BM_VT_INTEGER) . ", " . $dataLink->formatInput($item->type, BM_VT_INTEGER) . ")";
+        }
       }
       
       if (count($insertStrings) > 0)
@@ -132,9 +183,68 @@
         $dataLink->query($sql);
       }
       
-      $cacheLink->delete('dataObjectMap_dataObjectFields_' . $this->properties['identifier']);
       $this->dirty['saveFields'] = false;
+    }
+    
+    protected function updateTableFields()
+    {
+      $dataLink = $this->application->dataLink; 
       
+      $insertStrings = array();  
+      
+      foreach ($this->addedFieldIds as $id)
+      {
+        $dataObjectField = new bmDataObjectField($this->application, array('identifier' => $id));
+        
+        $insertStrings[] = 'ADD COLUMN `' . $dataObjectField->fieldName . '` ' . $dataLink->ffTypeToNativeType($dataObjectField->type, $dataObjectField->defaultValue);
+      }
+      
+      if (count($insertStrings) > 0)
+      {
+        $sql = "ALTER TABLE
+                  `" . $this->name . "`" .
+                implode(', ', $insertStrings) . ";";
+                
+        $dataLink->query($sql);
+      }
+      
+      $insertStrings = array();  
+      
+      foreach ($this->droppedFieldIds as $id)
+      {
+        $dataObjectField = new bmDataObjectField($this->application, array('identifier' => $id));
+        
+        $insertStrings[] = 'DROP COLUMN `' . $dataObjectField->fieldName . '`';
+        
+        $dataObjectField->delete();
+      }
+      
+      if (count($insertStrings) > 0)
+      {
+        $sql = "ALTER TABLE 
+                  `" . $this->name . "`" .
+                implode(', ', $insertStrings) . ";";
+        
+        $dataLink->query($sql);
+      }  
+      
+      $insertStrings = array();  
+      foreach ($this->renamedFields as $item)
+      {
+        $dataObjectField = new bmDataObjectField($this->application, array('identifier' => $item->fieldId));
+        $insertStrings[] = 'CHANGE `' . $item->oldFieldName . '` `' . $dataObjectField->fieldName . '` ' . $dataLink->ffTypeToNativeType($dataObjectField->type, $dataObjectField->defaultValue);
+      }
+      
+      if (count($insertStrings) > 0)
+      {
+        $sql = "ALTER TABLE
+                  `" . $this->name . "`" .
+                implode(', ', $insertStrings) . ";";
+        
+        $dataLink->query($sql);
+      }
+      
+      $this->dirty['updateTableFields'] = false;
     }
     
     private function dataTypeToString($dataType)
@@ -150,6 +260,12 @@
         break;
         case BM_VT_STRING:
           $result = 'BM_VT_STRING';
+        break;
+        case BM_VT_PASSWORD:
+          $result = 'BM_VT_PASSWORD';
+        break;
+        case BM_VT_IMAGE:
+          $result = 'BM_VT_IMAGE';
         break;
         case BM_VT_DATETIME:
           $result = 'BM_VT_DATETIME';
@@ -167,7 +283,7 @@
       foreach($fields as $field)
       {
         $defaultValue = $field->dataObjectField->defaultValue;
-        if ($field->dataObjectField->type == BM_VT_STRING || $field->dataObjectField->type == BM_VT_DATETIME || $field->dataObjectField->type == BM_VT_ANY)
+        if ($field->dataObjectField->type == BM_VT_STRING || $field->dataObjectField->type == BM_VT_DATETIME || $field->dataObjectField->type == BM_VT_ANY || $field->dataObjectField->type == BM_VT_IMAGE)
         {
           $defaultValue = "'" . $defaultValue . "'";
         }
@@ -211,10 +327,15 @@
               $existingFields[] = '$' . $this->properties['name'] . ucfirst($field->dataObjectField->propertyName) . ' = $' . $this->properties['name'] . '->' . $field->dataObjectField->propertyName . ';';
             break;
             case BM_VT_STRING:
+            case BM_VT_IMAGE:
             case BM_VT_DATETIME:
             case BM_VT_ANY:
               $emptyFields[] = '$' . $this->properties['name'] . ucfirst($field->dataObjectField->propertyName) . ' = \'' . htmlspecialchars($field->dataObjectField->defaultValue) . '\';';
               $existingFields[] = '$' . $this->properties['name'] . ucfirst($field->dataObjectField->propertyName) . ' = htmlspecialchars($' . $this->properties['name'] . '->' . $field->dataObjectField->propertyName . ');';
+            break;
+            case BM_VT_PASSWORD:
+              $emptyFields[] = '$' . $this->properties['name'] . ucfirst($field->dataObjectField->propertyName) . ' = \'\';';
+              $existingFields[] = '$' . $this->properties['name'] . ucfirst($field->dataObjectField->propertyName) . ' = \'\';';
             break;
           }
         }
@@ -251,9 +372,14 @@
               $objectProperies[] = '$' . $this->properties['name'] . '->' . $field->dataObjectField->propertyName . ' = $' . $this->properties['name'] . ucfirst($field->dataObjectField->propertyName) . ';';
             break;
             case BM_VT_STRING:
+            case BM_VT_IMAGE:
             case BM_VT_DATETIME:
             case BM_VT_ANY:
               $cgiProperies[] = '$' . $this->properties['name'] . ucfirst($field->dataObjectField->propertyName) . ' = $this->application->cgi->getGPC(\'' . $field->dataObjectField->propertyName . '\', \'' . $field->dataObjectField->defaultValue . '\', ' . $this->dataTypeToString($field->dataObjectField->type) . ');';
+              $objectProperies[] = '$' . $this->properties['name'] . '->' . $field->dataObjectField->propertyName . ' = $' . $this->properties['name'] . ucfirst($field->dataObjectField->propertyName) . ';';
+            break;
+            case BM_VT_PASSWORD:
+              $cgiProperies[] = '$' . $this->properties['name'] . ucfirst($field->dataObjectField->propertyName) . ' = $this->application->cgi->getGPC(\'' . $field->dataObjectField->propertyName . '\', \'\', BM_VT_STRING);';
               $objectProperies[] = '$' . $this->properties['name'] . '->' . $field->dataObjectField->propertyName . ' = $' . $this->properties['name'] . ucfirst($field->dataObjectField->propertyName) . ';';
             break;
           }
@@ -288,6 +414,7 @@
             case BM_VT_INTEGER:
             case BM_VT_FLOAT:
             case BM_VT_STRING:
+            case BM_VT_PASSWORD: 
             case BM_VT_DATETIME:
             case BM_VT_ANY:
               $editor = file_get_contents(projectRoot . '/templates/admin/code/textBox.html');
@@ -296,6 +423,14 @@
               $propertyTitle = $field->dataObjectField->propertyName;
               $editors[] = str_replace(array('%propertyTitle%', '%propertyName%', '%objectName%', '%upperCasePropertyName%'), array($propertyTitle, $propertyName, $this->properties['name'], $upperCasePropertyName), $editor);
             break;
+            case BM_VT_IMAGE:
+              $editor = file_get_contents(projectRoot . '/templates/admin/code/imageBox.html');
+              $propertyName = $field->dataObjectField->propertyName;
+              $upperCasePropertyName = ucfirst($field->dataObjectField->propertyName);
+              $propertyTitle = $field->dataObjectField->propertyName;
+              $editors[] = str_replace(array('%propertyTitle%', '%propertyName%', '%objectName%', '%upperCasePropertyName%'), array($propertyTitle, $propertyName, $this->properties['name'], $upperCasePropertyName), $editor);
+            break;
+            
           }
         }
       }
@@ -367,6 +502,9 @@
             case 'BM_VT_STRING':
               $tableField->FFDefault = '';
             break;
+            case 'BM_VT_IMAGE':
+              $tableField->FFDefault = '';
+            break;
             case 'BM_VT_DATETIME':
               $tableField->FFDefault = '0000-01-01 00:00:00';
             break;
@@ -411,7 +549,7 @@
       if (!file_exists($fileName))
       {
         $content = "<?php\n  final class bm" . ucfirst($this->properties['name']) . "Cache extends bmCustomCache\n  {\n\n\n  }\n?>";
-        file_put_contents($fileName, $content); 
+        file_put_contents($fileName, $content);
       }
       
       $fileName = documentRoot . '/modules/admin/' . $this->properties['name'] . '/';
@@ -495,16 +633,54 @@
       }
     }
     
+    /**
+    * Удаляет информацию из служебных таблиц dataObjectMap и DataObjectFields,
+    * а также удаляет саму таблицу датаобъекта
+    * 
+    */
     public function delete()
     {
       $this->removeFields();
       $this->checkDirty();
       $this->dirty = array();
+      
       $sql = "DELETE FROM `" . $this->objectName . "` WHERE `id` = " . $this->properties['identifier'] . ";";
       $this->application->dataLink->query($sql);
+      
+      $sql = "DROP TABLE `" . $this->name . "`;";
+      $this->application->dataLink->query($sql);
+          
       $this->deleteFiles();
     }
     
+    
+    public function store()
+    {
+      if ($this->properties['identifier'] == 0)
+      {
+        $sql = "CREATE TABLE `" . $this->properties['name'] . "` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`)) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
+        if (!$this->application->dataLink->query($sql))
+        {
+          throw new Exception();
+        }
+        // $dataObjectField = new bmDataObjectField($this->application, array('propertyName' => 'identifier', 'fieldName' => 'id', 'type' => BM_VT_INTEGER, 'defaultValue' => 0));
+        // $this->addField($dataObjectField->identifier, 1);
+        // unset($dataObjectField);   
+      }  
+      
+      parent::store();
+    }
+    
+    public function save()
+    {
+      $this->checkDirty();                                                 
+    }
+    
+    public function renameTable()
+    {
+      $sql = "RENAME TABLE `" . $this->savedPropertyValues['name'] . "` TO `" . $this->properties['name'] . "`;";
+      $this->application->dataLink->query($sql);
+    }                            
   }
 
 ?>

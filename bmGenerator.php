@@ -104,6 +104,18 @@
     
     public function generate($path)
     {
+      $pathParts = explode('?', $path);
+      if (count($pathParts) > 1)
+      {
+        $path = $pathParts[0];
+        $getParameters = explode('&', $pathParts[1]);
+        foreach ($getParameters as $getParameter)
+        {
+          list($key, $value) = explode('=', $getParameter);
+          $_GET[urldecode($key)] = $value;
+        }
+      }
+      
       $result = '';
       $status = 200;
       $routes = $this->routes;

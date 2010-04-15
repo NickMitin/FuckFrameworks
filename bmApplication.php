@@ -36,8 +36,12 @@
   define('E_DATA_OBJECT_NOT_EXISTS', 106);   
   define('E_DATAOBJECTMAP_NOT_FOUND', 107);   
   define('E_DATAOBJECTFIELDS_NOT_FOUND', 108);   
-	
-	define('BM_VT_ANY', 0);
+  
+  define('E_REFERENCEMAP_NOT_EXISTS', 109);   
+  define('E_REFERENCEMAP_NOT_FOUND', 110);   
+  define('E_REFERENCEFIELDS_NOT_FOUND', 111);   
+  
+  define('BM_VT_ANY', 0);
 	/**
 	* Строка
 	*/
@@ -47,7 +51,7 @@
 	*/
 	define('BM_VT_INTEGER', 2);
 	/**
-	* Число с плавающей запятой
+	* Число с плавающей точкой
 	*/
 	define('BM_VT_FLOAT', 3);
 	/**
@@ -58,6 +62,15 @@
 	* Объект
 	*/
 	define('BM_VT_OBJECT', 5);
+  /**  
+  * Пароль
+  */
+  define('BM_VT_PASSWORD', 6);
+  /**  
+  * Изображение
+  */
+  define('BM_VT_IMAGE', 7);
+  
 	
 	/**
 	* Базовый класс приложений
@@ -111,7 +124,6 @@
 				$this->timeOnline = time() - $this->session->createTime;        
 				$this->user->store();
 			}
-			
 			
 			$dataLink = $this->dataLink;
 			
@@ -167,7 +179,8 @@
 				
 				$this->user->lastVisit = $this->session->createTime;
 				$this->user->timeOnline = time() - $this->session->createTime;
-				$this->user->store();
+        //$this->user->password = '';
+				//$this->user->store();
 				
 				$dataLink = $this->dataLink;
 				$sql = "DELETE FROM 
@@ -198,6 +211,16 @@
         break;
         case 'dataObjectMaps':
           return $this->applicationCache->getDataObjectMaps($this);
+        break;
+        case 'referenceMapIds':
+          if (!array_key_exists('referenceMapIds', $this->properties))
+          {
+            $this->properties['referenceMapIds'] = $this->applicationCache->getReferenceMaps($this, false);
+          }
+          return $this->properties['referenceMapIds'];
+        break;
+        case 'referenceMaps':
+          return $this->applicationCache->getReferenceMaps($this);
         break;
         default:
           $className = 'bm' . ucfirst($propertyName);
@@ -427,6 +450,30 @@
         break;
       }
       return $value;
+    }
+    
+    public function declineNumber($value, $strings)
+    {
+      
+      if($value > 100) {
+        $value = $value % 100;
+      }
+      
+      $firstDigit = $value % 10;
+      $secondDigit = floor($value / 10);
+      
+      if ($secondDigit != 1) {
+        if ($firstDigit == 1) {
+          return $strings[0];
+        } else if ($firstDigit > 1 && $firstDigit < 5) {
+          return $strings[1];
+        } else {
+          return $strings[2];
+        }
+      } else {
+        return $strings[2];
+      }
+
     }
     
     public function getObjectIdByFieldName($objectName, $fieldName, $value)

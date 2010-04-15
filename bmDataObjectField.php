@@ -89,7 +89,10 @@
         case 'localNames':
           if (!array_key_exists('localNames', $this->properties))
           {
-            $this->properties['localNames'] = unserialize($this->properties['localName']);
+            //if (trim($this->properties['localName'] != ''))
+            //{
+              $this->properties['localNames'] = unserialize($this->properties['localName']);
+            //}
           }
           return $this->properties['localNames'];
         break;

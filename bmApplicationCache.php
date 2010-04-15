@@ -13,6 +13,20 @@
              ";
       return $this->getSimpleLinks($sql, $cacheKey, 'dataObjectMap', E_DATAOBJECTMAP_NOT_FOUND, $load); 
     }
+    
+    public function getReferenceMaps(bmApplication $application, $load = true)
+    {
+      $cacheKey = 'referenceMaps';
+      
+      $sql = "SELECT 
+                `id` AS `identifier` 
+              FROM 
+                 `referenceMap`
+              WHERE 1;
+             ";
+      
+      return $this->getSimpleLinks($sql, $cacheKey, 'referenceMap', E_REFERENCEMAP_NOT_FOUND, $load); 
+    }
   }
 
 ?>

@@ -117,7 +117,8 @@
       
       $result = $this->application->cacheLink->get($cacheKey);
       
-      if ($result === false) {
+      if ($result === false) 
+      {
         $result = $this->application->dataLink->getValue($sql);
         $this->application->cacheLink->set($cacheKey, $result, BM_CACHE_SHORT_TTL);
 
@@ -145,7 +146,8 @@
       
       $result = $this->application->cacheLink->get($cacheKey);
 
-      if ($result === false) {
+      if ($result === false) 
+      {
         $qObjectIds = $this->application->dataLink->select($sql);
         $result = array();
         while ($objectId = $qObjectIds->nextObject()) {
@@ -182,6 +184,99 @@
         return array();
       }
       return $result; 
+    }
+    
+    protected function getComplexLink($sql, $cacheKey, $map, $errorCode, $load)
+    {
+      $result = $this->application->cacheLink->get($cacheKey);
+      
+      if ($result === false) 
+      {
+        $result = array();
+        $qObjects = $this->application->dataLink->select($sql);
+        if ($qObjects->rowCount() > 0)
+        {
+          $objectArrays = array();
+          foreach($map as $propertyName => $type)
+          {
+            if ($type == BM_VT_OBJECT)
+            {
+              $objectArrays[$propertyName] = array();
+            }
+          }
+          while ($object = $qObjects->nextObject()) 
+          {
+            $result[] = $object;
+            
+            foreach ($objectArrays as $key => $dummy)
+            {               
+              $objectArrays[$key][] = $object->{$key . 'Id'};
+               
+            }
+          }
+        }
+   
+        $qObjects->free();
+        $this->application->cacheLink->set($cacheKey, $result, BM_CACHE_SHORT_TTL);
+        $this->application->cacheLink->set($cacheKey . '_objectArrays', $objectArrays, BM_CACHE_SHORT_TTL);
+      }
+ 
+      if (count($result) > 0)
+      {
+        $this->application->errorHandler->add(E_SUCCESS);
+        
+        $dateTimePropertyNames = array();
+          
+        
+        if ($load)
+        {
+          if (!$objectArrays)
+          {
+            $objectArrays = $this->application->cacheLink->get($cacheKey . '_objectArrays');               
+          }
+          
+          if ($offset > 0)
+          {           
+            $result = array_slice($result, $offset);          
+
+            foreach ($objectArrays as $key => $dummy)
+            {               
+              $objectArrays[$key] = array_slice($objectArrays[$key], $offset);
+            }
+          }          
+          
+          if ($limit > 0)
+          {         
+            $result = array_slice($result, 0, $limit);         
+            
+            foreach ($objectArrays as $key => $dummy)
+            {               
+              $objectArrays[$key] = array_slice($objectArrays[$key], 0, $limit);
+            }
+          }
+          
+          foreach ($objectArrays as $key => $dummy)
+          {
+            $objectArrays[$key] = $this->getObjects($objectArrays[$key], $key);
+          }
+          
+                                                  
+          foreach ($result as $order => $dummy)
+          {
+            foreach ($objectArrays as $key => $dummy)
+            {  
+              $result[$order]->$key = $objectArrays[$key][$order];              
+            }
+          }                
+        }
+      }
+      else
+      {
+        $this->application->errorHandler->add($errorCode);
+        return array();
+      } 
+                 
+      return $result;
     }
     
     protected function getComplexLinks($sql, $cacheKey, $map, $errorCode, $load, $limit = 0, $offset = 0)
@@ -225,26 +320,6 @@
         $this->application->errorHandler->add(E_SUCCESS);
         
         $dateTimePropertyNames = array();
-        
-        /*foreach($map as $propertyName => $type)
-        {
-          if ($type == BM_VT_DATETIME)
-          {
-            $dateTimePropertyNames[] = $propertyName;
-          }
-        }
-        
-        if (count($dateTimePropertyNames) > 0)
-        {
-          foreach ($dateTimePropertyNames as $dateTimePropertyName)
-          {
-            foreach ($result as $key => $value)
-            {
-              $result[$key]->$dateTimePropertyName = new bmDateTime($result[$key]->$dateTimePropertyName);
-            }
-          }
-        }*/
-        
           
         
         if ($load)

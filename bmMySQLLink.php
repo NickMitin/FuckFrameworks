@@ -75,7 +75,8 @@ class bmMySQLLink extends bmFFObject {
 		if (($this->linkId) && ($sqltext != '')) 
 		{
 			$startTime = microtime(true);
-			$result = mysql_query($sqltext, $this->linkId);
+//			echo '=============================================<br />' . $sqltext . '<br />==============================';
+      $result = mysql_query($sqltext, $this->linkId);
 			if ($this->application->debug)
 			{
 				$currentTime = microtime(true) - $startTime;
