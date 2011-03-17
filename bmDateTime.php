@@ -63,15 +63,36 @@
       return $this->dateTime;
     }
     
-    public function format($format)
+    public function format($format, $locale = 'en_EN')
     {
-      if ($format == 'human')
+      if ($locale == 'ru_RU')
       {
-        return $this->formatHuman();
+        switch ($format)
+        {
+          case 'j F Y?':
+            return $this->toGenericRussianDateFormat();
+          break;
+          case 'j F Y':
+            return $this->toGenericRussianDateFormat(true);
+          break;
+          case 'j? G I':
+            return $this->toGenericRussianTimeFormat();
+          break;
+          default:
+            throw new Exception('Такой формат пока не поддерживается');
+          break;
+        }       
       }
       else
       {
-        return $this->dateTime->format($format);
+        if ($format == 'human')
+        {
+          return $this->formatHuman();
+        }
+        else
+        {
+          return $this->dateTime->format($format);
+        }
       }
     }
     
@@ -250,6 +271,51 @@
       if ($dateInfo['wday'] == 0) {
         $dateInfo['wday'] = 7;
       }
+    }
+    
+    private function toGenericRussianDateFormat($yearIsMandatory = false)
+    {
+      $monthsArray = array(1 => 'января',
+                           2 => 'февраля', 
+                           3 => 'марта', 
+                           4 => 'апреля', 
+                           5 => 'мая', 
+                           6 => 'июня', 
+                           7 => 'июля', 
+                           8 => 'августа', 
+                           9 => 'сентября', 
+                           10 => 'октября', 
+                           11 => 'ноября', 
+                           12 => 'декабря');
+                           
+      if ($yearIsMandatory)
+      {
+        $year = ' ' . $this->format('Y');
+      }
+      else
+      {
+        $year = date('Y') == $this->format('Y') ? '' : ' ' . $this->format('Y');
+      }
+      
+      $month = $monthsArray[$this->format('n')];
+      $day = $this->format('j');
+      
+      return $day . ' ' . $month . $year;
+    }
+    
+    private function toGenericRussianTimeFormat()
+    {
+      $daysCount = floor(intval($this->format('U')) / 86400);
+      $hoursCount = floor(intval($this->format('U') - $daysCount * 86400) / 3600);
+      $minutesCount = floor(intval($this->format('U') - $daysCount * 86400 - $hoursCount * 3600) / 60);
+      //$secondsCount = intval((int) $this->format('s'));
+      
+      $days = $daysCount == 0 ? '' : $daysCount . ' ' . $this->declineNumber($daysCount, array('день', 'дня', 'дней'));
+      $hours = $hoursCount == 0 ? '' : $hoursCount . ' ' . $this->declineNumber($hoursCount, array('час', 'часа', 'часов'));
+      $minutes = $minutesCount == 0 ? '' : $minutesCount . ' ' . $this->declineNumber($minutesCount, array('минута', 'минуты', 'минут'));
+      //$seconds = $secondsCount == 0 ? '' : $secondsCount . ' ' . $this->declineNumber($secondsCount, array('секунда', 'секунды', 'секунд'));
+      
+      return $days . ' ' . $hours . ' ' . $minutes; // . ' ' . $seconds;
     }
 
   }

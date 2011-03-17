@@ -59,12 +59,14 @@
     public function __construct($application, $parameters = array())
     {
       parent::__construct($application, $parameters);
-      $this->routes = $application->cacheLink->get('router');
+      $this->routes = $application->cacheLink->get(C_CACHE_PREFIX . 'sitePages');
+      
+      $this->routes = false;
       
       if ($this->routes == false)
       {
         require_once(projectRoot . '/conf/generator.conf');
-        $application->cacheLink->set('router', $this->routes);
+        $application->cacheLink->set(C_CACHE_PREFIX . 'sitePages', $this->routes);
       }
     }
     
@@ -80,74 +82,9 @@
       $this->routes[$uri] = $route;
     }
     
-    public function setRoute($uri, $oldURI, $handlerFile, $handlerClassName)
-    {
-      if (array_key_exists($uri, $this->routes))
-      {
-        $parameters = array(); 
-        if ($uri == $oldURI)
-        {
-          $this->routes[$uri]['route'] = $handlerFile;
-          $this->routes[$uri]['class'] = $handlerClassName;
-          return true;
-        }
-        else
-        {
-          if (array_key_exists('parameters', $this->routes[$uri]))
-          {
-            $parameters = $this->routes[$uri]['parameters'];
-          }
-          unset($this->routes[$uri]);
-        }
-      }
-      $route = array();
-      $route['route'] = $handlerFile;
-      $route['class'] = $handlerClassName;
-      $route['parameters'] = $parameters;
-      $this->routes[$uri] = $route;
-    }
-    
-    public function deleteRoute($uri)
-    {
-      if (array_key_exists($uri, $this->routes))
-      {
-        unset($this->routes[$uri]);
-      }
-      return false;
-    }
-    
-    public function setRouteParameter($uri, $name, $type)
-    {
-      if (array_key_exists($uri, $this->routes))
-      {
-        if (array_key_exists('parameters', $this->routes[$uri]))
-        {
-          $this->routes[$uri]['parameters'][$name] = $type;
-          return true;
-        }
-      }
-      return false;
-    }
-    
-    public function deleteRouteParameter($uri, $name)
-    {
-      if (array_key_exists($uri, $this->routes))
-      {
-        if (array_key_exists('parameters', $this->routes[$uri]))
-        {
-          if (array_key_exists($name, $this->routes[$uri]['parameters']))
-          {
-            unset($this->routes[$uri]['parameters'][$name]);
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-    
     public function serialize()
     {
-      $routes = array();  
+      $routes = array();
       foreach ($this->routes as $uri => $route)
       {
         $routeString = "  '" . $uri . "' => array\n  (\n    'route' => '" . $route['route'] . "',\n    'class' => '" . $route['class'] . "'";
@@ -166,7 +103,6 @@
       }
       $routes = "<?php\n\n\$this->routes = array\n(\n" . implode(",\n", $routes) . "\n);";
       file_put_contents(projectRoot . '/conf/generator.conf', $routes);
-      $application->cacheLink->set('router', $this->routes);
     }
     
     public function generate($path)
@@ -194,36 +130,23 @@
       $status = 200;
       $routes = $this->routes;
       $forceEmpty = false;
+      
       foreach ($routes as $route => $routeData)
       {
+        
         if (preg_match($route, $path, $matches))
-        {          
+        {
           require_once(documentRoot . $routeData['route']);
           $parameters = array();
-          $matchCount = count($matches) - 1;
-          if (array_key_exists('parameters', $routeData))
+          if (count($matches) > 1)
           {
-            if ($matchCount > 0)
+            $i = 1;
+            foreach ($routeData['parameters'] as $name => $type)
             {
-              $routeParameters = array_slice($routeData['parameters'], 0, $matchCount);
-
-              $i = 1;
-              foreach ($routeParameters as $name => $type)
-              {
-                $parameters[$name] = $this->application->validateValue($matches[$i], $type);              
-                $i++;
-              }
+              $parameters[$name] = $this->application->validateValue($matches[$i], $type);
+              $i++;
             }
-            if(count($routeParameters = array_slice($routeData['parameters'], $matchCount)) > 0)
-            {
-              foreach ($routeParameters as $name => $type)
-              {
-                $parameters[$name] = $this->application->cgi->getGPC($name, '', $type);  
-              }
-            }
-            
           }
-
           $entity = new $routeData['class']($this->application, $parameters);
           if ($entity instanceof bmCustomRemoteProcedure)
           {
@@ -236,7 +159,15 @@
           }
           else
           {
+            $timeStart = microtime(true); 
+            
             $result = $entity->generate();
+            
+            $timeEnd = microtime(true);
+            $time = $timeEnd - $timeStart;
+            
+            if (BM_C_VERBOSE >= 1) echo '<br />' . $time;
+            if (BM_C_VERBOSE >= 2) echo '<br />' . $this->application->dataLink->queriesCount;
           }
           break;
         }

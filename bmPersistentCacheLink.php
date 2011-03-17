@@ -27,7 +27,7 @@
   * 
   */
 
-	
+  
   class bmPersistentCacheLink extends bmFFObject
   {
     private $cacher = null;

@@ -44,26 +44,26 @@
   define('E_OBJECTS_NOT_FOUND', 112);   
   
   define('BM_VT_ANY', 0);
-	/**
-	* Строка
-	*/
-	define('BM_VT_STRING', 1);
-	/**
-	* Целое число
-	*/
-	define('BM_VT_INTEGER', 2);
-	/**
-	* Число с плавающей точкой
-	*/
-	define('BM_VT_FLOAT', 3);
-	/**
-	* Дата
-	*/
-	define('BM_VT_DATETIME', 4);
-	/**	
-	* Объект
-	*/
-	define('BM_VT_OBJECT', 5);
+  /**
+  * Строка
+  */
+  define('BM_VT_STRING', 1);
+  /**
+  * Целое число
+  */
+  define('BM_VT_INTEGER', 2);
+  /**
+  * Число с плавающей точкой
+  */
+  define('BM_VT_FLOAT', 3);
+  /**
+  * Дата
+  */
+  define('BM_VT_DATETIME', 4);
+  /**  
+  * Объект
+  */
+  define('BM_VT_OBJECT', 5);
   /**  
   * Пароль
   */
@@ -84,142 +84,161 @@
   
   
   
-	
-	/**
-	* Базовый класс приложений
-	*/
-	abstract class bmApplication extends bmFFObject
-	{
-		public $templatecache = array();
-		public $doctype = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">';
-		public $action = '';
-		public $dataLink = null;
-		public $user = null;		
-		public $session = null;
-		public $debug = BM_C_DEBUG;
+  
+  /**
+  * Базовый класс приложений
+  */
+  abstract class bmApplication extends bmFFObject
+  {
+    public $templatecache = array();
+    public $doctype = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">';
+    public $action = '';
+    public $dataLink = null;
+    public $user = null;    
+    public $session = null;
+    public $debug = BM_C_DEBUG;
     public $locale = ''; 
-		
-		/**
-		* Конструктор класса
-		* 
-		* @param bmApplication $application указатель на приложение. должен быть null
-		* @param array $parameters параметры, необходимые для инициализации экземпляра приложения
-		* @return bmApplication
-		*/
-		public function __construct($application, $parameters = array())
-		{
-			$this->locale = C_LOCALE;
+    
+    /**
+    * Конструктор класса
+    * 
+    * @param bmApplication $application указатель на приложение. должен быть null
+    * @param array $parameters параметры, необходимые для инициализации экземпляра приложения
+    * @return bmApplication
+    */
+    public function __construct($application, $parameters = array())
+    {
+      $this->locale = C_LOCALE;
       parent::__construct($application, $parameters);
       require_once(projectRoot . '/conf/errors.conf'); 
-			$this->action = $this->cgi->getGPC('action', '');
-			
-			$this->dataLink = new bmMySQLLink($this);
-			register_shutdown_function(array($this, 'save'));
-		}
-		
-		/**
-		* Выполняет авторизацию пользователя. 
-		* В случае, если проверка пары email/пароль прошла успешно, то функция обновляет $this->user и сохраняет информацию о пользователе в $this->session
-		* -
-		* 
-		* @param string $email e-mail пользователя
-		* @param string $password пароль пользователя в открытом виде
-		* @param bool $isMD5 флаг, указывающий на тип параметра $password - plaintext или md5
-		* @return bool флаг успеха авторизации
-		*/
-		public function login($email, $password, $isMD5 = false)
-		{
-			
-			$result = false;
-			if (($this->session->userId != C_DEFAULT_USER_ID) && ($this->session->userId != 0))
-			{
-				$this->user->identifier = $this->session->userId;
-				$this->user->lastVisit = $this->session->createTime;
-				$this->timeOnline = time() - $this->session->createTime;        
-				$this->user->store();
-			}
-			
-			$dataLink = $this->dataLink;
-			
-			$password = $dataLink->formatInput($password);
-			if(!$isMD5)
-			{
-				$password = md5($password);
-			}
-			
-			$sql = "SELECT 
-								`id` AS `id`
-							FROM
-								`user`
-							WHERE
-								`email` = '" . $dataLink->formatInput($email) . "' AND 
-								`password` = '" . $password . "'
-							LIMIT 1;";
-			$user = $dataLink->getObject($sql);
-			
-      if ($user)
-			{
-				$result = true;
-				$this->session->userId = $user->id;
-				$this->session->createTime = time();
-				$this->session->store();
-				
-        $this->user->identifier = $user->id;
-				$this->user->load();
-				/*
-        $sql = "INSERT IGNORE INTO 
-								`link_user_session`
-								SET 
-									`userId` = '" . $dataLink->formatInput($this->session->userId) . "',
-									`sessionHash` = '" . $dataLink->formatInput($this->session->identifier) . "',
-									`ipAddress` = '" . $dataLink->formatInput($this->session->ipAddress) . "';";
-									
-				$dataLink->query($sql);
-        */
-			}
-		 
-			return $result;
-		}
-		
-		/**
-		* Выполняет деавторизацию пользователя.
-		* Сбрасывает $this->user в гостя
-		* 
-		* @return bool флаг успеха: false, если пользователь является гостем, иначе true
-		*/
-		public function logout()
-		{
-			$result = false;
-			if ($this->session->userId != C_DEFAULT_USER_ID)
-			{
-				$result = true;
-				
-				$this->user->lastVisit = $this->session->createTime;
-				$this->user->timeOnline = time() - $this->session->createTime;
-        //$this->user->password = '';
-				//$this->user->store();
-				
-				$dataLink = $this->dataLink;
-				/*
-        $sql = "DELETE FROM 
-									`link_user_session`
-								WHERE 
-									`userId` = '" . $dataLink->formatInput($this->session->userId) . "';"; 
-				$dataLink->query($sql);
-				*/
-				$this->session->userId = C_DEFAULT_USER_ID;
-				$this->session->createTime = time();
-				$this->session->save();      
-				$this->user->identifier = C_DEFAULT_USER_ID;
-				$this->user->load();
-			}
-			return $result;
-		}
-		
-		public function __get($propertyName)
-		{
-		  switch ($propertyName)
+      $this->action = $this->cgi->getGPC('action', '');
+      
+      $this->dataLink = new bmMySQLLink($this);
+      register_shutdown_function(array($this, 'save'));
+    }
+    
+    /**
+    * Выполняет авторизацию пользователя. 
+    * В случае, если проверка пары email/пароль прошла успешно, то функция обновляет $this->user и сохраняет информацию о пользователе в $this->session
+    * -
+    * 
+    * @param string $email e-mail пользователя
+    * @param string $password пароль пользователя в открытом виде
+    * @param bool $isMD5 флаг, указывающий на тип параметра $password - plaintext или md5
+    * @return bool флаг успеха авторизации
+    */
+    public function login($email, $password, $isMD5 = false)
+    {
+      $result = false;
+      if (($this->session->userId != C_DEFAULT_USER_ID) && ($this->session->userId != 0))
       {
+        $this->user->identifier = $this->session->userId;
+        $this->user->lastVisit = $this->session->createTime;
+        $this->timeOnline = time() - $this->session->createTime;        
+        $this->user->store();
+      }
+      
+      $dataLink = $this->dataLink;
+      
+      $password = $dataLink->formatInput($password);
+      if(!$isMD5)
+      {
+        $password = md5($password);
+      }
+      
+      $sql = "SELECT 
+                `id` AS `id`
+              FROM
+                `user`
+              WHERE
+                `email` = '" . $dataLink->formatInput($email) . "' AND 
+                `password` = '" . $password . "'
+              LIMIT 1;";
+      $user = $dataLink->getObject($sql);
+      
+      if ($user)
+      {
+        $result = true;
+        $this->session->userId = $user->id;
+        $this->session->createTime = time();
+        $this->session->store();
+        
+        $this->user->identifier = $user->id;
+        $this->user->load();
+        /*
+        $sql = "INSERT IGNORE INTO 
+                `link_user_session`
+                SET 
+                  `userId` = '" . $dataLink->formatInput($this->session->userId) . "',
+                  `sessionHash` = '" . $dataLink->formatInput($this->session->identifier) . "',
+                  `ipAddress` = '" . $dataLink->formatInput($this->session->ipAddress) . "';";
+                  
+        $dataLink->query($sql);
+        */
+      }
+     
+      return $result;
+    }
+    
+    /**
+    * Выполняет деавторизацию пользователя.
+    * Сбрасывает $this->user в гостя
+    * 
+    * @return bool флаг успеха: false, если пользователь является гостем, иначе true
+    */
+    public function logout()
+    {
+      $result = false;
+      if ($this->session->userId != C_DEFAULT_USER_ID)
+      {
+        $result = true;
+        
+        $this->user->lastVisit = $this->session->createTime;
+        $this->user->timeOnline = time() - $this->session->createTime;
+        //$this->user->password = '';
+        //$this->user->store();
+        
+        $dataLink = $this->dataLink;
+        /*
+        $sql = "DELETE FROM 
+                  `link_user_session`
+                WHERE 
+                  `userId` = '" . $dataLink->formatInput($this->session->userId) . "';"; 
+        $dataLink->query($sql);
+        */
+        $this->session->userId = C_DEFAULT_USER_ID;
+        $this->session->createTime = time();
+        $this->session->save();      
+        $this->user->identifier = C_DEFAULT_USER_ID;
+        $this->user->load();
+      }
+      return $result;
+    }
+    
+    public function __get($propertyName)
+    {
+      switch ($propertyName)
+      {
+        case 'dataObjectMapIds':
+          if (!array_key_exists('dataObjectMapIds', $this->properties))
+          {
+            $this->properties['dataObjectMapIds'] = $this->applicationCache->getDataObjectMaps($this, false);
+          }
+          return $this->properties['dataObjectMapIds'];
+        break;
+        case 'dataObjectMaps':
+          return $this->applicationCache->getDataObjectMaps($this);
+        break;
+        case 'referenceMapIds':
+          if (!array_key_exists('referenceMapIds', $this->properties))
+          {
+            $this->properties['referenceMapIds'] = $this->applicationCache->getReferenceMaps($this, false);
+          }
+          return $this->properties['referenceMapIds'];
+        break;
+        case 'referenceMaps':
+          return $this->applicationCache->getReferenceMaps($this);
+        break;
         default:
           $className = 'bm' . ucfirst($propertyName);
           if (class_exists($className))
@@ -231,32 +250,32 @@
           return parent::__get($propertyName);
         break;
       }
-		}
-		
-		/**
-		* Сохраняет состояние объекта. Не реализована.
-		* @todo определить необходимость присутствия этой функции
-		*/
-		public function save()
-		{
+    }
+    
+    /**
+    * Сохраняет состояние объекта. Не реализована.
+    * @todo определить необходимость присутствия этой функции
+    */
+    public function save()
+    {
  
-		}
+    }
 
-		/**
-		* Выполняет конвертацию переданной строки в UTF-8 
-		* 
-		* @param string $string исходная строка
-		* @return string результат конвертации переданной строки
-		*/
-		public function decodeUrl($string)
-		{
-			$encoding = mb_detect_encoding($string, 'UTF-8, CP1251');
-			if ($encoding != 'UTF-8')
-			{
-				$string = mb_convert_encoding($string, 'UTF-8', $encoding);
-			}
-			return $string;
-		}
+    /**
+    * Выполняет конвертацию переданной строки в UTF-8 
+    * 
+    * @param string $string исходная строка
+    * @return string результат конвертации переданной строки
+    */
+    public function decodeUrl($string)
+    {
+      $encoding = mb_detect_encoding($string, 'UTF-8, CP1251');
+      if ($encoding != 'UTF-8')
+      {
+        $string = mb_convert_encoding($string, 'UTF-8', $encoding);
+      }
+      return $string;
+    }
   
     /**
     * Возвращает содержимое шаблона
@@ -268,26 +287,24 @@
     * @param string $path путь к корню проекта. по умолчанию - значение константы projectRoot
     * @todo проверить логику функции
     */
-		public function getTemplate($templateName, $escape = true, $read = false, $path = projectRoot)
-		{
-			$template = $this->debug ?  false : $this->cacheLink->get(C_TEMPLATE_PREFIX . $templateName);
-			
-      $read = true;
+    public function getTemplate($templateName, $escape = true, $read = false, $path = projectRoot)
+    {
+      $template = $this->debug ? false : $this->cacheLink->get(C_TEMPLATE_PREFIX . $templateName);
       
       if ($template === false || $read !== false)
-			{
-				$template = trim(file_get_contents($path . '/templates/' . $templateName . '.html'));
+      {
+        $template = trim(file_get_contents($path . '/templates/' . $templateName . '.html'));
 
-				$this->cacheLink->set(C_TEMPLATE_PREFIX . $templateName, $template);
-				$this->updateTemplateStack($templateName);
-			}
-			if ($escape)
-			{
-				$template = addcslashes(trim($template), '"');
-			}
-			return $template;
-		}
-		
+        $this->cacheLink->set(C_TEMPLATE_PREFIX . $templateName, $template);
+        $this->updateTemplateStack($templateName);
+      }
+      if ($escape)
+      {
+        $template = addcslashes(trim($template), '"');
+      }
+      return $template;
+    }
+    
     /**
     * Возвращает (если возможно - кешированный) результат выполнения указанной функции.
     * Функция пытается вернуть кешированный результат выполнения метода. Если это невозможно, выполняет метод и сохраняет его в кеше.
@@ -298,24 +315,24 @@
     * @param int $TTL время жизни кешированной страницы
     * @return string результат выполнения генератора
     */
-		public function getStaticCache($cacheName, $generator, $TTL = 0)
-		{
-			$cachePath = contentRoot . 'cache/' . $cacheName . '.html';
-			$result = false;
-			if (!file_exists($cachePath) || ($TTL > 0 && filemtime($cachePath) < time() - $TTL) || $TTL < 0)
-			{
-				
-				$result = call_user_func($generator, $cacheName);
-				
-				$this->uploader->saveToFile('cache', $cacheName, $result);
-			}
-			else
-			{
-				$result = file_get_contents($cachePath);
-			}
-			return $result;
-		}
-		
+    public function getStaticCache($cacheName, $generator, $TTL = 0)
+    {
+      $cachePath = contentRoot . 'cache/' . $cacheName . '.html';
+      $result = false;
+      if (!file_exists($cachePath) || ($TTL > 0 && filemtime($cachePath) < time() - $TTL) || $TTL < 0)
+      {
+        
+        $result = call_user_func($generator, $cacheName);
+        
+        $this->uploader->saveToFile('cache', $cacheName, $result);
+      }
+      else
+      {
+        $result = file_get_contents($cachePath);
+      }
+      return $result;
+    }
+    
     /**
     * Возвращает, если возможно, сохраненное в кеше значение 
     * Функция вернет false, если в кеше нет значения с переданным ключем, а также если приложение находится в режиме отладки
@@ -323,111 +340,111 @@
     * @param string $cacheName ключ 
     * @return mixed кешированное значение или false в случае неудачи
     */
-		public function getHTMLCache($cacheName) 
-		{
-			$result = $this->debug ? false : $this->cacheLink->get($cacheName);
-			return $result;
-		}
-		
+    public function getHTMLCache($cacheName) 
+    {
+      $result = $this->debug ? false : $this->cacheLink->get($cacheName);
+      return $result;
+    }
+    
     /**
     * Сохраняет в кеше переданное значение с указанным ключем и временем жизни объекта равным значению константы BM_CACHE_MIDDLE_TTL
     *
     * @param string $cacheName ключ
     * @param mixed $content значение
     */
-		public function setHTMLCache($cacheName, $content) 
-		{
-			$this->cacheLink->set($cacheName, $content, BM_CACHE_MIDDLE_TTL);
-		}
-		
-		/**
+    public function setHTMLCache($cacheName, $content) 
+    {
+      $this->cacheLink->set($cacheName, $content, BM_CACHE_MIDDLE_TTL);
+    }
+    
+    /**
     * Удаляет значение из статического кеша
     * В роли кешера используется файловая система.
     *
     * @param string $cacheName ключ
     */
-		public function removeStaticCache($cacheName)
-		{
-			$cachePath = contentRoot . 'cache/' . $cacheName . '.html';
-			if (file_exists($cachePath))
-			{
-				unlink($cachePath);
-			}
-		}
-		
+    public function removeStaticCache($cacheName)
+    {
+      $cachePath = contentRoot . 'cache/' . $cacheName . '.html';
+      if (file_exists($cachePath))
+      {
+        unlink($cachePath);
+      }
+    }
+    
     /**
     * Возвращает содержимое шаблона, выполняя над ним необходимые преобразования.
     * 
     * @param string $templateName имя шаблона
     * @todo необходимые - это какие?
     */
-		public function getClientTemplate($templateName)
-		{
+    public function getClientTemplate($templateName)
+    {
 
-			$this->template = false;
-			if ($this->template === false)
-			{
-				$this->template = $this->getTemplate($templateName, false);
-				$this->template = preg_replace('/[{]?\$([a-zA-Z]+)->([a-zA-Z]+)?[}]?/S', '%\\2%', $this->template);
-				$this->template = preg_replace('/[{]?\$([a-zA-Z]+)[}]?/S', '%\\1%', $this->template);
-				$this->template = preg_replace('/\s*?\n\s*/', '', $this->template);
-			}
-			return $this->template;
-		}
-		
+      $this->template = false;
+      if ($this->template === false)
+      {
+        $this->template = $this->getTemplate($templateName, false);
+        $this->template = preg_replace('/[{]?\$([a-zA-Z]+)->([a-zA-Z]+)?[}]?/S', '%\\2%', $this->template);
+        $this->template = preg_replace('/[{]?\$([a-zA-Z]+)[}]?/S', '%\\1%', $this->template);
+        $this->template = preg_replace('/\s*?\n\s*/', '', $this->template);
+      }
+      return $this->template;
+    }
+    
     /**
     * Обновляет стек шаблонов
     * 
     * @param string $templateName имя шаблона
     * @todo обязательное ревью документации
     */
-		private function updateTemplateStack($templateName)
-		{
-			$templateStack = $this->cacheLink->get('templateStack');
-			if ($templateStack === false)
-			{
-				$templateStack = array();
-			}
-			$templateStack[$templateName] = $templateName;
-			$this->cacheLink->set('templateStack', $templateStack);
-		}
-		
+    private function updateTemplateStack($templateName)
+    {
+      $templateStack = $this->cacheLink->get('templateStack');
+      if ($templateStack === false)
+      {
+        $templateStack = array();
+      }
+      $templateStack[$templateName] = $templateName;
+      $this->cacheLink->set('templateStack', $templateStack);
+    }
+    
     /**
     * Обновляет в кеше, находящиеся в стеке шаблоны.
     *
     * @todo обязательное ревью документации
     */
-		public function updateTemplates()
-		{
-			$templateStack = $this->cacheLink->get('templateStack');
-			if ($templateStack === false)
-			{
-				$templateStack = array();
-			}
-			
-			foreach ($templateStack as $key => $templateName)
-			{
-				$template = trim(file_get_contents(homePath . 'templates/' . $templateName . '.html'));
-				$this->cacheLink->set(templatePrefix . $templateName, $template);
-			}
-		}
-		
-		/**
-		* Создает stdObject по переданному ассоциативному массиву
-		* 
-		* @param array $parameters 
-		* @return stdClass
-		*/		
-		public function createObject($parameters)
-		{
-			$result = new stdClass();
-			
-			foreach($parameters as $parameterName => $parameterValue)
-			{
-				$result->$parameterName = $parameterValue;
-			}
-			return $result;
-		}
+    public function updateTemplates()
+    {
+      $templateStack = $this->cacheLink->get('templateStack');
+      if ($templateStack === false)
+      {
+        $templateStack = array();
+      }
+      
+      foreach ($templateStack as $key => $templateName)
+      {
+        $template = trim(file_get_contents(homePath . 'templates/' . $templateName . '.html'));
+        $this->cacheLink->set(templatePrefix . $templateName, $template);
+      }
+    }
+    
+    /**
+    * Создает stdObject по переданному ассоциативному массиву
+    * 
+    * @param array $parameters 
+    * @return stdClass
+    */    
+    public function createObject($parameters)
+    {
+      $result = new stdClass();
+      
+      foreach($parameters as $parameterName => $parameterValue)
+      {
+        $result->$parameterName = $parameterValue;
+      }
+      return $result;
+    }
     
     /**
     * Выполняет фильтрацию(валидацию) переданного значения в соответствии с его типом
@@ -491,7 +508,67 @@
       return ($result != null) ? $result : 0;
     }
     
-
-	}
-	
+    public function isEmailCorrect($email)
+    {
+      $emailParts = explode('@', $email);
+      
+      if (count($emailParts) == 2)
+      {
+        $hostname = $emailParts[1];
+        if (getmxrr($hostname, $mxhosts) && filter_var($email, FILTER_VALIDATE_EMAIL))
+        {
+          return true;
+        }
+      }
+      
+      return false;
+    }    
+    
+    public function formatNumber($number)
+    {
+      if ($number >= 10000) 
+      {
+        $number = number_format($number, 0, ',', '~');  
+        $number = str_replace('~', '&nbsp;', $number);
+        return $number;
+      }
+      else
+      {
+        return $number;
+      }                                            
+    }
+    
+    public function generatePassword()
+    {
+      $result = '';
+      
+      $passwordChars = array (
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+        's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+        'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
+      $passwordCharsMaxIndex = count($passwordChars)-1;
+      $passwordLength = rand(6, 9);
+      $previousIndex = 0;
+      $stopCycle = 30;
+      $i = 0;
+      while ($i < $passwordLength)
+      {
+          // желательно иметь неповторяющуюся попарно последовательность
+        $k = 0;
+        do
+        {
+          $index = rand(0, $passwordCharsMaxIndex);
+          $k++;
+        }
+        while (($k <= $stopCycle) && ($index == $previousIndex));
+        
+        $result .= $passwordChars[$index];
+        $i++;
+      }
+      
+      return $result;
+    }
+  }
+  
 ?>

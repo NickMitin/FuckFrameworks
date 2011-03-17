@@ -36,7 +36,7 @@
   define('BM_ROT_ADDITIONAL', 3); // Добавочные, справочные объекты связи
   define('BM_ROT_NOT_AN_OBJECT', 4); // Простое свойство, а не объект
   
-  abstract class bmDataObject extends bmFFObject {
+  abstract class bmDataObject extends bmFFObject implements IDataObject {
     
     public $map = array();
     public $objectName = '';
@@ -206,9 +206,16 @@
         if ((string)$this->properties[$propertyName] != (string)$value)
         {
           $this->triggerEvent('propertyChange', array('identifier' => $this->properties['identifier'], 'propertyName' => $propertyName, 'oldValue' => $this->properties[$propertyName], 'newValue' => $value));
-          if ($this->map[$propertyName]['dataType'] == BM_VT_PASSWORD && $value == '')
+          if ($this->map[$propertyName]['dataType'] == BM_VT_PASSWORD)
           {
-            return;
+            if ($value == '')
+            {
+              return;
+            }
+            else
+            {
+              $value = md5($value);
+            }
           }
           if ($this->map[$propertyName]['dataType'] == BM_VT_IMAGE)
           {
@@ -268,13 +275,14 @@
         foreach ($this->map as $propertyName => $property) 
         {                                                                                                                          
           $this->properties[$propertyName] = $this->formatProperty($propertyName, $property['dataType'], $cache->$propertyName);   
-        } 
+        }
+        $this->application->errorHandler->add(E_SUCCESS);    
         $this->dirty['store'] = false; 
         $this->triggerEvent('load', array('identifier' => $this->properties['identifier'])); 
       }
       else
       {
-        //TODO: Error here   
+        $this->application->errorHandler->add(E_DATA_OBJECT_NOT_EXISTS);    
       } 
     }
     
@@ -326,7 +334,7 @@
               $value = floatval($propertyValue);
             break;
             case BM_VT_PASSWORD:
-              $value = "'" . md5($propertyValue) . "'";
+              $value = "'" . (string)$propertyValue . "'";
             break;
             case BM_VT_IMAGE:
               $value = "'" . (string)$propertyValue . "'";
@@ -351,7 +359,6 @@
         $fields = implode(',', $fields);
         
         $sql = "INSERT INTO `" . $this->objectName . "` SET " . $fields . " ON DUPLICATE KEY UPDATE " . $fields . ";";
-      
         $objectId = $this->application->dataLink->query($sql);
         if (($objectId = $this->application->dataLink->insertId()) != 0)
         {
@@ -370,7 +377,7 @@
       
       if ($this->storage == 'dods')
       {
-        $this->application->cacheLink->set($this->objectName . $this->properties['identifier'], $cacheObject, BM_CACHE_LONG_TTL);  
+        $this->application->cacheLink->set($this->objectName . $this->properties['identifier'], $cacheObject, BM_CACHE_LIFELONG_TTL);  
         $result = $this->application->cacheLink->get($this->objectName . $this->properties['identifier']); 
       }
       
@@ -406,30 +413,26 @@
     
     protected function itemExists($key, $propertyName, &$collection)
     {
-      $result = false;
       foreach ($collection as $item)
       {
         if ($item->$propertyName == $key)
         {
-          $result = true;
-          break;
+          return true;
         }
       }
-      return $result;
+      return false;
     }
     
     protected function searchItem($key, $propertyName, $collection)
     {
-      $result = false;
       foreach ($collection as $index => $item)
       {
         if ($item->$propertyName == $key)
         {
-          $result = $index;
-          break;
+          return $index;
         }
       }
-      return $result;
+      return false;
     }
     
     public function getObject()
@@ -457,6 +460,7 @@
         if ($result == null)
         {
           $result = false;
+          $this->application->errorHandler->add(E_DATA_OBJECT_NOT_EXISTS); 
         } 
         else 
         {
@@ -585,6 +589,7 @@
           $result = array_slice($result, 0, $limit);         
         }
         
+        $this->application->errorHandler->add(E_SUCCESS);
         
         if ($load)
         {
@@ -593,6 +598,7 @@
       }
       else
       {
+        $this->application->errorHandler->add($errorCode);
         return array();
       }
       return $result; 
@@ -679,7 +685,9 @@
       }
  
       if (count($result) > 0)
-      {        
+      {
+        $this->application->errorHandler->add(E_SUCCESS);
+        
         $dateTimePropertyNames = array();
           
         if ($load)
@@ -737,6 +745,7 @@
       }
       else
       {
+        $this->application->errorHandler->add($errorCode);
         return array();
       } 
                  
@@ -751,6 +760,12 @@
     
     protected function validateCache()
     {
+      // Не добавлены:
+      // worldMapSelectors
+      
+      // renderedAdvert_N_withInterest и renderedAdvert_N_withoutInterest
+         // тут не добавлены редко изменяемые сущности: валюта, класс перелета и пр.
+      
       $this->dirty['validateCache'] = false;
     } 
   }

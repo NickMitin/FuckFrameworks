@@ -27,7 +27,7 @@
   * 
   */
 
-	
+  
    define('BM_CACHE_SHORT_TTL', 600);
    define('BM_CACHE_MIDDLE_TTL', 3600);
    define('BM_CACHE_LONG_TTL', 86400);
@@ -56,6 +56,7 @@
     {
       parent::__construct($application, $parameters);
       $this->cacherExists = function_exists('xcache_isset');
+      //$this->cacherExists = false;
     }
     
     /**

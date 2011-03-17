@@ -27,7 +27,7 @@
   * 
   */
 
-	
+  
   define('STEMMER_VOWEL_RU', '/аеиоуыэюя/u');
   define('STEMMER_PERFECTIVEGROUND_RU', '/((ив|ивши|ившись|ыв|ывши|ывшись)|((?<=[ая])(в|вши|вшись)))$/u');
   define('STEMMER_REFLEXIVE_RU', '/(с[яь])$/u');
@@ -371,4 +371,3 @@
   }
 
 ?>
-

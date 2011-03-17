@@ -562,7 +562,7 @@
       $propertyName = $item->referenceField->propertyName;
       $ucPropertyName = ucfirst($propertyName);
       $tableName = $referenceMap->name;
-     
+        
       foreach ($referenceMap->fields as $referenceFieldItem)
       {
         if ($referenceFieldItem->referenceField->referencedObjectId == $this->properties['identifier'] && $referenceFieldItem->type == BM_RT_MAIN)
@@ -856,7 +856,7 @@
       $this->checkDirty();
       $licence = file_get_contents(projectRoot . '/conf/licence.conf');
       list($emptyFields, $existingFields) = $this->toEditorFields();
-      $editor = "<?php\n" . $licence . "\n\n\n  final class bm" . ucfirst($this->properties['name']) . "EditPage extends " . $ancestorClass . "\n  {\n\n    public \$" . $this->properties['name'] . "Id = 0;\n\n\n    public function generate()\n    {\n\n      if (\$this->" . $this->properties['name'] . "Id == 0)\n      {\n\n        " . $emptyFields . "\n\n      }\n      else\n      {\n        \$" . $this->properties['name'] . " = new bm" . ucfirst($this->properties['name']) . "(\$this->application, array('identifier' => \$this->" . $this->properties['name'] . "Id));\n\n        " . $existingFields . "\n\n      }\n      eval('\$this->content = \"' . \$this->application->getTemplate('/admin/" . $this->properties['name'] . "/" . $this->properties['name'] . "') . '\";');\n      \$page = parent::generate();\n      return \$page;\n    }\n  }\n?>";
+      $editor = "<?php\n" . $licence . "\n\n\n  final class bm" . ucfirst($this->properties['name']) . "EditPage extends " . $ancestorClass . "\n  {\n\n    public \$" . $this->properties['name'] . "Id = 0;\n\n\n    public function generate()\n    {\n\n      if (\$this->" . $this->properties['name'] . "Id == 0)\n      {\n\n        " . $emptyFields . "\n\n      }\n      else\n      {\n        \$" . $this->properties['name'] . " = new bm" . ucfirst($this->properties['name']) . "(\$this->application, array('identifier' => \$this->" . $this->properties['name'] . "Id));\n        if (\$this->application->errorHandler->getLast() != E_SUCCESS)\n        {\n          //TODO Error;\n          exit;\n        }\n\n        " . $existingFields . "\n\n      }\n      eval('\$this->content = \"' . \$this->application->getTemplate('/admin/" . $this->properties['name'] . "/" . $this->properties['name'] . "') . '\";');\n      \$page = parent::generate();\n      return \$page;\n    }\n  }\n?>";
       return $editor;
     }
     
@@ -1122,7 +1122,7 @@
 //        
 //        file_put_contents($fileName, $content);
 //      }
-      /*
+      
       $fileName = documentRoot . '/modules/admin/' . $this->properties['name'] . '/';
       if (!file_exists($fileName))
       {
@@ -1186,7 +1186,7 @@
       $generator->addRoute('~^/admin/' . $this->properties['name'] . '/(new|\d+)/?$~', '/modules/admin/' . $this->properties['name'] . '/index.php', 'bm' . ucfirst($this->properties['name']) . 'EditPage', array($this->properties['name'] . 'Id' => BM_VT_INTEGER));
       $generator->addRoute('~^/' . $this->properties['name'] . '/(.+)/?$~', '/modules/view/' . $this->properties['name'] . '/index.php', 'bm' . ucfirst($this->properties['name']) . 'Page', array($this->properties['name'] . 'Id' => BM_VT_INTEGER));
       $generator->serialize();
-      */
+      
     }
     
     private function deleteFiles()
