@@ -27,7 +27,7 @@
   * 
   */
 
-  abstract class bmCustomSession extends bmDataObject implements IDataObject 
+  abstract class bmCustomSession extends bmDataObject 
   {
     public function __construct($application, $parameters = array()) 
     {

@@ -36,7 +36,7 @@
   define('BM_ROT_ADDITIONAL', 3); // Добавочные, справочные объекты связи
   define('BM_ROT_NOT_AN_OBJECT', 4); // Простое свойство, а не объект
   
-  abstract class bmDataObject extends bmFFObject implements IDataObject {
+  abstract class bmDataObject extends bmFFObject {
     
     public $map = array();
     public $objectName = '';
@@ -46,6 +46,7 @@
     public $updateCount = 0;
     public $runningCheckDirty = false;
     public $storage = 'rdbs+dods';
+    protected $cacheQueue = array();
     
     public function __construct(bmApplication $application, $parameters = array())
     {
@@ -267,14 +268,13 @@
         foreach ($this->map as $propertyName => $property) 
         {                                                                                                                          
           $this->properties[$propertyName] = $this->formatProperty($propertyName, $property['dataType'], $cache->$propertyName);   
-        }
-        $this->application->errorHandler->add(E_SUCCESS);    
+        } 
         $this->dirty['store'] = false; 
         $this->triggerEvent('load', array('identifier' => $this->properties['identifier'])); 
       }
       else
       {
-        $this->application->errorHandler->add(E_DATA_OBJECT_NOT_EXISTS);    
+        //TODO: Error here   
       } 
     }
     
@@ -373,6 +373,8 @@
         $this->application->cacheLink->set($this->objectName . $this->properties['identifier'], $cacheObject, BM_CACHE_LONG_TTL);  
         $result = $this->application->cacheLink->get($this->objectName . $this->properties['identifier']); 
       }
+      
+      $this->enqueueCache('store');
     }
     
     public function save() 
@@ -455,7 +457,6 @@
         if ($result == null)
         {
           $result = false;
-          $this->application->errorHandler->add(E_DATA_OBJECT_NOT_EXISTS); 
         } 
         else 
         {
@@ -584,7 +585,6 @@
           $result = array_slice($result, 0, $limit);         
         }
         
-        $this->application->errorHandler->add(E_SUCCESS);
         
         if ($load)
         {
@@ -593,7 +593,6 @@
       }
       else
       {
-        $this->application->errorHandler->add($errorCode);
         return array();
       }
       return $result; 
@@ -680,9 +679,7 @@
       }
  
       if (count($result) > 0)
-      {
-        $this->application->errorHandler->add(E_SUCCESS);
-        
+      {        
         $dateTimePropertyNames = array();
           
         if ($load)
@@ -740,12 +737,21 @@
       }
       else
       {
-        $this->application->errorHandler->add($errorCode);
         return array();
       } 
                  
       return $result;
     }
     
+    protected function enqueueCache($method)
+    {
+      $this->cacheQueue[] = $method;
+      $this->dirty['validateCache'] = true;
+    }
+    
+    protected function validateCache()
+    {
+      $this->dirty['validateCache'] = false;
+    } 
   }
 ?>

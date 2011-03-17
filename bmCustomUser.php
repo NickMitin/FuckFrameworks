@@ -51,16 +51,6 @@
           'dataType' => BM_VT_STRING,
           'defaultValue' => ''
         ),
-        'homePage' => array(
-          'fieldName' => 'homePage',
-          'dataType' => BM_VT_STRING,
-          'defaultValue' => ''
-        ),
-        'avatar' => array(
-          'fieldName' => 'avatar',
-          'dataType' => BM_VT_STRING,
-          'defaultValue' => ''
-        ),
         'name' => array(
           'fieldName' => 'name',
           'dataType' => BM_VT_STRING,
