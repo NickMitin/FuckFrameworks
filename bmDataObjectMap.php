@@ -307,7 +307,7 @@
     public function toClass()
     {
       $this->checkDirty();
-      $licence = file_get_contents(projectRoot . '/conf/licence.conf');
+      $license = file_get_contents(projectRoot . '/conf/license.conf');
       $className = 'bm' . ucfirst($this->properties['name']);
       $mapping = $this->toMapping();
       $getterCasesBlock = $this->toGetterCases();
@@ -854,9 +854,9 @@
     public function toEditor($ancestorClass)
     {
       $this->checkDirty();
-      $licence = file_get_contents(projectRoot . '/conf/licence.conf');
+      $license = file_get_contents(projectRoot . '/conf/license.conf');
       list($emptyFields, $existingFields) = $this->toEditorFields();
-      $editor = "<?php\n" . $licence . "\n\n\n  final class bm" . ucfirst($this->properties['name']) . "EditPage extends " . $ancestorClass . "\n  {\n\n    public \$" . $this->properties['name'] . "Id = 0;\n\n\n    public function generate()\n    {\n\n      if (\$this->" . $this->properties['name'] . "Id == 0)\n      {\n\n        " . $emptyFields . "\n\n      }\n      else\n      {\n        \$" . $this->properties['name'] . " = new bm" . ucfirst($this->properties['name']) . "(\$this->application, array('identifier' => \$this->" . $this->properties['name'] . "Id));\n        if (\$this->application->errorHandler->getLast() != E_SUCCESS)\n        {\n          //TODO Error;\n          exit;\n        }\n\n        " . $existingFields . "\n\n      }\n      eval('\$this->content = \"' . \$this->application->getTemplate('/admin/" . $this->properties['name'] . "/" . $this->properties['name'] . "') . '\";');\n      \$page = parent::generate();\n      return \$page;\n    }\n  }\n?>";
+      $editor = "<?php\n" . $license . "\n\n\n  final class bm" . ucfirst($this->properties['name']) . "EditPage extends " . $ancestorClass . "\n  {\n\n    public \$" . $this->properties['name'] . "Id = 0;\n\n\n    public function generate()\n    {\n\n      if (\$this->" . $this->properties['name'] . "Id == 0)\n      {\n\n        " . $emptyFields . "\n\n      }\n      else\n      {\n        \$" . $this->properties['name'] . " = new bm" . ucfirst($this->properties['name']) . "(\$this->application, array('identifier' => \$this->" . $this->properties['name'] . "Id));\n        if (\$this->application->errorHandler->getLast() != E_SUCCESS)\n        {\n          //TODO Error;\n          exit;\n        }\n\n        " . $existingFields . "\n\n      }\n      eval('\$this->content = \"' . \$this->application->getTemplate('/admin/" . $this->properties['name'] . "/" . $this->properties['name'] . "') . '\";');\n      \$page = parent::generate();\n      return \$page;\n    }\n  }\n?>";
       return $editor;
     }
     
@@ -901,10 +901,10 @@
     public function toSaveProcedure()
     {
       $this->checkDirty();
-      $licence = file_get_contents(projectRoot . '/conf/licence.conf');
+      $license = file_get_contents(projectRoot . '/conf/license.conf');
       list($cgiProperies, $objectProperies) = $this->toSaveProcedureProperties();
       $saveProcedure = file_get_contents(projectRoot . '/templates/admin/code/save.php');
-      $saveProcedure = str_replace(array('%objectName%', '%upperCaseObjectName%', '%cgiProperties%', '%objectProperties%', '%licence%'), array($this->properties['name'], ucfirst($this->properties['name']), $cgiProperies, $objectProperies, $licence), $saveProcedure);
+      $saveProcedure = str_replace(array('%objectName%', '%upperCaseObjectName%', '%cgiProperties%', '%objectProperties%', '%licence%'), array($this->properties['name'], ucfirst($this->properties['name']), $cgiProperies, $objectProperies, $license), $saveProcedure);
       return $saveProcedure;
     }
     

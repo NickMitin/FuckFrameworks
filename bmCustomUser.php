@@ -27,12 +27,12 @@
   * 
   */
 
-    
-  abstract class bmCustomUser extends bmDataObject
-  {  
+		
+	abstract class bmCustomUser extends bmDataObject
+	{  
 
-    public function __construct($application, $parameters)
-    {                                                
+		public function __construct($application, $parameters)
+		{                                                
       
       $this->map = array_merge($this->map, array
       (
@@ -119,7 +119,7 @@
       ));
       
       parent::__construct($application, $parameters);
-    }
+		}
   
-  }  
+	}  
 ?>

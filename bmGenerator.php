@@ -138,15 +138,30 @@
         {
           require_once(documentRoot . $routeData['route']);
           $parameters = array();
-          if (count($matches) > 1)
+          $matchCount = count($matches) - 1;
+          if (array_key_exists('parameters', $routeData))
           {
-            $i = 1;
-            foreach ($routeData['parameters'] as $name => $type)
+            if ($matchCount > 0)
             {
-              $parameters[$name] = $this->application->validateValue($matches[$i], $type);
-              $i++;
+              $routeParameters = array_slice($routeData['parameters'], 0, $matchCount);
+
+              $i = 1;
+              foreach ($routeParameters as $name => $type)
+              {
+                $parameters[$name] = $this->application->validateValue($matches[$i], $type);              
+                $i++;
+              }
             }
+            if(count($routeParameters = array_slice($routeData['parameters'], $matchCount)) > 0)
+            {
+              foreach ($routeParameters as $name => $type)
+              {
+                $parameters[$name] = $this->application->cgi->getGPC($name, '', $type);  
+              }
+            }
+            
           }
+          
           $entity = new $routeData['class']($this->application, $parameters);
           if ($entity instanceof bmCustomRemoteProcedure)
           {
@@ -177,7 +192,9 @@
       {
         #HTTP/1.1 200 OK
         header('HTTP/1.1 404 Not Found', true, 404);
-        $result = '<h1>404</h1>';
+        require_once(documentRoot . '/modules/view/404/index.php');
+        $page = new bm404Page($this->application);
+        $result = $page->generate();
         $status = 404;
       }   
       return $result;

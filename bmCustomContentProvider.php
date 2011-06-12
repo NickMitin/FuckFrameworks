@@ -27,7 +27,7 @@
   * 
   */
 
-    
+	  
   abstract class bmCustomContentProvider extends bmFFObject
   {
     protected $staticServers = null;

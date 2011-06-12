@@ -27,7 +27,7 @@
   * 
   */
 
-      
+		  
   abstract class bmCustomTextProcessor extends bmFFObject {
     
     public function declineNumber($value, $strings)

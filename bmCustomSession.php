@@ -92,32 +92,7 @@
       
       if ($this->properties['identifier'] != '')
       {          
-        $this->load();
-        /*
-        if ($this->application->errorHandler->getLast() != E_SUCCESS)
-        {        
-          $sql = "SELECT 
-                    `session`.`userId` AS `userId`,
-                    `session`.`id` AS `sessionId`
-                  FROM 
-                    `session`
-                  WHERE 
-                    `session`.`id` = '" . $this->application->dataLink->formatInput($this->identifier) . "'";
-          $oldSession = $this->application->dataLink->getObject($sql);
-          if ($oldSession)
-          {
-            $this->userId = intval($oldSession->userId);
-            $this->ipAddress = $this->application->cgi->getIPAddress();
-            $this->createTime = time();
-          }
-          else
-          {
-            $this->identifier = md5(uniqid(microtime(true), true));
-            $this->userId = C_DEFAULT_USER_ID;
-            $this->createTime = time();
-          }
-        }
-        */
+        $this->load();  
       }
       else
       {

@@ -33,7 +33,7 @@
   define('BM_RP_TYPE_XML', 4);
   define('BM_RP_TYPE_RAW', 5);
 
-  
+	
   abstract class bmCustomRemoteProcedure extends bmFFObject
   {
     

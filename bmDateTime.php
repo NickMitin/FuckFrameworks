@@ -168,7 +168,8 @@
       $result = '';
       $date = $this->dateTime->format('U');      
       $yearMonths = array(1 => 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря');
-      $weekDays = array(1 => 'в понедельник', 'во вторник', 'в среду', 'в четверг', 'в пятницу', 'в субботу', 'в воскресенье');
+      //$weekDays = array(1 => 'в понедельник', 'во вторник', 'в среду', 'в четверг', 'в пятницу', 'в субботу', 'в воскресенье');
+      //$weekDays = array(1 => 'в понедельник', 'во вторник', 'в среду', 'в четверг', 'в пятницу', 'в субботу', 'в воскресенье');
       $today = time();
       
       $todayInfo = getdate($today);
@@ -180,6 +181,10 @@
       $monthOffset = $todayInfo['mon'] - $dateInfo['mon'];
       $yearOffset = $todayInfo['year'] - $dateInfo['year'];
       
+      $dateInfo['minutes'] = str_pad($dateInfo['minutes'], 2, '0', STR_PAD_LEFT);
+      $now = new DateTime();
+      $difference = $now->diff($this->dateTime, true);
+      
       $offset = $today - $date;
       if ($offset < 60)
       {
@@ -189,7 +194,7 @@
         }
         else
         {
-          $result = $offset . ' ' . $this->declineNumber($offset, array('секунду', 'секунды', 'секунд'));
+          $result = $offset . ' ' . $this->declineNumber($offset, array('секунду', 'секунды', 'секунд')) . ' назад';
         }
       }
       elseif ($offset < 3600)
@@ -201,40 +206,48 @@
         }
         else
         {
-          $result = $offset . ' ' . $this->declineNumber($offset, array('минуту', 'минуты', 'минут'));
+          $result = $offset . ' ' . $this->declineNumber($offset, array('минуту', 'минуты', 'минут')) . ' назад';
         }
       }
       elseif ($offset < 86400)
       {
-        if ($dateInfo['mday'] >= $today['mday'])
+        if ($dateInfo['mday'] >= $todayInfo['mday'])
         {
           $result = 'вчера в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
         }
         else
         {
-          $result = 'в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
+          //$result = 'в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
+          $count = floor($offset / 3600);
+          $result = $count . ' ' . $this->declineNumber($count, array('час', 'часа', 'часов')) . ' назад';
         }
       }
       elseif ($offset < 604800)
       {
-        if ($dateInfo['wday'] >= $today['wday'])
+        $offset += $today % 86400;
+        //if ($dateInfo['wday'] >= $todayInfo['wday'])
+        if ($offset < 172800)
         {
-          $result = $weekDays[$dateInfo['wday']] . ' в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
+          $result = 'вчера в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
         }
         else
         {
-          $result = $dateInfo['mday'] . ' ' . $yearMonths[$dateInfo['mon']] . ' в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
-        }
-      }
+          //$result = $dateInfo['mday'] . ' ' . $yearMonths[$dateInfo['mon']] . ' в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
+          $count = floor($offset / 86400);
+          $result = $count . ' ' . $this->declineNumber($count, array('день', 'дня', 'дней')) . ' назад';
+        }  
+        //$count = floor($offset / 86400);
+        //$result = $count . ' ' . $this->declineNumber($count, array('день', 'дня', 'дней')) . ' назад';
+      }                                                                        
       else
       {
         if ($yearOffset == 0)
         {
-          $result = $dateInfo['mday'] . ' ' . $yearMonths[$dateInfo['mon']] . ' в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
+          $result = $dateInfo['mday'] . ' ' . $yearMonths[$dateInfo['mon']]; // . ' в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
         }
         else
         {
-          $result = $dateInfo['mday'] . ' ' . $yearMonths[$dateInfo['mon']] . ' ' . $dateInfo['year'] . ' в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
+          $result = $dateInfo['mday'] . ' ' . $yearMonths[$dateInfo['mon']]; // . ' ' . $dateInfo['year'] . ' в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
         }
       }
       

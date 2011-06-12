@@ -36,7 +36,7 @@
   define('BM_ROT_ADDITIONAL', 3); // Добавочные, справочные объекты связи
   define('BM_ROT_NOT_AN_OBJECT', 4); // Простое свойство, а не объект
   
-  abstract class bmDataObject extends bmFFObject implements IDataObject {
+  abstract class bmDataObject extends bmFFObject {
     
     public $map = array();
     public $objectName = '';
@@ -46,7 +46,7 @@
     public $updateCount = 0;
     public $runningCheckDirty = false;
     public $storage = 'rdbs+dods';
-    protected $cacheQueue = array();
+    private $cacheQueue = array();
     
     public function __construct(bmApplication $application, $parameters = array())
     {
@@ -275,14 +275,12 @@
         foreach ($this->map as $propertyName => $property) 
         {                                                                                                                          
           $this->properties[$propertyName] = $this->formatProperty($propertyName, $property['dataType'], $cache->$propertyName);   
-        }
-        $this->application->errorHandler->add(E_SUCCESS);    
+        }  
         $this->dirty['store'] = false; 
         $this->triggerEvent('load', array('identifier' => $this->properties['identifier'])); 
       }
       else
-      {
-        $this->application->errorHandler->add(E_DATA_OBJECT_NOT_EXISTS);    
+      { 
       } 
     }
     
@@ -377,11 +375,9 @@
       
       if ($this->storage == 'dods')
       {
-        $this->application->cacheLink->set($this->objectName . $this->properties['identifier'], $cacheObject, BM_CACHE_LIFELONG_TTL);  
+        $this->application->cacheLink->set($this->objectName . $this->properties['identifier'], $cacheObject, BM_CACHE_LONG_TTL);  
         $result = $this->application->cacheLink->get($this->objectName . $this->properties['identifier']); 
       }
-      
-      $this->enqueueCache('store');
     }
     
     public function save() 
@@ -460,7 +456,6 @@
         if ($result == null)
         {
           $result = false;
-          $this->application->errorHandler->add(E_DATA_OBJECT_NOT_EXISTS); 
         } 
         else 
         {
@@ -589,8 +584,6 @@
           $result = array_slice($result, 0, $limit);         
         }
         
-        $this->application->errorHandler->add(E_SUCCESS);
-        
         if ($load)
         {
           $result = $this->getObjects($result, $objectName);
@@ -598,7 +591,6 @@
       }
       else
       {
-        $this->application->errorHandler->add($errorCode);
         return array();
       }
       return $result; 
@@ -607,7 +599,7 @@
     protected function getComplexLink($sql, $cacheKey, $map, $errorCode, $load)
     {
       $bigResult = $this->getComplexLinks($sql, $cacheKey, $map, $errorCode, $load, 1, 0);
-      
+
       if (count($bigResult) > 0)
       {
         $result = $bigResult[0];
@@ -685,9 +677,7 @@
       }
  
       if (count($result) > 0)
-      {
-        $this->application->errorHandler->add(E_SUCCESS);
-        
+      { 
         $dateTimePropertyNames = array();
           
         if ($load)
@@ -745,26 +735,44 @@
       }
       else
       {
-        $this->application->errorHandler->add($errorCode);
         return array();
       } 
                  
       return $result;
     }
     
-    protected function enqueueCache($method)
+    protected function enqueueCache($methodKey, $objectId)
     {
-      $this->cacheQueue[] = $method;
+      $this->cacheQueue[$methodKey][] = $objectId;
       $this->dirty['validateCache'] = true;
     }
     
     protected function validateCache()
     {
-      // Не добавлены:
-      // worldMapSelectors
-      
-      // renderedAdvert_N_withInterest и renderedAdvert_N_withoutInterest
-         // тут не добавлены редко изменяемые сущности: валюта, класс перелета и пр.
+      foreach ($this->cacheQueue as $methodKey => $objectIds)
+      {
+        switch ($methodKey)
+        {
+          case 'country__store':
+            foreach ($objectIds as $objectId)
+            {
+              $this->application->cacheLink->delete('country_synonym_' . $objectId);
+            }
+          break;
+          case 'resort__store':
+            foreach ($objectIds as $objectId)
+            {
+              $this->application->cacheLink->delete('resort_synonym_' . $objectId);
+            }
+          break;
+          case 'hotel__store':
+            foreach ($objectIds as $objectId)
+            {
+              $this->application->cacheLink->delete('hotel_synonym_' . $objectId);
+            }
+          break;
+        }
+      }
       
       $this->dirty['validateCache'] = false;
     } 

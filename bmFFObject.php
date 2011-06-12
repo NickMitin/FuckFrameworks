@@ -27,68 +27,68 @@
   * 
   */
 
-    
-  abstract class bmFFObject
-  {                                                                                                                   
-    /**
+		
+	abstract class bmFFObject
+	{                                                                                                                   
+		/**
      * @var bmApplication
      */
     protected $application = null;
-    protected $properties = array();
+		protected $properties = array();
     protected $events = array();
     protected $eventHandlers = array();
-    
-    public function __construct($application, $parameters = array())
-    {
-      $this->application = $application;
-      
+		
+		public function __construct($application, $parameters = array())
+		{
+			$this->application = $application;
+			
       if (!is_array($parameters))
       {
         $parameters = array();
       }
-            
-      foreach($parameters as $name => &$value)
-      {        
-        if (property_exists($this, $name))
-        {
-          $this->$name = $value;
-        }
-      }
-    }
+      			
+			foreach($parameters as $name => &$value)
+			{        
+				if (property_exists($this, $name))
+				{
+					$this->$name = $value;
+				}
+			}
+		}
 
-    protected function getParameter(&$parameters, $parameter, $defaultValue = null)
-    {
-      if (array_key_exists($parameter, $parameters))
-      {
-        return $parameters[$parameter];
-      }
-      else
-      {
-        return $defaultValue;
-      }
-    }
-    
-    protected function addProperty($propertyName, $value = null) 
-    {
-      if (!array_key_exists($propertyName, $this->properties)) 
-      {
-        $this->properties[$propertyName] = $value;
-      }
-    }
-    
-    protected function propertyExists($propertyName) {
-    
-      return array_key_exists($propertyName, $this->properties);
-      
-    }
-    
-    public function __get($propertyName)
-    {
-      if (array_key_exists($propertyName, $this->properties)) 
-      {
-        return $this->properties[$propertyName];
-      }
-    }
+		protected function getParameter(&$parameters, $parameter, $defaultValue = null)
+		{
+			if (array_key_exists($parameter, $parameters))
+			{
+				return $parameters[$parameter];
+			}
+			else
+			{
+				return $defaultValue;
+			}
+		}
+		
+		protected function addProperty($propertyName, $value = null) 
+		{
+			if (!array_key_exists($propertyName, $this->properties)) 
+			{
+				$this->properties[$propertyName] = $value;
+			}
+		}
+		
+		protected function propertyExists($propertyName) {
+		
+			return array_key_exists($propertyName, $this->properties);
+			
+		}
+		
+		public function __get($propertyName)
+		{
+			if (array_key_exists($propertyName, $this->properties)) 
+			{
+				return $this->properties[$propertyName];
+			}
+		}
     
     public function addEventListener($eventName, $handler)
     {
@@ -155,7 +155,7 @@
         }
       }
     }
-    
-  }
-  
+		
+	}
+	
 ?>

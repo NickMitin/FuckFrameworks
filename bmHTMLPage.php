@@ -27,14 +27,12 @@
   * 
   */
 
-  
+	
   abstract class bmHTMLPage extends bmPage
   {
     
     public $title = '';
-    public $docType = '<?xml version="1.0" encoding="utf-8" ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-';
+    public $docType = '<!DOCTYPE html>';
     
     private $scripts = array();
     private $CSS = array();
