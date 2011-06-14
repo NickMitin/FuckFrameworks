@@ -4,7 +4,7 @@ class bmTextProcessor extends bmCustomTextProcessor
   {
     
     private $allowedTags = array(); //array('html', 'body', 'div', 'a', 'b', 'strong', 'i', 'em', 'img', 'ul', 'ol', 'li', 'sub', 'sup', 'object', 'param', 'embed', 'br');
-    private $allowedAttributes = array();// array('img' => array('src', 'class'), 'a' => array('href'), 'object' => array('classid', 'width', 'height'), 'param' => array('name', 'value'), 'embed' => array('src', 'quality', 'allowfullscreen', 'wmode', 'width', 'height', 'type'));
+    private $allowedAttributes = array();// array('*'=>array('style', 'class'), 'img' => array('src', 'class', 'width', 'height'), 'a' => array('href'), 'object' => array('classid', 'width', 'height'), 'param' => array('name', 'value'), 'embed' => array('src', 'quality', 'allowfullscreen', 'wmode', 'width', 'height', 'type'));
 
     private $currentDotPosition = 0;
     private $position = 0;
@@ -21,7 +21,11 @@ class bmTextProcessor extends bmCustomTextProcessor
 
       if (is_null($allowedAttributes))
       {
-        $allowedAttributes = array('img' => array('src', 'class'), 'a' => array('href'), 'object' => array('classid', 'width', 'height'), 'param' => array('name', 'value'), 'embed' => array('src', 'quality', 'allowfullscreen', 'wmode', 'width', 'height', 'type', 'flashvars'));
+        $allowedAttributes = array('*'=>array('style', 'class'), 'img' => array('src', 'class', 'width', 'height'), 'a' => array('href'), 'object' => array('classid', 'width', 'height'), 'param' => array('name', 'value'), 'embed' => array('src', 'quality', 'allowfullscreen', 'wmode', 'width', 'height', 'type', 'flashvars'));
+      }
+
+      if (!array_key_exists('*', $allowedAttributes)) {
+          $allowedAttributes['*']=array();
       }
       
       $this->allowedTags = $allowedTags;
@@ -71,7 +75,7 @@ class bmTextProcessor extends bmCustomTextProcessor
       while ($j < $node->attributes->length)
       {
         $attribute = $node->attributes->item($j);
-        if ( (!$checkAttribute) || (!in_array($attribute->name, $this->allowedAttributes[$node->nodeName])) )
+          if ( ((!$checkAttribute) || (!in_array($attribute->name, $this->allowedAttributes[$node->nodeName]))) && !in_array($attribute->name, $this->allowedAttributes['*']) )
         {
           $node->removeAttribute($attribute->name);
           $j--;            
