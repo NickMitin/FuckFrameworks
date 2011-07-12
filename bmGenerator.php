@@ -133,7 +133,11 @@
       
       foreach ($routes as $route => $routeData)
       {
-        
+        if (array_key_exists('redirect', $routeData))
+        {
+          header('location: ' . $routeData['redirect'], true);
+          exit;
+        }
         if (preg_match($route, $path, $matches))
         {
           require_once(documentRoot . $routeData['route']);
