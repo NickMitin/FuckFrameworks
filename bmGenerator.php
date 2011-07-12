@@ -192,7 +192,7 @@
       {
         #HTTP/1.1 200 OK
         header('HTTP/1.1 404 Not Found', true, 404);
-        require_once(documentRoot . '/modules/view/404/index.php');
+        require_once(documentRoot . '/modules/errors/404.php');
         $page = new bm404Page($this->application);
         $result = $page->generate();
         $status = 404;
