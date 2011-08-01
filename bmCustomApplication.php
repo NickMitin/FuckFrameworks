@@ -128,7 +128,7 @@
 		*/
 		public function login($email, $password, $isMD5 = false)
 		{
-			$result = false;
+      $result = false;
 			if (($this->session->userId != C_DEFAULT_USER_ID) && ($this->session->userId != 0))
 			{
 				$this->user->identifier = $this->session->userId;
