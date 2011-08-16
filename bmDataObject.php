@@ -741,7 +741,7 @@
       return $result;
     }
     
-    protected function enqueueCache($methodKey, $objectId)
+    protected function enqueueCache($methodKey)
     {
       $this->cacheQueue[$methodKey][] = $this->properties['identifier'];
       $this->dirty['validateCache'] = true;
