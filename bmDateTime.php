@@ -78,6 +78,9 @@
           case 'j? G I':
             return $this->toGenericRussianTimeFormat();
           break;
+          case 'j F Y? at H:i':
+            return $this->toGenericRussianDateTimeFormat();
+          break;
           default:
             throw new Exception('Такой формат пока не поддерживается');
           break;
@@ -211,7 +214,8 @@
       }
       elseif ($offset < 86400)
       {
-        if ($dateInfo['mday'] >= $todayInfo['mday'])
+        
+        if ($dateInfo['mday'] > $todayInfo['mday'])
         {
           $result = 'вчера в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
         }
@@ -329,6 +333,14 @@
       //$seconds = $secondsCount == 0 ? '' : $secondsCount . ' ' . $this->declineNumber($secondsCount, array('секунда', 'секунды', 'секунд'));
       
       return $days . ' ' . $hours . ' ' . $minutes; // . ' ' . $seconds;
+    }
+    
+    private function toGenericRussianDateTimeFormat($yearIsMandatory = false)
+    {
+      $date = $this->toGenericRussianDateFormat($yearIsMandatory);
+      $date .= ' в '  . $this->format('H:i');
+      
+      return $date;
     }
 
   }

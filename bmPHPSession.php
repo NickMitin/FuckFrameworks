@@ -27,6 +27,15 @@
   * 
   */
 
+	
+   define('BM_CACHE_SHORT_TTL', 600);
+   define('BM_CACHE_MIDDLE_TTL', 3600);
+   define('BM_CACHE_LONG_TTL', 86400);
+   define('BM_CACHE_LIFELONG_TTL', 0);
+   ini_set('session.save_path', projectRoot . '/cache/session/');
+   
+
+   
    /**
    * Класс, инкапсулирующий работу с кешем
    * В случае, если:
@@ -34,10 +43,11 @@
    * - приложение находится в режиме отладки (определяется через $application->debug)
    * то все обращения к функциям класса будут завершаться неудачей.
    */
-  class bmCacheLink extends bmFFObject {
-        
-    private $className = 'default';
-    private $cacherObject = null;
+  class bmPHPSession extends bmFFObject {
+    
+    private $cacherExists = false;
+    protected $prefix = '';
+    
     /**
     * Конструктор класса
     * 
@@ -48,14 +58,11 @@
     public function __construct($application, $parameters = array())
     {
       parent::__construct($application, $parameters);
-      $fileName = projectRoot . '/conf/cache_' . $this->className . '.conf';
-      if (!file_exists($fileName))
+      $this->cacherExists = function_exists('session_start');
+      if ($this->cacherExists)
       {
-        $fileName = projectRoot . '/conf/cache_default.conf';  
+        session_start();
       }
-      require($fileName);
-      $className = $this->className;
-      $this->cacherObject = new $className($this->application, array('prefix' => $this->prefix));
     }
     
     /**
@@ -70,7 +77,23 @@
     */
     public function get($key)
     {
-      return $this->cacherObject->get($key);
+      if ($key != null)
+      {
+        $key = $this->prefix . $key;
+        if (!$this->cacherExists)
+        {
+          return false;
+        }
+        if (array_key_exists($key, $_SESSION))
+        {
+          return unserialize($_SESSION[$key]);
+        }
+        return false;
+      }
+      else
+      {
+        return false;
+      }
     }
 
     /**
@@ -84,8 +107,48 @@
     */
     public function set($key, $value, $expire = 0, $force = false)
     { 
-
-      return $this->cacherObject->set($key, $value, $expire, $force);
+      if ($key != null)
+      {
+        if ($this->cacherExists && $force)
+        {
+          $key = $this->prefix . $key;
+          $result = true;
+          if (is_object($value) && get_class($value) != 'stdClass')
+          {
+            print "\n Вероятно ты пытаешься положить в кэш какой-то объект, который наследуется от bmFFObject:\n";
+            print "-> $key <-\n";
+            var_dump($test);
+            print "Этого делать нельзя, так как чтение такого кеша приведет к внутренней ошибке PHP и 500 ошибке сервера.\n";
+            print "Поэтому я (скрипт) вынужден завершиться на 36 строке файла /lib/bmCacheLink.php\n";
+            //НЕ УДАЛЯТЬ, ПО ЭТОМУ ВОПРОСУ К КОЛЕ.
+            exit;
+          }
+          else if (is_array($value))
+          {
+            $test = current($value);
+            if (is_object($test) && get_class($test) != 'stdClass')
+            {
+              print "\n Вероятно ты пытаешься положить в кэш массив каких-то объектов, которые наследуются от bmFFObject:\n";
+              print "-> $key <-\n";
+              var_dump($test);
+              print "Этого делать нельзя, так как чтение такого кеша приведет к внутренней ошибке PHP и 500 ошибке сервера.\n";
+              print "Поэтому я (скрипт) вынужден завершиться на 46 строке файла /lib/bmCacheLink.php\n";
+              //НЕ УДАЛЯТЬ, ПО ЭТОМУ ВОПРОСУ К КОЛЕ.
+              exit;
+            }
+          }
+          $_SESSION[$key] = serialize($value);
+          return $result;
+        }
+        else
+        {
+          return false;
+        }
+      }
+      else
+      {
+        return false;
+      }
     }
 
     /**
@@ -96,7 +159,28 @@
     */
     public function delete($key)
     {
-      return $this->cacherObject->delete($key);
+      if ($key != null)
+      {
+        if ($this->cacherExists)
+        {
+          $key = $this->prefix . $key;
+          $result = false; 
+          if (array_key_exists($key, $_SESSION))
+          {
+            unset($_SESSION[$key]);
+            return true;
+          }
+          return false;
+        }
+        else
+        {
+          return false;
+        }
+      }
+      else
+      {
+        return false;
+      }
     }
   }
 ?>

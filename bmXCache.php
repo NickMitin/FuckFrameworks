@@ -27,6 +27,13 @@
   * 
   */
 
+	
+   define('BM_CACHE_SHORT_TTL', 600);
+   define('BM_CACHE_MIDDLE_TTL', 3600);
+   define('BM_CACHE_LONG_TTL', 86400);
+   define('BM_CACHE_LIFELONG_TTL', 0);
+
+   
    /**
    * Класс, инкапсулирующий работу с кешем
    * В случае, если:
@@ -34,10 +41,11 @@
    * - приложение находится в режиме отладки (определяется через $application->debug)
    * то все обращения к функциям класса будут завершаться неудачей.
    */
-  class bmCacheLink extends bmFFObject {
-        
-    private $className = 'default';
-    private $cacherObject = null;
+  class bmXCache extends bmFFObject {
+    
+    private $cacherExists = false;
+    protected $prefix = '';
+    
     /**
     * Конструктор класса
     * 
@@ -48,14 +56,7 @@
     public function __construct($application, $parameters = array())
     {
       parent::__construct($application, $parameters);
-      $fileName = projectRoot . '/conf/cache_' . $this->className . '.conf';
-      if (!file_exists($fileName))
-      {
-        $fileName = projectRoot . '/conf/cache_default.conf';  
-      }
-      require($fileName);
-      $className = $this->className;
-      $this->cacherObject = new $className($this->application, array('prefix' => $this->prefix));
+      $this->cacherExists = function_exists('xcache_isset');
     }
     
     /**
@@ -70,7 +71,23 @@
     */
     public function get($key)
     {
-      return $this->cacherObject->get($key);
+      if ($key != null)
+      {
+        $key = $this->prefix . $key;
+        if (!$this->cacherExists)
+        {
+          return false;
+        }
+        if (xcache_isset($key))
+        {
+          return unserialize(xcache_get($key));
+        }
+        return false;
+      }
+      else
+      {
+        return false;
+      }
     }
 
     /**
@@ -82,10 +99,55 @@
     * @param int $expire время жизни объекта в кеше в секундах. 0 для бесконечного времени жизни.
     * @return bool флаг успеха. true, если все ок. false, если не установлен поддерживаемый кешер.
     */
-    public function set($key, $value, $expire = 0, $force = false)
+    public function set($key, $value, $expire = 0)
     { 
-
-      return $this->cacherObject->set($key, $value, $expire, $force);
+      if ($key != null)
+      {
+        if ($this->cacherExists)
+        {
+          $key = $this->prefix . $key;
+          $result = true;
+          if (!xcache_isset('lock_' . $key))
+          {
+            xcache_set('lock_' . $key, true);
+            if (is_object($value) && get_class($value) != 'stdClass')
+            {
+              print "\n Вероятно ты пытаешься положить в кэш какой-то объект, который наследуется от bmFFObject:\n";
+              print "-> $key <-\n";
+              var_dump($test);
+              print "Этого делать нельзя, так как чтение такого кеша приведет к внутренней ошибке PHP и 500 ошибке сервера.\n";
+              print "Поэтому я (скрипт) вынужден завершиться на 36 строке файла /lib/bmCacheLink.php\n";
+              //НЕ УДАЛЯТЬ, ПО ЭТОМУ ВОПРОСУ К КОЛЕ.
+              exit;
+            }
+            else if (is_array($value))
+            {
+              $test = current($value);
+              if (is_object($test) && get_class($test) != 'stdClass')
+              {
+                print "\n Вероятно ты пытаешься положить в кэш массив каких-то объектов, которые наследуются от bmFFObject:\n";
+                print "-> $key <-\n";
+                var_dump($test);
+                print "Этого делать нельзя, так как чтение такого кеша приведет к внутренней ошибке PHP и 500 ошибке сервера.\n";
+                print "Поэтому я (скрипт) вынужден завершиться на 46 строке файла /lib/bmCacheLink.php\n";
+                //НЕ УДАЛЯТЬ, ПО ЭТОМУ ВОПРОСУ К КОЛЕ.
+                exit;
+              }
+            }
+            $result = xcache_set($key, serialize($value), $expire);
+            xcache_unset('lock_' . $key);
+          }
+          return $result;
+        }
+        else
+        {
+          return false;
+        }
+      }
+      else
+      {
+        return false;
+      }
     }
 
     /**
@@ -96,7 +158,27 @@
     */
     public function delete($key)
     {
-      return $this->cacherObject->delete($key);
+      if ($key != null)
+      {
+        if ($this->cacherExists)
+        {
+          $key = $this->prefix . $key;
+          $result = false; 
+          if (xcache_isset($key))
+          {
+            $result = xcache_unset($key);
+          }
+          return $result;
+        }
+        else
+        {
+          return false;
+        }
+      }
+      else
+      {
+        return false;
+      }
     }
   }
 ?>

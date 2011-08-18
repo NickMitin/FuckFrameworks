@@ -47,43 +47,47 @@
     
     public function send($subject, $messages, $context = 'default')
     {               
+      
+      
       if (!array_key_exists($context, $this->contexts))
       {
         return;
       }
-      
       if (count($messages) > 0)
       {
+        
         require_once('Mail.php');
 
         $context = $this->contexts[$context];
         $subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
         $smtp = null;
+        
         if (class_exists('Mail', false))
         {
-          $smtp = Mail::factory('smtp', array ('host' => $context['host'], 'port' => $context['port'], 'auth' => $context['authorization'], 'username' => $context['username'], 'password' => $context['password'], 'debug' => false));
+          $smtp = Mail::factory('smtp', array ('host' => $context['host'], 'port' => $context['port'], 'auth' => $context['authorization'], 'username' => $context['username'], 'password' => $context['password'], 'debug' => true));
         }
-      
-   
+
         foreach ($messages as $email => $message)
         {
           if ($this->validate($email))
           {
+            $senderName = '';
             if ($smtp != null)
             {
-  
-              $headers = array ('From' => $context['sender'], 'To' => $email, 'Subject' => $subject, 'Content-type' => 'text/html; charset=utf-8');
+              $senderName = $senderName == '' ? $context['senderName'] : $senderName;
+              $sender = $context['senderEmail'];
+              if ($senderName != '')
+              {
+                $sender = '=?UTF-8?B?' . base64_encode($senderName) . '?= <' . $sender . '>';
+              }
+              $headers = array ('From' => $sender, 'To' => $email, 'Subject' => $subject, 'Content-type' => 'text/html; charset=utf-8');
               $mail = $smtp->send($email, $headers, $message);
-              //var_dump($mail);
-              //return true;
             } 
             elseif (mail($email, $subject, $message, 'Content-type: text/html; charset=utf-8'))
             {
-              //return true;
             }
             else
             {
-              //return false;
             }
           }
         }
@@ -100,6 +104,7 @@
     {
       $sql = 'SELECT `id` FROM `mail` WHERE 1 LIMIT 1';
       $id = $this->application->dataLink->getValue($sql);
+
       if ($id > 0)
       {
         $mail = new bmMail($this->application, array('identifier' => $id));
