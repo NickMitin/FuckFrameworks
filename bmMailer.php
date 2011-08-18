@@ -64,13 +64,14 @@
           $smtp = Mail::factory('smtp', array ('host' => $context['host'], 'port' => $context['port'], 'auth' => $context['authorization'], 'username' => $context['username'], 'password' => $context['password'], 'debug' => false));
         }
       
-        
+   
         foreach ($messages as $email => $message)
         {
           if ($this->validate($email))
           {
             if ($smtp != null)
             {
+  
               $headers = array ('From' => $context['sender'], 'To' => $email, 'Subject' => $subject, 'Content-type' => 'text/html; charset=utf-8');
               $mail = $smtp->send($email, $headers, $message);
               //var_dump($mail);

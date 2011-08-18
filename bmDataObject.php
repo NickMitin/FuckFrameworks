@@ -741,8 +741,12 @@
       return $result;
     }
     
-    protected function enqueueCache($methodKey, $objectId)
+    protected function enqueueCache($methodKey, $objectId = null)
     {
+      if ($objectId == null)
+      {
+        $objectId = $this->properties['identifier'];
+      }
       $this->cacheQueue[$methodKey][] = $objectId;
       $this->dirty['validateCache'] = true;
     }
