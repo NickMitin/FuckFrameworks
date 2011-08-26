@@ -27,7 +27,7 @@
   * 
   */
 
-  final class bmReferenceMap extends bmDataObject
+  final class bmReferenceMap extends bmMetaDataObject
   {
     
     private $savedPropertyValues = array();
@@ -190,6 +190,7 @@
       $sql = "DELETE FROM `link_referenceMap_referenceField` WHERE `referenceMapId` = " . $this->properties['identifier'] . ";";
       
       $dataLink->query($sql);
+      $this->application->log->add($sql);
       
       if (count($this->droppedFields) > 0)
       {
@@ -225,6 +226,7 @@
                   " . implode(', ', $insertStrings) . ";";
                   
         $dataLink->query($sql);
+        $this->application->log->add($sql);
       }
       
       $this->dirty['saveFields'] = false;
@@ -243,6 +245,7 @@
       $dataLink = $this->application->dataLink; 
       
       $insertStrings = array();  
+      $indexStrings = array();  
       
       foreach ($this->addedFieldIds as $id)
       {
@@ -250,6 +253,18 @@
         
         $tableFieldName = ($referenceField->dataType == BM_VT_OBJECT) ? $referenceField->fieldName . 'Id' : $referenceField->fieldName;
         $insertStrings[] = 'ADD COLUMN `' . $tableFieldName . '` ' . $dataLink->ffTypeToNativeType($referenceField->dataType, $referenceField->defaultValue);
+        
+        $key = $this->searchItem($id, 'referenceFieldId', $this->properties['fieldIds']);
+        
+        if ($key !== false)
+        {
+          $item = $this->properties['fieldIds'][$key];
+          
+          if (in_array($item->type, array(1, 2)))
+          {
+            $indexStrings[] = 'ADD UNIQUE `' . $tableFieldName . '` (`' . $tableFieldName . '`)';  
+          }
+        }
       }
       
       if (count($insertStrings) > 0)
@@ -257,6 +272,16 @@
         $sql = "ALTER TABLE
                   `" . $this->name . "`" .
                 implode(', ', $insertStrings) . ";";
+                
+        $dataLink->query($sql);
+        $this->application->log->add($sql);
+      }
+      
+      if (count($indexStrings) > 0)
+      {
+        $sql = "ALTER TABLE
+                  `" . $this->name . "`" .
+                implode(', ', $indexStrings) . ";";
                 
         $dataLink->query($sql);
         $this->application->log->add($sql);
@@ -328,6 +353,7 @@
         
         $sql = "DELETE FROM `" . $this->objectName . "` WHERE `id` = " . $this->properties['identifier'] . ";";
         $this->application->dataLink->query($sql);
+        $this->application->log->add($sql);
         
         $sql = "DROP TABLE `" . $this->name . "`;";
         $this->application->dataLink->query($sql);
@@ -350,6 +376,7 @@
         $sql = "CREATE TABLE `" . $this->properties['name'] . "` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`)) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
         $this->application->dataLink->query($sql);
         $this->application->log->add($sql);
+        $this->application->log->add($this->prepareSQL());
       } 
        
       $this->dirty['generateFiles'] = true;
