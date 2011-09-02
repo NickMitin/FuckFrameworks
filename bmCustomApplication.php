@@ -221,22 +221,22 @@
         case 'dataObjectMapIds':
           if (!array_key_exists('dataObjectMapIds', $this->properties))
           {
-            $this->properties['dataObjectMapIds'] = $this->applicationCache->getDataObjectMaps($this, false);
+            $this->properties['dataObjectMapIds'] = $this->data->getDataObjectMaps($this, false);
           }
           return $this->properties['dataObjectMapIds'];
         break;
         case 'dataObjectMaps':
-          return $this->applicationCache->getDataObjectMaps($this);
+          return $this->data->getDataObjectMaps($this);
         break;
         case 'referenceMapIds':
           if (!array_key_exists('referenceMapIds', $this->properties))
           {
-            $this->properties['referenceMapIds'] = $this->applicationCache->getReferenceMaps($this, false);
+            $this->properties['referenceMapIds'] = $this->data->getReferenceMaps($this, false);
           }
           return $this->properties['referenceMapIds'];
         break;
         case 'referenceMaps':
-          return $this->applicationCache->getReferenceMaps($this);
+          return $this->data->getReferenceMaps($this);
         break;
         default:
           $className = 'bm' . ucfirst($propertyName);
