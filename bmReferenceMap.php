@@ -262,7 +262,7 @@
           
           if (in_array($item->type, array(1, 2)))
           {
-            $indexStrings[] = 'ADD UNIQUE `' . $tableFieldName . '` (`' . $tableFieldName . '`)';  
+            $indexStrings[] = 'ADD INDEX `' . $tableFieldName . '` (`' . $tableFieldName . '`)';  
           }
         }
       }

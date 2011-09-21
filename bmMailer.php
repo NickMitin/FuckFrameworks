@@ -34,6 +34,17 @@
     
     private $contexts = array();
     
+    private function getMainContext()
+    {
+      foreach ($this->contexts as $key => $context)
+      {
+        if ($context->type == 'main')
+        {
+          return $key;
+        }
+      }
+    }
+    
     public function __construct($application, $parameters = array())
     {
       parent::__construct($application, $parameters);
@@ -102,9 +113,15 @@
     
     public function processQueue()
     {
-      $sql = 'SELECT `id` FROM `mail` WHERE 1 LIMIT 1';
+      $context = $this->getMainContext();
+      
+      $sql = "SELECT `id` FROM `mail` WHERE `context` = '" . $context . "' LIMIT 1";
       $id = $this->application->dataLink->getValue($sql);
-
+      if ($id == null)
+      {
+        $sql = 'SELECT `id` FROM `mail` WHERE 1 LIMIT 1';
+        $id = $this->application->dataLink->getValue($sql);
+      }
       if ($id > 0)
       {
         $mail = new bmMail($this->application, array('identifier' => $id));
