@@ -27,7 +27,7 @@
   * 
   */
 
-  final class bmDataObjectField extends bmDataObject
+  final class bmDataObjectField extends bmMetaDataObject
   {
     
     public function __construct($application, $parameters = array())
@@ -123,6 +123,7 @@
       $objectDataMapId = $this->properties['dataObjectMapId'];
       $sql = "DELETE FROM `link_dataObjectMap_dataObjectField` WHERE `dataObjectMapId` = " . $dataLink->formatInput($this->identifier, BM_VT_INTEGER);
       $dataLink->query($sql);
+      $this->application->log->add($sql);
             
       $sql = "INSERT IGNORE INTO
                 `link_dataObjectMap_dataObjectField`
@@ -131,6 +132,7 @@
                   (" . $this->properties['identifier'] . ", " . $dataLink->formatInput($objectDataMapId[0]->dataObjectMapId, BM_VT_INTEGER) . ", " . $dataLink->formatInput($objectDataMapId[0]->type, BM_VT_INTEGER) . ");";
                   
       $dataLink->query($sql);
+      $this->application->log->add($sql);
             
       $cacheLink->delete('dataObjectField_dataObjectMap_' . $this->properties['identifier']);
       $cacheLink->delete('dataObjectField_dataObjectMap_' . $this->properties['identifier'] . '_objectArrays');
@@ -142,6 +144,7 @@
       $this->dirty = array();
       $sql = "DELETE FROM `" . $this->objectName . "` WHERE `id` = " . $this->properties['identifier'] . ";";
       $this->application->dataLink->query($sql);
+      $this->application->log->add($sql);
     }
     
     public function getDataObjectMap($load = true)
@@ -174,6 +177,7 @@
     public function store()
     {
       $this->dirty['generateFiles'] = true;
+      $this->application->log->add($this->prepareSQL());
       parent::store();
     }
     

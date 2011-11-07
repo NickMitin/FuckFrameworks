@@ -150,7 +150,7 @@ class bmMySQLLink extends bmFFObject {
         $result = " VARCHAR(255) NOT NULL DEFAULT '" . $defaultValue . "'";
       break;
       case BM_VT_INTEGER:
-        $result = " INT(10) UNSIGNED NOT NULL DEFAULT '" . $defaultValue . "'";
+        $result = " INT(10) NOT NULL DEFAULT '" . $defaultValue . "'";
       break;
       case BM_VT_FLOAT:
         $result = " DOUBLE NOT NULL DEFAULT '" . $defaultValue . "'";

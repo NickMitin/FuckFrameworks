@@ -59,14 +59,14 @@
     public function __construct($application, $parameters = array())
     {
       parent::__construct($application, $parameters);
-      $this->routes = $application->cacheLink->get(C_CACHE_PREFIX . 'sitePages');
+      $this->routes = $application->cacheLink->get('sitePages');
       
       $this->routes = false;
       
       if ($this->routes == false)
       {
         require_once(projectRoot . '/conf/generator.conf');
-        $application->cacheLink->set(C_CACHE_PREFIX . 'sitePages', $this->routes);
+        $application->cacheLink->set('sitePages', $this->routes);
       }
     }
     

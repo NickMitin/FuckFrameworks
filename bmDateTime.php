@@ -214,7 +214,8 @@
       }
       elseif ($offset < 86400)
       {
-        if ($dateInfo['mday'] >= $todayInfo['mday'])
+        
+        if ($dateInfo['mday'] > $todayInfo['mday'])
         {
           $result = 'вчера в ' . $dateInfo['hours'] . ':' . $dateInfo['minutes'];
         }
