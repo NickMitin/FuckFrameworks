@@ -56,7 +56,7 @@
     public function __construct($application, $parameters = array())
     {
       parent::__construct($application, $parameters);
-      $this->cacherExists = function_exists('xcache_isset');
+      $this->cacherExists = function_exists('xcache_isset');  
     }
     
     /**

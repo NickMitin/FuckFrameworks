@@ -191,7 +191,7 @@
           break;
         }
       }
-      if (!$success)
+      /*if (!$success)
       {
         $pageId = $this->application->getObjectIdByFieldName('textPage', 'url', $path);
         if ($pageId > 0)
@@ -200,7 +200,7 @@
           $page = new bmTextPagePage($this->application);
           $result = $page->generate();  
         }
-      }
+      }*/
       if ($result == '' && !$forceEmpty)
       {
         #HTTP/1.1 200 OK

@@ -26,24 +26,13 @@
   * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   * 
   */
-    
+	  
   class bmMailer extends bmFFObject
   { 
     
     private $queue = array();
     
     private $contexts = array();
-    
-    private function getMainContext()
-    {
-      foreach ($this->contexts as $key => $context)
-      {
-        if ($context['type'] == 'main')
-        {
-          return $key;
-        }
-      }
-    }
     
     public function __construct($application, $parameters = array())
     {
@@ -58,47 +47,43 @@
     
     public function send($subject, $messages, $context = 'default')
     {               
-      
-      
       if (!array_key_exists($context, $this->contexts))
       {
         return;
       }
+      
       if (count($messages) > 0)
       {
-        
         require_once('Mail.php');
 
         $context = $this->contexts[$context];
         $subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
         $smtp = null;
-        
         if (class_exists('Mail', false))
         {
-          $smtp = Mail::factory('smtp', array ('host' => $context['host'], 'port' => $context['port'], 'auth' => $context['authorization'], 'username' => $context['username'], 'password' => $context['password'], 'debug' => true));
+          $smtp = Mail::factory('smtp', array ('host' => $context['host'], 'port' => $context['port'], 'auth' => $context['authorization'], 'username' => $context['username'], 'password' => $context['password'], 'debug' => false));
         }
-
+      
+        
         foreach ($messages as $email => $message)
         {
+          var_dump($email, $message);
           if ($this->validate($email))
           {
-            $senderName = '';
             if ($smtp != null)
             {
-              $senderName = $senderName == '' ? $context['senderName'] : $senderName;
-              $sender = $context['senderEmail'];
-              if ($senderName != '')
-              {
-                $sender = '=?UTF-8?B?' . base64_encode($senderName) . '?= <' . $sender . '>';
-              }
-              $headers = array ('From' => $sender, 'To' => $email, 'Subject' => $subject, 'Content-type' => 'text/html; charset=utf-8');
+              $headers = array ('From' => $context['sender'], 'To' => $email, 'Subject' => $subject, 'Content-type' => 'text/html; charset=utf-8');
               $mail = $smtp->send($email, $headers, $message);
+              //var_dump($mail);
+              //return true;
             } 
             elseif (mail($email, $subject, $message, 'Content-type: text/html; charset=utf-8'))
             {
+              //return true;
             }
             else
             {
+              //return false;
             }
           }
         }
@@ -113,15 +98,8 @@
     
     public function processQueue()
     {
-      $context = $this->getMainContext();
-      
-      $sql = "SELECT `id` FROM `mail` WHERE `context` = '" . $context . "' LIMIT 1";
+      $sql = 'SELECT `id` FROM `mail` WHERE 1 LIMIT 1';
       $id = $this->application->dataLink->getValue($sql);
-      if ($id == null)
-      {
-        $sql = 'SELECT `id` FROM `mail` WHERE 1 LIMIT 1';
-        $id = $this->application->dataLink->getValue($sql);
-      }
       if ($id > 0)
       {
         $mail = new bmMail($this->application, array('identifier' => $id));
