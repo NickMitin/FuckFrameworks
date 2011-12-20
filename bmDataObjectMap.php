@@ -27,7 +27,7 @@
   * 
   */
 
-  final class bmDataObjectMap extends bmDataObject
+  final class bmDataObjectMap extends bmMetaDataObject
   {
     private $savedPropertyValues = array();
     private $addedFieldIds = array();
@@ -154,6 +154,7 @@
       
       $sql = "DELETE FROM `link_dataObjectMap_dataObjectField` WHERE `dataObjectMapId` = " . $this->properties['identifier'] . ";";
       $dataLink->query($sql);
+      $this->application->log->add($sql);
       
       $insertStrings = array();
       foreach ($this->properties['fieldIds'] as $fieldId)
@@ -173,6 +174,7 @@
                   " . implode(', ', $insertStrings) . ";";
                   
         $dataLink->query($sql);
+        $this->application->log->add($sql);
       }
       
       $this->dirty['saveFields'] = false;
@@ -1051,7 +1053,7 @@
       }
     }
     
-    public function generateFiles($ancestorPage = '')
+    public function generateFiles()
     {
       $this->checkDirty();
       $fileName = projectRoot . '/controllers/bm' . ucfirst($this->properties['name']) . '.php';
@@ -1122,7 +1124,7 @@
 //        
 //        file_put_contents($fileName, $content);
 //      }
-      
+      /*
       $fileName = documentRoot . '/modules/admin/' . $this->properties['name'] . '/';
       if (!file_exists($fileName))
       {
@@ -1180,7 +1182,7 @@
         $content = preg_replace('/<!--\s+FF::AC::EDITORS::\{\s+-->.+<!--\s+FF::AC::EDITORS::\}\s+-->/ism', $editors, $content);
         file_put_contents($fileName, $content);
       }
-      
+      */
       //$generator = $this->application->generator;
       //$generator->addRoute('~^/admin/' . $this->properties['name'] . '/rp/save/(\d+)/?$~', '/modules/admin/' . $this->properties['name'] . '/rp/save.php', 'bmSave' . ucfirst($this->properties['name']), array($this->properties['name'] . 'Id' => BM_VT_INTEGER));
       //$generator->addRoute('~^/admin/' . $this->properties['name'] . '/(new|\d+)/?$~', '/modules/admin/' . $this->properties['name'] . '/index.php', 'bm' . ucfirst($this->properties['name']) . 'EditPage', array($this->properties['name'] . 'Id' => BM_VT_INTEGER));
@@ -1219,6 +1221,7 @@
         
         $sql = "DELETE FROM `" . $this->objectName . "` WHERE `id` = " . $this->properties['identifier'] . ";";
         $this->application->dataLink->query($sql);
+        $this->application->log->add($sql);
                 
         $sql = "DROP TABLE `" . $this->name . "`;";
         $this->application->dataLink->query($sql);
@@ -1245,6 +1248,7 @@
         }
                 
         $this->application->log->add($sql);
+        $this->application->log->add($this->prepareSQL());
         
         // $dataObjectField = new bmDataObjectField($this->application, array('propertyName' => 'identifier', 'fieldName' => 'id', 'type' => BM_VT_INTEGER, 'defaultValue' => 0));
         // $this->addField($dataObjectField->identifier, 1);

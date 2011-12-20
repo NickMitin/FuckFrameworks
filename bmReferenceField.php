@@ -27,7 +27,7 @@
   * 
   */
 
-  final class bmReferenceField extends bmDataObject
+  final class bmReferenceField extends bmMetaDataObject
   {
     
     public function __construct($application, $parameters = array())
@@ -127,6 +127,7 @@
       
       $sql = "DELETE FROM `link_referenceField_dataObjectMap` WHERE `referenceFieldId` = " . $dataLink->formatInput($this->properties['identifier'], BM_VT_INTEGER) . ";";
       $dataLink->query($sql);
+      $this->application->log->add($sql);
       
       if (isset($this->properties['referencedObjectId']) && $this->properties['referencedObjectId'] != 0)
       {
@@ -137,6 +138,7 @@
                     (" . $dataLink->formatInput($this->properties['referencedObjectId'], BM_VT_INTEGER) . ", " . $dataLink->formatInput($this->properties['identifier'], BM_VT_INTEGER) . ");";
                     
         $dataLink->query($sql);
+        $this->application->log->add($sql);
       }
       
       $cacheLink->delete('referenceField_dataObjectMap_' . $this->properties['identifier']);
@@ -154,6 +156,8 @@
           exit;
         }
       }
+      
+      $this->application->log->add($this->prepareSQL());
       
       $this->dirty['generateFiles'] = true;
       parent::store();
@@ -182,6 +186,7 @@
       
       $sql = "DELETE FROM `" . $this->objectName . "` WHERE `id` = " . $this->properties['identifier'] . ";";
       $this->application->dataLink->query($sql);
+      $this->application->log->add($sql);
       
       $this->dirty = array();
     }

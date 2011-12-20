@@ -178,9 +178,9 @@
           case BM_VT_DATETIME:
             return $result;
           break;
-          case BM_VT_PASSWORD:
+          /*case BM_VT_PASSWORD:
             return '';
-          break;
+          break;*/
           default:
             return $result;
           break;
@@ -774,7 +774,6 @@
           break;
         }
       }
-      
       $this->dirty['validateCache'] = false;
     } 
   }

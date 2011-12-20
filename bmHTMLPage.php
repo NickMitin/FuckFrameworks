@@ -129,6 +129,10 @@
       $this->addHTMLMetaDatum('meta', 'description', '<meta name="description" content="' . $description . '" />');
     }
     
+    public function addCustomMeta($key, $name, $content)
+    {
+      $this->addHTMLMetaDatum('meta', $name, '<meta ' . $key . '="' . $name . '" content="' . $content . '" />');
+    }
     
     public function addMetas($meta)
     {

@@ -107,6 +107,7 @@ class bmTextProcessor extends bmCustomTextProcessor
           }
           else
           {
+            var_dump($child->nodeName);
             //копируем содержимое запрещённой ноды
             foreach ($child->childNodes as $childChild)
             {
