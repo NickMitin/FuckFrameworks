@@ -119,6 +119,11 @@
       $this->addHTMLMetaDatum('meta', $name, '<meta http-equiv="' . $name . '" content="' . $content . '" />');
     }
     
+    public function addCustomMeta($name, $content)
+    {
+      $this->addHTMLMetaDatum('meta', $name, '<meta http-equiv="' . $name . '" content="' . $content . '" />');
+    }
+    
     public function addMetas($meta)
     {
       foreach ($meta as $name => $content)
