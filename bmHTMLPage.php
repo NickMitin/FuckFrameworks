@@ -119,9 +119,19 @@
       $this->addHTMLMetaDatum('meta', $name, '<meta http-equiv="' . $name . '" content="' . $content . '" />');
     }
     
-    public function addCustomMeta($name, $content)
+    public function addKeywords($keywords)
     {
-      $this->addHTMLMetaDatum('meta', $name, '<meta http-equiv="' . $name . '" content="' . $content . '" />');
+      $this->addHTMLMetaDatum('meta', 'keywords', '<meta name="keywords" content="' . $keywords . '" />');
+    }
+    
+    public function addDescription($description)
+    {
+      $this->addHTMLMetaDatum('meta', 'description', '<meta name="description" content="' . $description . '" />');
+    }
+    
+    public function addCustomMeta($key, $name, $content)
+    {
+      $this->addHTMLMetaDatum('meta', $name, '<meta ' . $key . '="' . $name . '" content="' . $content . '" />');
     }
     
     public function addMetas($meta)

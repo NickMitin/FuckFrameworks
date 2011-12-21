@@ -38,7 +38,7 @@
     {
       foreach ($this->contexts as $key => $context)
       {
-        if ($context->type == 'main')
+        if ($context['type'] == 'main')
         {
           return $key;
         }
