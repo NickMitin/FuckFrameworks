@@ -96,7 +96,6 @@
             $parameters[] = "      '" . $name . "' => " . $this->ffTypeToString($type);
           }
           $routeString .= ",\n    'parameters' => array\n    (\n" . implode(",\n", $parameters) . "\n    )";
-          
         }
         $routeString .= "\n  )";
         $routes[] = $routeString;
@@ -130,7 +129,7 @@
       $status = 200;
       $routes = $this->routes;
       $forceEmpty = false;
-      
+      $success = false;
       foreach ($routes as $route => $routeData)
       {
         if (preg_match($route, $path, $matches))
@@ -188,10 +187,20 @@
             if (BM_C_VERBOSE >= 1) echo '<br />' . $time;
             if (BM_C_VERBOSE >= 2) echo '<br />' . $this->application->dataLink->queriesCount;
           }
+          $success = true;
           break;
         }
       }
-
+      if (!$success)
+      {
+        $pageId = $this->application->getObjectIdByFieldName('textPage', 'url', $path);
+        if ($pageId > 0)
+        {
+          require_once(documentRoot . '/modules/view/textPage/index.php');
+          $page = new bmTextPagePage($this->application);
+          $result = $page->generate();  
+        }
+      }
       if ($result == '' && !$forceEmpty)
       {
         #HTTP/1.1 200 OK

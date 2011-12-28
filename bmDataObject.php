@@ -274,6 +274,7 @@
       {
         foreach ($this->map as $propertyName => $property) 
         {                                                                                                                          
+          //ar_dump($propertyName);
           $this->properties[$propertyName] = $this->formatProperty($propertyName, $property['dataType'], $cache->$propertyName);   
         }  
         $this->dirty['store'] = false; 
