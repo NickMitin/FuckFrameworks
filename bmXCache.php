@@ -180,5 +180,20 @@
         return false;
       }
     }
+    
+    public function deleteByPrefix($key)
+    {
+      if ($key != null)
+      {
+        $result = xcache_unset_by_prefix($key);
+      }
+      else
+      {
+        return false;
+      }
+    }
   }
+  
+
+  
 ?>
