@@ -38,7 +38,7 @@
     {
       foreach ($this->contexts as $key => $context)
       {
-        if ($context->type == 'main')
+        if ($context['type'] == 'main')
         {
           return $key;
         }
@@ -58,7 +58,6 @@
     
     public function send($subject, $messages, $context = 'default')
     {               
-      
       
       if (!array_key_exists($context, $this->contexts))
       {
