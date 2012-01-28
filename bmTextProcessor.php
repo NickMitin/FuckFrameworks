@@ -63,8 +63,9 @@ class bmTextProcessor extends bmCustomTextProcessor
       $this->allowedAttributes = null;
       
       
-      
-      return $text;
+      //return $this->typo($text);
+      //return $this->post_typo($text);
+      return $this->text;
     }
 
     private function cleanNode2(DOMElement $node)
@@ -554,6 +555,260 @@ class bmTextProcessor extends bmCustomTextProcessor
         $string = trim($string) . '...';
       }
       return $string;
-    }    
+    }
+
+    private function typo_tag_encode($match)
+    {
+      return '<'.base64_encode($match[1]).'>';
+    }
+
+    private function typo_tag_decode($match)
+    {
+      return '<'.base64_decode($match[1]).'>';
+    }
+
+    private function typo_savetag_encode($match)
+    {
+      return '<%'.base64_encode('%'.$match[1]).'>';
+    }
+    
+    private function typo_savetag_decode($match)
+    {  $t=base64_decode($match[1]);
+      if($t[0]!='%')return '<%'.$match[1].'>';
+      return '<'.substr($t,1).'>';
+    }
+
+
+    private function typo_nbsp($match)
+    {
+      $match_t=trim(preg_replace('/<[^>]+>/u','',$match[0]));
+      //if(substr($match_t,-1,1)=='.')return $match[0];
+      $match_t=preg_replace('/[\s\()-]/u','',$match_t);
+
+      $t=mb_strlen($match_t);
+      if($t>0&&$t<4)$match[0]=$match[1].'&nbsp;';
+
+      return $match[0];
+    }
+
+    private function typo($text,$settings='none')
+    {
+
+      if($text=='')return '';
+
+      $config=array(
+        'cleen_utf'=>true,
+      );
+
+      if($settings!='none')$config=$settings+$config;
+
+      $spec_chars_normalaize=array(
+      '&quot;'=>'"',
+      '&#34;'=>'"',
+      '&#034;'=>'"',
+
+      '&#39;'=>"'",
+      '&#039;'=>"'",
+
+      '&#160;'=>'&nbsp;',
+      '&#xA0;'=>'&nbsp;',
+      chr(194).chr(160)=>'&nbsp;',
+
+      '&mdash;'=>'&#151;',
+      chr(226).chr(128).chr(148)=>'&#151;',
+
+      '«'=>'&laquo;',
+      '»'=>'&raquo;',
+      '„'=>'&bdquo;',
+      '”'=>'&rdquo;',
+      '“'=>'&ldquo;',
+      "‘"=>'&lsquo;',
+      "’"=>'&rsquo;',
+      );
+
+      $spec_chars_good=array(
+      '&quot;'=>'"',
+      '&#34;'=>'"',
+      '&#034;'=>'"',
+
+      '&#39;'=>"'",
+      '&#039;'=>"'",
+
+      '&lsquo;'=>"‘",
+      '&rsquo;'=>"’",
+
+      '&ldquo;'=>'“',
+      '&#147;'=>'“',
+      '&#x93;'=>'“',
+
+      '&rdquo;'=>'”',
+      '&#148;'=>'”',
+      '&#x94;'=>'”',
+
+      '&bdquo;'=>'„',
+
+      '&mdash;'=>chr(226).chr(128).chr(148),
+      '&#151;'=>chr(226).chr(128).chr(148),
+
+
+      '&laquo;'=>'«',
+      '&#171;'=>'«',
+      '&#xAB;'=>'«',
+
+      '&raquo;'=>'»',
+      '&#187;'=>'»',
+      '&#xBB;'=>'»',
+
+      //'&nbsp;'=>chr(194).chr(160),
+      '&#160;'=>chr(194).chr(160),
+      '&#xA0;'=>chr(194).chr(160),
+
+      //'&#8209;'=>chr(226).chr(128).chr(145),
+      //'-'=>chr(226).chr(128).chr(145),
+
+      '&copy;'=>'©',
+      '&#169;'=>'©',
+      '&reg;'=>'®',
+      '&#174;'=>'®',
+      '&trade;'=>'™',
+      '&#153;'=>'™',
+      '&hellip;'=>'...',
+      );
+
+
+
+      $symbols = array(
+      '(c)'=>'&#169;',
+      '(r)'=>'&#174;',
+      '(tm)'=>'&#153;',
+      '(C)'=>'&#169;',
+      '(R)'=>'&#174;',
+      '(TM)'=>'&#153;',
+      '...'=>'&hellip;'
+      );
+
+      //Сохраняем нужное
+      $text=preg_replace_callback('/<((script|style|code|save)[^>]*>.+<\/\2)>/Uus', 'typo_savetag_encode', $text);
+      $text=preg_replace_callback('/<([^%][^>]*)>/us', 'typo_tag_encode', $text);
+      $text=strtr($text,$symbols);
+      $text=strtr($text,$spec_chars_normalaize);
+
+      //Кавычки
+
+
+      $text=preg_replace('/([^\w])"([^"]*[^\d])"([^\w])/Usu', '\1&laquo;\2&raquo;\3', ' '.$text.' '); //russian
+      $text=preg_replace('/([^\w])"([^"]*\d"[^"]+)"([^\w])/Usu', '\1&laquo;\2&raquo;\3', $text); //russian
+      $text=preg_replace('/([^\w])"([^"]*[^\d])"([^\w])/Usu', '\1&laquo;\2&raquo;\3', $text); //russian
+      $text=preg_replace('/([^\w])"([^"]*)"([^\w])/Usu', '\1&laquo;\2&raquo;\3', $text); //russian
+
+      $text=preg_replace('/(&laquo;)\s+/Uus', '\1', $text);
+      $text=preg_replace('/\s+(&raquo;)/Uus', '\1', $text);
+
+      //$text=preg_replace('/&laquo;(.*)&laquo;(.*)&raquo;(.*)&raquo;/Usu', '&laquo;\1&bdquo;\2&ldquo;\3&raquo;', $text); //russian
+
+      $text=preg_replace('/([^\w])\'([^\']*)\'([^\w])/Usu', '\1&lsquo;\2&rsquo;\3', $text);
+
+
+      //Пробелы у пунктуации - иногда лучше отключать
+      $text = preg_replace('/\s+([\.,;:\!\?])(\s+)/u','\1\2', $text);
+
+      $text=trim($text);
+
+
+      //Много тире
+      $text = preg_replace('/\s*-{2,3}\s*/us','&nbsp;&#151; ', $text);
+
+
+      //Длинное тире
+      $text = preg_replace('/\s+-\s+/us','&nbsp;&#151; ', $text);
+      if($text[0]=='-'&&$text[1]==' ')$text='&#151;'.substr($text,1);
+
+      //Короткие слова
+      $text=preg_replace('/\s+(\w{1,3}($|\.))/u', '&nbsp;\1', $text);
+
+      //Удаляем лишние пробелы
+      $text = preg_replace('/\s*&nbsp;\s*/u','&nbsp;', $text);
+      $text = str_replace(' &#151;','&nbsp;&#151;', $text);
+      $text = str_replace(' -','&nbsp;-', $text);
+
+      //language part
+      //back nbsp
+      $text=preg_replace('/\s+(бы|ли|же)([\s\W])/u', '&nbsp;\1\2', $text);
+
+      if($config['cleen_utf'])
+      $text=strtr($text,$spec_chars_good);
+
+      //nbsp
+      $text=preg_replace_callback('/([^\s]+)[ \t]+/u', 'typo_nbsp', $text);
+
+      if($config['cleen_utf'])
+      //$text=str_replace('&nbsp;',chr(194).chr(160),$text);
+
+
+      //------------------------------------------------------------------------------
+      //Восстанавливаем нужное1
+      $text=preg_replace_callback('/<([^%][^>]*)>/u', 'typo_tag_decode', $text);
+
+      //вынос кавычек из ссылок
+      $text=preg_replace('/<a([^>]+)>«([^<]+)»<\/a>/usi', '«<a\1>\2</a>»', $text);
+
+      //Восстанавливаем нужное2
+      $text=preg_replace_callback('/<%([^>]+)>/u', 'typo_savetag_decode', $text);
+
+      return $text;
+    }
+    
+    private function post_typo($text)
+    {
+      
+      //Сохраняем нужное
+      $text=preg_replace_callback('/<((script|style|code|save|nobr)[^>]*>.+<\/\2)>/Uus', 'typo_savetag_encode', $text);
+      $text=preg_replace_callback('/<([^%][^>]*)>/su', 'typo_tag_encode', $text);
+
+      //непеносимый дефиз
+      $text=preg_replace('/[A-zА-я0-9]+-[A-zА-я0-9]+/u', '<nobr class="typo">\0</nobr>', $text);
+      $text=preg_replace_callback('/<((nobr)[^>]*>.+<\/\2)>/Uus', 'typo_savetag_encode', $text);
+
+      //вынос
+      $text=preg_replace('/(\s|&nbsp;|'.chr(194).chr(160).')*(«|&laquo;)/su','<d2JyIGNsYXNzPSJ0eXBvIg==><span class="slaquo-s typo"> </span> <span class="hlaquo-s typo">\2</span>',$text);
+      $text=preg_replace('/(\s|&nbsp;|'.chr(194).chr(160).')*(„|&bdquo;)/su','<d2JyIGNsYXNzPSJ0eXBvIg==><span class="sbdquo typo"> </span> <span class="hbdquo typo">\2</span>',$text);
+      $text=preg_replace('/(\s|&nbsp;|'.chr(194).chr(160).')*\(/su','<d2JyIGNsYXNzPSJ0eXBvIg==><span class="sbrace typo"> </span> <span class="hbrace typo">(</span>',$text);
+
+      if(substr($text,0,63)=='<d2JyIGNsYXNzPSJ0eXBvIg==><span class="slaquo-s typo"> </span> ')$text=substr($text,63);
+      if(substr($text,0,61)=='<d2JyIGNsYXNzPSJ0eXBvIg==><span class="sbrace typo"> </span> ')$text=substr($text,61);
+      if(substr($text,0,61)=='<d2JyIGNsYXNzPSJ0eXBvIg==><span class="sbdquo typo"> </span> ')$text=substr($text,61);
+
+      $text=preg_replace_callback('/<((span)[^>]*>.+<\/\2)>/Uus', 'typo_savetag_encode', $text);
+
+      //Восстанавливаем нужное
+      $text=preg_replace_callback('/<([^%][^>]*)>/u', 'typo_tag_decode', $text);
+      $text=preg_replace_callback('/<%([^>]+)>/u', 'typo_savetag_decode', $text);
+
+      $text=preg_replace('/(<(p|br)[^>]*>(\s|&nbsp;|'.chr(194).chr(160).')*)<wbr class="typo"><span class="slaquo-s typo">(\s|&nbsp;)<\/span> /ius','\1',$text);
+      $text=preg_replace('/(<(p|br)[^>]*>(\s|&nbsp;|'.chr(194).chr(160).')*)<wbr class="typo"><span class="sbrace typo">(\s|&nbsp;)<\/span> /ius','\1',$text);
+      $text=preg_replace('/(<(p|br)[^>]*>(\s|&nbsp;|'.chr(194).chr(160).')*)<wbr class="typo"><span class="sbdquo typo">(\s|&nbsp;)<\/span> /ius','\1',$text);
+
+      return $text;
+    }
+
+
+    private function unpost_typo($text)
+    {
+      $text=preg_replace('/<nobr class="typo">(.+)<\/nobr>/Uu','\1',$text);
+
+      $text=str_replace('<span class="hbrace typo">(</span>', '(', $text);
+
+      $text=str_replace('<span class="hlaquo-s typo">«</span>', '«', $text);
+      $text=str_replace('<span class="hlaquo-s typo">&laquo;</span>', '&laquo;', $text);
+
+      $text=str_replace('<span class="hbdquo typo">„</span>', '„', $text);
+      $text=str_replace('<span class="hbdquo typo">&bdquo;</span>', '&bdquo;', $text);
+
+      $text=str_replace('<wbr class="typo"><span class="slaquo-s typo"> </span> ', ' ', $text);
+      $text=str_replace('<wbr class="typo"><span class="sbrace typo"> </span> ', ' ', $text);
+      $text=str_replace('<wbr class="typo"><span class="sbdquo typo"> </span> ', ' ', $text);
+      /**/
+      return $text;
+    }
   }
-  ?>
+?>
