@@ -185,7 +185,7 @@
     {
       if ($key != null)
       {
-        $result = xcache_unset_by_prefix($key);
+        $result = xcache_unset_by_prefix($this->prefix . $key);
       }
       else
       {
