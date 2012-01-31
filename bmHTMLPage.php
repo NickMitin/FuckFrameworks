@@ -80,7 +80,7 @@
     public function addScript($source)
     {
       $src = mb_strpos($source, 'http') === 0 ? $source : $this->application->contentProvider->getStaticServer() . '/scripts/' . $source . '.js';
-      $this->addHTMLMetaDatum('scripts', $source, '<script type="text/javascript" src="' . $src . '"></script>');
+      $this->addHTMLMetaDatum('scripts', $source, '<script type="text/javascript" src="' . $src . '?build=' . BM_C_BUILD . '"></script>');
     }
     
     public function addScripts($scripts)
@@ -98,7 +98,7 @@
     
     public function addCSS($source)
     {
-      $this->addHTMLMetaDatum('CSS', $source, '<link rel="stylesheet" type="text/css" href="' . $this->application->contentProvider->getStaticServer() . '/styles/' . $source . '.css" />');
+      $this->addHTMLMetaDatum('CSS', $source, '<link rel="stylesheet" type="text/css" href="' . $this->application->contentProvider->getStaticServer() . '/styles/' . $source . '.css?build=' . BM_C_BUILD . '" />');
     }
     
     public function addCSSs($CSSs)
@@ -117,6 +117,16 @@
     public function addMeta($name, $content)
     {
       $this->addHTMLMetaDatum('meta', $name, '<meta http-equiv="' . $name . '" content="' . $content . '" />');
+    }
+    
+    public function addKeywords($keywords)
+    {
+      $this->addHTMLMetaDatum('meta', 'keywords', '<meta name="keywords" content="' . $keywords . '" />');
+    }
+    
+    public function addDescription($description)
+    {
+      $this->addHTMLMetaDatum('meta', 'description', '<meta name="description" content="' . $description . '" />');
     }
     
     public function addCustomMeta($key, $name, $content)

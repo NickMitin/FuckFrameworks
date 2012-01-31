@@ -104,7 +104,7 @@ class bmMySQLLink extends bmFFObject {
 			} else {
         if ($this->application->debug) 
         {
-				  print $sqltext . "\n" . mysql_error($this->linkId);
+          print $sqltext . "\n" . mysql_error($this->linkId);
           echo '<pre>';
         }
 			}

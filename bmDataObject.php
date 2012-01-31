@@ -178,9 +178,9 @@
           case BM_VT_DATETIME:
             return $result;
           break;
-          case BM_VT_PASSWORD:
+          /*case BM_VT_PASSWORD:
             return '';
-          break;
+          break;*/
           default:
             return $result;
           break;
@@ -274,6 +274,7 @@
       {
         foreach ($this->map as $propertyName => $property) 
         {                                                                                                                          
+          //ar_dump($propertyName);
           $this->properties[$propertyName] = $this->formatProperty($propertyName, $property['dataType'], $cache->$propertyName);   
         }  
         $this->dirty['store'] = false; 

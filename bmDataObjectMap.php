@@ -1244,7 +1244,7 @@
         $sql = "CREATE TABLE `" . $this->properties['name'] . "` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`)) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
         if (!$this->application->dataLink->query($sql))
         {
-        //  throw new Exception();
+          throw new Exception();
         }
                 
         $this->application->log->add($sql);

@@ -98,5 +98,10 @@
     {
       return $this->cacherObject->delete($key);
     }
+    
+    public function deleteByPrefix($key)
+    {
+      return $this->cacherObject->deleteByPrefix($key);
+    }
   }
 ?>
