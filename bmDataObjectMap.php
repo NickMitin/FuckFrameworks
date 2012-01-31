@@ -1223,9 +1223,12 @@
         $this->application->dataLink->query($sql);
         $this->application->log->add($sql);
                 
-        $sql = "DROP TABLE `" . $this->name . "`;";
-        $this->application->dataLink->query($sql);
-        $this->application->log->add($sql);
+        if ($this->application->dataLink->tableExists($this->name))
+        {
+          $sql = "DROP TABLE `" . $this->name . "`;";
+          $this->application->dataLink->query($sql);
+          $this->application->log->add($sql);
+        }
             
         $this->deleteFiles();
       }
@@ -1241,7 +1244,7 @@
     {
       if ($this->properties['identifier'] == 0)
       {
-        $sql = "CREATE TABLE `" . $this->properties['name'] . "` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`)) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
+        $sql = "CREATE TABLE IF NOT EXISTS `" . $this->properties['name'] . "` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`)) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
         if (!$this->application->dataLink->query($sql))
         {
           throw new Exception();
@@ -1267,9 +1270,12 @@
     
     public function renameTable()
     {
-      $sql = "RENAME TABLE `" . $this->savedPropertyValues['name'] . "` TO `" . $this->properties['name'] . "`;";
-      $this->application->dataLink->query($sql);
-      $this->application->log->add($sql);
+      if ($this->application->dataLink->tableExists($this->savedPropertyValues['name']) && !$this->application->dataLink->tableExists($this->properties['name']))
+      {
+        $sql = "RENAME TABLE `" . $this->savedPropertyValues['name'] . "` TO `" . $this->properties['name'] . "`;";
+        $this->application->dataLink->query($sql);
+        $this->application->log->add($sql);
+      }
     }
     
     public function getFields($load = true)
