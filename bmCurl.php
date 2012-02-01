@@ -79,7 +79,17 @@
     */
     private function onCurlWrite($curl, $data) 
     {
-      $result = strlen($data);
+      /**
+       * @see
+       * Функция-обработчик данных от curlа должна возвращать строго размер в байтах, иначе
+       * при включенном mbstring будет ошибка вроде "Failed writing body", с внешней
+       * ошибкой libcurl #23.
+       * 
+       * так НЕЛЬЗЯ   $result = strlen($data);
+       * так НУЖНО    $result = mb_strlen($data, '8bit');
+       */
+      
+      $result = mb_strlen($data, '8bit');
       $this->buffer .= $data;
       return $result;
     }
