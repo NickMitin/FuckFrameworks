@@ -439,6 +439,7 @@
       
       if ($this->application->debug == false || $this->storage == 'dods')
       {
+
         $result = $this->application->cacheLink->get($objectName . $objectId); 
       }
       else
