@@ -32,6 +32,10 @@
   define('BM_RP_TYPE_JSONP', 3);
   define('BM_RP_TYPE_XML', 4);
   define('BM_RP_TYPE_RAW', 5);
+  
+  header('Cache-Control: no-cache, must-revalidate');
+  header('Expires: Sat, 26 Jul 1997 05:00:00 GMT');
+  header('Pragma: no-cache');
 
 	
   abstract class bmCustomRemoteProcedure extends bmFFObject
