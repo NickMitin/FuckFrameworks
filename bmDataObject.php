@@ -725,7 +725,7 @@
             
             $objectArrays[$key] = $this->getObjects($objectArrays[$key], $objectName);
           }  
-          
+
           foreach ($result as $order => $dummy)
           {
             foreach ($objectArrays as $key => $dummy)
