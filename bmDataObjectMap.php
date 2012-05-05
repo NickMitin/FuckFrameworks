@@ -564,7 +564,7 @@
       $propertyName = $item->referenceField->propertyName;
       $ucPropertyName = ucfirst($propertyName);
       $tableName = $referenceMap->name;
-        
+      
       foreach ($referenceMap->fields as $referenceFieldItem)
       {
         if ($referenceFieldItem->referenceField->referencedObjectId == $this->properties['identifier'] && $referenceFieldItem->type == BM_RT_MAIN)
