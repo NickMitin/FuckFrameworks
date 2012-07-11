@@ -578,11 +578,13 @@
           if ($referenceFieldItem->type == BM_RT_REFERRED)
           {
             $otherObjectPropertyName = $referenceFieldItem->referenceField->referencedObject->name;    
+            $otherObjectFieldName = $referenceFieldItem->referenceField->fieldName . 'Id';
           } 
         }
         else
         {
           $otherObjectPropertyName = $referenceFieldItem->referenceField->propertyName;  
+          $otherObjectFieldName = $referenceFieldItem->referenceField->fieldName . 'Id';
         } 
       }                                    
       

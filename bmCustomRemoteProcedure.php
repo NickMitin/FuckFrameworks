@@ -46,7 +46,6 @@
     {
       parent::__construct($application, $parameters);
       $this->returnTo = array_key_exists('returnTo', $parameters) ? $parameters['returnTo'] : $this->application->cgi->getReferer('returnTo', '');
-
     }
     
     public function execute() 

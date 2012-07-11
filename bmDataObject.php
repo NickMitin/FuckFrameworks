@@ -439,7 +439,7 @@
       
       if ($this->application->debug == false || $this->storage == 'dods')
       {
-        $result = $this->application->cacheLink->get($objectName . $objectId); 
+        $result = $this->application->cacheLink->get($objectName . $objectId);
       }
       else
       {
@@ -775,6 +775,33 @@
         }
       }
       $this->dirty['validateCache'] = false;
-    } 
+    }
+    
+    protected function itemDiff($sourceArray, $subtractedArray, $propertyName) 
+    {
+      return array_udiff($sourceArray, $subtractedArray, function($a, $b) use ($propertyName)
+      {
+        if ($a->$propertyName == $b->$propertyName)
+        {
+          return 0;
+        }
+        else
+        {
+          return $a->$propertyName > $b->$propertyName ? 1 : -1;
+        }
+      });
+    }
+    
+    protected function itemImplode($itemArray, $propertyName) 
+    {
+      $idArray = array();
+      
+      foreach ($itemArray as $item)
+      {
+        $idArray[] = $item->$propertyName;
+      }
+      
+      return implode(', ', $idArray);
+    }
   }
 ?>

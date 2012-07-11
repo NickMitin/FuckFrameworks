@@ -44,9 +44,6 @@
       $identifier = $application->cgi->getGPC(C_SESSION_COOKIE_NAME, '', BM_VT_STRING);
       
       parent::__construct($application, array('identifier' => $identifier));
-			
-			// $application->cgi->deleteCookie(C_SESSION_COOKIE_NAME, C_SESSION_COOKIE_OLD_DOMAIN);
-      // $application->cgi->deleteCookie(C_SESSION_COOKIE_NAME, C_SESSION_COOKIE_OLD_DOMAIN_WWW);
       
       $application->cgi->addCookie(C_SESSION_COOKIE_NAME, $this->identifier, false, '/', C_SESSION_COOKIE_DOMAIN, time() + C_SESSION_LIFE_TIME);
 		} 
