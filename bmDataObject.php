@@ -370,14 +370,14 @@
           $cacheObject->identifier = $saveIdentifier;
         }
         
-        $this->application->cacheLink->set($this->objectName . $this->properties['identifier'], $cacheObject, BM_CACHE_SHORT_TTL);
+        $this->application->cacheLink->set($this->objectName . '_' . $this->properties['identifier'], $cacheObject, BM_CACHE_SHORT_TTL);
       }
       
       
       if ($this->storage == 'dods')
       {
-        $this->application->cacheLink->set($this->objectName . $this->properties['identifier'], $cacheObject, BM_CACHE_LONG_TTL, true);  
-        $result = $this->application->cacheLink->get($this->objectName . $this->properties['identifier']); 
+        $this->application->cacheLink->set($this->objectName . '_' . $this->properties['identifier'], $cacheObject, BM_CACHE_LONG_TTL, true);  
+        $result = $this->application->cacheLink->get($this->objectName . '_' . $this->properties['identifier']); 
       }
     }
     
@@ -439,7 +439,7 @@
       
       if ($this->application->debug == false || $this->storage == 'dods')
       {
-        $result = $this->application->cacheLink->get($objectName . $objectId);
+        $result = $this->application->cacheLink->get($objectName . '_' . $objectId); 
       }
       else
       {
@@ -460,7 +460,7 @@
         } 
         else 
         {
-          $this->application->cacheLink->set($objectName . $objectId, $result, BM_CACHE_SHORT_TTL);
+          $this->application->cacheLink->set($objectName . '_' . $objectId, $result, BM_CACHE_SHORT_TTL);
         }
       }
 
@@ -479,7 +479,7 @@
       {
         if ($this->application->debug == false || $this->storage == 'dods')
         {
-          if ($object = $this->application->cacheLink->get($objectName . $objectId))
+          if ($object = $this->application->cacheLink->get($objectName . '_' . $objectId))
           {
             if (is_object($object))
             {
@@ -514,7 +514,7 @@
         
         while ($object = $qObjects->nextObject())
         {                    
-          $this->application->cacheLink->set($objectName . $object->identifier, $object, BM_CACHE_SHORT_TTL);  
+          $this->application->cacheLink->set($objectName . '_' . $object->identifier, $object, BM_CACHE_SHORT_TTL);  
           $object->load = false;
                                                                                                                           
           foreach ($objectsFilter as $order => $objectId) 
@@ -724,7 +724,7 @@
             
             $objectArrays[$key] = $this->getObjects($objectArrays[$key], $objectName);
           }  
-          
+
           foreach ($result as $order => $dummy)
           {
             foreach ($objectArrays as $key => $dummy)
@@ -750,30 +750,6 @@
     
     protected function validateCache()
     {
-      foreach ($this->cacheQueue as $methodKey => $objectIds)
-      {
-        switch ($methodKey)
-        {
-          case 'country__store':
-            foreach ($objectIds as $objectId)
-            {
-              $this->application->cacheLink->delete('country_synonym_' . $objectId);
-            }
-          break;
-          case 'resort__store':
-            foreach ($objectIds as $objectId)
-            {
-              $this->application->cacheLink->delete('resort_synonym_' . $objectId);
-            }
-          break;
-          case 'hotel__store':
-            foreach ($objectIds as $objectId)
-            {
-              $this->application->cacheLink->delete('hotel_synonym_' . $objectId);
-            }
-          break;
-        }
-      }
       $this->dirty['validateCache'] = false;
     }
     

@@ -105,7 +105,7 @@
     }
     
     public function generate($path)
-    {
+    {   
       $pathParts = explode('?', $path);
       
       if (count($pathParts) > 1)
@@ -209,7 +209,8 @@
         $page = new bm404Page($this->application);
         $result = $page->generate();
         $status = 404;
-      }   
+      }
+
       return $result;
     }
     

@@ -295,137 +295,12 @@
 				$template = trim(file_get_contents($path . '/templates/' . $templateName . '.html'));
 
 				$this->cacheLink->set(C_TEMPLATE_PREFIX . $templateName, $template);
-				$this->updateTemplateStack($templateName);
 			}
 			if ($escape)
 			{
 				$template = addcslashes(trim($template), '"');
 			}
 			return $template;
-		}
-		
-    /**
-    * Возвращает (если возможно - кешированный) результат выполнения указанной функции.
-    * Функция пытается вернуть кешированный результат выполнения метода. Если это невозможно, выполняет метод и сохраняет его в кеше.
-    * В роли кешера выступает файловая система (статический кеш). 
-    * 
-    * @param string $cacheName имя метода класса генератора (по совместительству - кешированной страницы)
-    * @param string $generator имя класса генератора
-    * @param int $TTL время жизни кешированной страницы
-    * @return string результат выполнения генератора
-    */
-		public function getStaticCache($cacheName, $generator, $TTL = 0)
-		{
-			$cachePath = contentRoot . 'cache/' . $cacheName . '.html';
-			$result = false;
-			if (!file_exists($cachePath) || ($TTL > 0 && filemtime($cachePath) < time() - $TTL) || $TTL < 0)
-			{
-				
-				$result = call_user_func($generator, $cacheName);
-				
-				$this->uploader->saveToFile('cache', $cacheName, $result);
-			}
-			else
-			{
-				$result = file_get_contents($cachePath);
-			}
-			return $result;
-		}
-		
-    /**
-    * Возвращает, если возможно, сохраненное в кеше значение 
-    * Функция вернет false, если в кеше нет значения с переданным ключем, а также если приложение находится в режиме отладки
-    * 
-    * @param string $cacheName ключ 
-    * @return mixed кешированное значение или false в случае неудачи
-    */
-		public function getHTMLCache($cacheName) 
-		{
-			$result = $this->debug ? false : $this->cacheLink->get($cacheName);
-			return $result;
-		}
-		
-    /**
-    * Сохраняет в кеше переданное значение с указанным ключем и временем жизни объекта равным значению константы BM_CACHE_MIDDLE_TTL
-    *
-    * @param string $cacheName ключ
-    * @param mixed $content значение
-    */
-		public function setHTMLCache($cacheName, $content) 
-		{
-			$this->cacheLink->set($cacheName, $content, BM_CACHE_MIDDLE_TTL);
-		}
-		
-		/**
-    * Удаляет значение из статического кеша
-    * В роли кешера используется файловая система.
-    *
-    * @param string $cacheName ключ
-    */
-		public function removeStaticCache($cacheName)
-		{
-			$cachePath = contentRoot . 'cache/' . $cacheName . '.html';
-			if (file_exists($cachePath))
-			{
-				unlink($cachePath);
-			}
-		}
-		
-    /**
-    * Возвращает содержимое шаблона, выполняя над ним необходимые преобразования.
-    * 
-    * @param string $templateName имя шаблона
-    * @todo необходимые - это какие?
-    */
-		public function getClientTemplate($templateName)
-		{
-
-			$this->template = false;
-			if ($this->template === false)
-			{
-				$this->template = $this->getTemplate($templateName, false);
-				$this->template = preg_replace('/[{]?\$([a-zA-Z]+)->([a-zA-Z]+)?[}]?/S', '%\\2%', $this->template);
-				$this->template = preg_replace('/[{]?\$([a-zA-Z]+)[}]?/S', '%\\1%', $this->template);
-				$this->template = preg_replace('/\s*?\n\s*/', '', $this->template);
-			}
-			return $this->template;
-		}
-		
-    /**
-    * Обновляет стек шаблонов
-    * 
-    * @param string $templateName имя шаблона
-    * @todo обязательное ревью документации
-    */
-		private function updateTemplateStack($templateName)
-		{
-			$templateStack = $this->cacheLink->get('templateStack');
-			if ($templateStack === false)
-			{
-				$templateStack = array();
-			}
-			$templateStack[$templateName] = $templateName;
-			$this->cacheLink->set('templateStack', $templateStack);
-		}
-		
-    /**
-    * Обновляет в кеше, находящиеся в стеке шаблоны.
-    *
-    * @todo обязательное ревью документации
-    */
-		public function updateTemplates()
-		{
-			$templateStack = $this->cacheLink->get('templateStack');
-			if ($templateStack === false)
-			{
-				$templateStack = array();
-			}
-			
-			foreach ($templateStack as $key => $templateName)
-			{
-				$template = trim(file_get_contents(homePath . 'templates/' . $templateName . '.html'));
-				$this->cacheLink->set(templatePrefix . $templateName, $template);
-			}
 		}
 		
 		/**
@@ -524,7 +399,7 @@
     }    
     
     public function formatNumber($number)
-    {
+    {                                                                                                   
       if ($number >= 10000) 
       {
         $number = number_format($number, 0, ',', '~');  
