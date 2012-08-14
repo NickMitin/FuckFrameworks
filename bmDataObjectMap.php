@@ -291,10 +291,8 @@
         {
           $defaultValue = "'" . $defaultValue . "'";
         }
-        if (($this->properties['type'] == 1 && $field->type == 0) || $this->properties['type'] == 0) // TODO: Зачем? // Андрей Колпаков
-        {
-          $mappingItems[] = "        '" . $field->propertyName . "' => array(\n          'fieldName' => '" . $field->fieldName . "',\n          'dataType' => " . $this->dataTypeToString($field->dataType) . ",\n          'defaultValue' => " . $defaultValue . "\n        )";
-        }
+        $mappingItems[] = "        '" . $field->propertyName . "' => array(\n          'fieldName' => '" . $field->fieldName . "',\n          'dataType' => " . $this->dataTypeToString($field->dataType) . ",\n          'defaultValue' => " . $defaultValue . "\n        )";
+        
       }
       
       if (count($mappingItems) > 0)
