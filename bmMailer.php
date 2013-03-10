@@ -58,7 +58,6 @@
     
     public function send($subject, $messages, $context = 'default')
     {               
-      
       if (!array_key_exists($context, $this->contexts))
       {
         return;
@@ -71,34 +70,24 @@
         $context = $this->contexts[$context];
         $subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
         $smtp = null;
-        
-        if (class_exists('Mail', false))
-        {
-          $smtp = Mail::factory('smtp', array ('host' => $context['host'], 'port' => $context['port'], 'auth' => $context['authorization'], 'username' => $context['username'], 'password' => $context['password'], 'debug' => true));
-        }
 
         foreach ($messages as $email => $message)
         {
           if ($this->validate($email))
           {
             $senderName = '';
-            if ($smtp != null)
-            {
               $senderName = $senderName == '' ? $context['senderName'] : $senderName;
-              $sender = $context['senderEmail'];
+              $senderEmail = $context['senderEmail'];
               if ($senderName != '')
               {
-                $sender = '=?UTF-8?B?' . base64_encode($senderName) . '?= <' . $sender . '>';
+                $sender = '=?UTF-8?B?' . base64_encode($senderName) . '?= <' . $senderEmail . '>';
               }
-              $headers = array ('From' => $sender, 'To' => $email, 'Subject' => $subject, 'Content-type' => 'text/html; charset=utf-8');
-              $mail = $smtp->send($email, $headers, $message);
-            } 
-            elseif (mail($email, $subject, $message, 'Content-type: text/html; charset=utf-8'))
-            {
-            }
-            else
-            {
-            }
+              else
+              {
+								$sender = $senderEmail;
+              }
+              $headers = array ('From: ' . $sender, 'To:' . $email, 'Reply-To: ' . $sender, 'Subject: ' . $subject, 'Content-type: text/html; charset=utf-8');
+            	mail($email, $subject, $message, implode("\r\n", $headers), '-f' . $senderEmail);
           }
         }
         unset($smtp);

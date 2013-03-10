@@ -80,6 +80,7 @@
         }
         if (xcache_isset($key))
         {
+          //return xcache_get($key);
           return unserialize(xcache_get($key));
         }
         return false;
@@ -107,7 +108,7 @@
         {
           $key = $this->prefix . $key;
           $result = true;
-          if (!xcache_isset('lock_' . $key))
+          /*if (!xcache_isset('lock_' . $key))
           {
             xcache_set('lock_' . $key, true);
             if (is_object($value) && get_class($value) != 'stdClass')
@@ -133,10 +134,10 @@
                 //НЕ УДАЛЯТЬ, ПО ЭТОМУ ВОПРОСУ К КОЛЕ.
                 exit;
               }
-            }
+            }*/
             $result = xcache_set($key, serialize($value), $expire);
-            xcache_unset('lock_' . $key);
-          }
+            //xcache_unset('lock_' . $key);
+          //}
           return $result;
         }
         else

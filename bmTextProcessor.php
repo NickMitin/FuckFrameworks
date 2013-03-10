@@ -1,17 +1,17 @@
 <?php
 
-class bmTextProcessor extends bmCustomTextProcessor 
+class bmTextProcessor extends bmCustomTextProcessor
   {
-    
+
     private $allowedTags = array();
     private $allowedAttributes = array();
 
     private $currentDotPosition = 0;
     private $position = 0;
-    private $length = 0;    
+    private $length = 0;
     private $breakSymbol = array('.', '?', '!', ';');
-    private $clearTextNode = false;       
-    
+    private $clearTextNode = false;
+
     public function process($text, $allowedTags = null, $allowedAttributes = null)
     {
       if (is_null($allowedTags))
@@ -27,29 +27,29 @@ class bmTextProcessor extends bmCustomTextProcessor
       if (!array_key_exists('*', $allowedAttributes)) {
           $allowedAttributes['*']=array();
       }
-      
+
       $this->allowedTags = $allowedTags;
       $this->allowedAttributes = $allowedAttributes;
-      
+
       if (trim($text) != '')
-      {        
+      {
         $text = preg_replace('/\r\n/', "\n", $text);
-      
+
         $document = new DOMDocument('1.0', 'utf-8');
-        
+
         $text = '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/></head><body><div>' . $text . '</div></body></html>';
 
         @$document->loadHTML($text);
-        
-        
+
+
         $this->cleanNode2($document->documentElement->childNodes->item(1)->childNodes->item(0));
-        
-        
+
+
 
         $text = $document->saveXML();
-        
+
         $text = $this->processYouTubeLink($text);
-        
+
         $text = preg_replace('/(?<!=")(https?|ftp):\/\/([\w\-]+(\.[\w\-]+)*(\.[a-z]{2,4})?)(\d{1,5})?(\/([^<>\s]*))?/', '<a href="\0">\0</a>', $text);
         $matches = null;
         preg_match('/<html><head><meta http-equiv="Content-Type" content="text\/html; charset=utf-8"\/><\/head><body><div>(.*)<\/div><\/body><\/html>/s', $text, $matches);
@@ -61,8 +61,8 @@ class bmTextProcessor extends bmCustomTextProcessor
 
       $this->allowedTags = null;
       $this->allowedAttributes = null;
-      
-      
+
+
       //return $this->typo($text);
       //return $this->post_typo($text);
       return $this->text;
@@ -79,27 +79,27 @@ class bmTextProcessor extends bmCustomTextProcessor
           if ( ((!$checkAttribute) || (!in_array($attribute->name, $this->allowedAttributes[$node->nodeName]))) && !in_array($attribute->name, $this->allowedAttributes['*']) )
         {
           $node->removeAttribute($attribute->name);
-          $j--;            
+          $j--;
         }
 
         if ( ($attribute->name == 'href') || ($attribute->name == 'src') )
         {
-          // что-то мне регуляярка эта не нравится 
+          // что-то мне регуляярка эта не нравится
           if (preg_match('/^\s*javascript\s*:/', $attribute->value))
-          {            
+          {
             $node->removeAttribute($attribute->name);
             $j--;
           }
         }
         $j++;
       }
-      
+
       // проверка допустимых нод
       $i = 0;
       while ($i < $node->childNodes->length)
-      {        
+      {
         $child = $node->childNodes->item($i);
-        
+
         if ($child instanceof DOMElement)
         {
           if (in_array($child->nodeName, $this->allowedTags))
@@ -120,7 +120,7 @@ class bmTextProcessor extends bmCustomTextProcessor
             $i--;
           }
         }
-        elseif ($child instanceof DOMText) 
+        elseif ($child instanceof DOMText)
         {
           // проверяем текстовые ноды на наличие '\n', заменяем '\n' на '<br>'
           $text = $child->nodeValue;
@@ -146,16 +146,16 @@ class bmTextProcessor extends bmCustomTextProcessor
         }
         $i++;
       }
-    }   
-                        
+    }
+
     public function simpleProcess($text)
     {
       $allowedTags = array('a');
       $allowedAttributes = array('a' => array('href'));
       $text = $this->process($text, $allowedTags, $allowedAttributes);
       return $text;
-    } 
-    
+    }
+
     public function substr($string, $start, $length = 0)
     {
       if ($length == 0 || $length > ($stringLen = mb_strlen($string)))
@@ -178,7 +178,7 @@ class bmTextProcessor extends bmCustomTextProcessor
         }
       }
     }
-    
+
     /**
     * @desc функция для вызова в array_walk($array, array($testProcessor, 'trim'))
     */
@@ -187,7 +187,7 @@ class bmTextProcessor extends bmCustomTextProcessor
       $value = trim($value);
       return $value;
     }
-        
+
     /**
     * @desc функция для вызова в array_walk($array, array($testProcessor, 'toLowerCase'))
     */
@@ -195,22 +195,22 @@ class bmTextProcessor extends bmCustomTextProcessor
     {
       $value = mb_convert_case(trim($value), MB_CASE_LOWER);
       return $value;
-    } 
-    
-        
-    
+    }
+
+
+
     //private $linkRegExp = '/(https?|ftp):\/\/([\w\-]+(\.[\w\-]+)*(\.[a-z]{2,4})?)(\d{1,5})?(\/(\S*))?/i';
     //private $linkRegExp = '/(([^:\/#\s\.\?,!:;"«»()а-я]+):\/\/)?([^\/?#\s\?,!:;"«»()а-я]+\.[^\/?#\s\.а-я]{2,4})((\/[\S]*)?[^\s\.\?,!:;"«»()]+)?/i';
     public $linkRegExp = '/(([^:\/#\s\.\?,!:;"«»()а-я]+):\/\/)?(([^\/?#\s\?.,!:;"«»()а-я]+\.)+[a-z]{2,4})((\/[\S]*)?[^\s\.\?,!:;"«»()]+)?/i';
-    
+
     private $imageLinkRegExp = '(([^:\/?#\sа-я]+):\/\/)?([^\/?#\sа-я]+\.[^\/?#\s\.а-я]{1,4})(\/[\S]*)(gif|jpg|jpeg|png|bmp)';
-    
+
     private $youTubeRegExp = '/(http\:\/\/)?www\.youtube\.com\/watch\?v=(\S{11})(&\S+)?/i';
     private $youTubeRuRegExp = '/(http\:\/\/)?ru\.youtube\.com\/watch\?v=(\S{11})(&\S+)?/i';
     private $ruTubeRegExp = '/(http\:\/\/)?rutube\.ru\/tracks\/\d+.html\?v=([a-f0-9]{32})/i';
     private $vimeoRegExp = '/(http\:\/\/)?vimeo\.com\/(\d+)(\?\S+)?/i';
     private $smotriRegExp = '/(http\:\/\/)?smotri\.com\/video\/view\/\?id=v(\S{10})/i';
-    
+
     private function insertYouTubeLink($match)
     {
       $text = '<div><object width="425" height="344"><param name="movie" value="http://www.youtube.com/v/' . $match[2] . '&hl=ru&fs=1"></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><param name="wmode" value="opaque"></param><embed src="http://www.youtube.com/v/' . $match[2] . '&hl=ru&fs=1" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" wmode="opaque" width="425" height="344"></embed></object></div>';
@@ -218,7 +218,7 @@ class bmTextProcessor extends bmCustomTextProcessor
     }
 
     private function insertYouTubeRuLink($match)
-    {                      
+    {
       $text = '<div><object width="425" height="344"><param name="movie" value="http://www.youtube.com/v/' . $match[2] . '&hl=ru&fs=1"></param><param name="allowFullScreen" value="true"></param><param name="wmode" value="opaque"></param><embed src="http://www.youtube.com/v/' . $match[2] . '&hl=ru&fs=1" type="application/x-shockwave-flash" allowfullscreen="true" wmode="opaque" width="425" height="344"></embed></object></div>';
       return $text;
     }
@@ -228,7 +228,7 @@ class bmTextProcessor extends bmCustomTextProcessor
       $text = '<div><OBJECT width="470" height="353"><PARAM name="movie" value="http://video.rutube.ru/' . $match[2] . '"></PARAM><PARAM name="wmode" value="window"></PARAM><PARAM name="allowFullScreen" value="true"></PARAM><param name="wmode" value="opaque"></param><EMBED src="http://video.rutube.ru/' . $match[2] . '" type="application/x-shockwave-flash" wmode="window" wmode="opaque" width="470" height="353" allowFullScreen="true" ></EMBED></OBJECT></div>';
       return $text;
     }
-    
+
     private function insertVimeoLink($match)
     {
       $text = '<div><object width="400" height="225">  <param name="allowfullscreen" value="true" />  <param name="allowscriptaccess" value="always" />  <param name="movie" value="http://vimeo.com/moogaloop.swf?clip_id=' . $match[2] . '&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=0&amp;color=&amp;fullscreen=1" /><param name="wmode" value="opaque" />  <embed src="http://vimeo.com/moogaloop.swf?clip_id=' . $match[2] . '&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=0&amp;color=&amp;fullscreen=1" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" wmode="opaque" width="400" height="225"></embed></object></div>';
@@ -241,12 +241,12 @@ class bmTextProcessor extends bmCustomTextProcessor
       return $text;
     }
 
-    
+
     public function getYouTubeFlashPlayer($videoId)
     {
       return $this->insertYouTubeLink(array(2 => $videoId));
     }
-    
+
     private function processYouTubeLink($text)
     {
       return preg_replace_callback($this->youTubeRegExp, array($this, 'insertYouTubeLink'), $text);
@@ -261,7 +261,7 @@ class bmTextProcessor extends bmCustomTextProcessor
     {
       return preg_replace_callback($this->ruTubeRegExp, array($this, 'insertRuTubeLink'), $text);
     }
-    
+
     private function processVimeoLink($text)
     {
       return preg_replace_callback($this->vimeoRegExp, array($this, 'insertVimeoLink'), $text);
@@ -271,35 +271,35 @@ class bmTextProcessor extends bmCustomTextProcessor
     {
       return preg_replace_callback($this->smotriRegExp, array($this, 'insertSmotriLink'), $text);
     }
-    
-    
+
+
     public function processVideoLink($text)
     {
       $text = $this->processYouTubeLink($text);
-      $text = $this->processYouTubeRuLink($text);      
+      $text = $this->processYouTubeRuLink($text);
       $text = $this->processRuTubeLink($text);
       $text = $this->processVimeoLink($text);
       $text = $this->processSmotriLink($text);
       return $text;
     }
-        
+
     public function processLink($text)
     {
-      
+
       if (trim($text) != '')
       {
         $document = new DOMDocument('1.0', 'utf-8');
-        
+
         $text = '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/></head><body><div>' . $text . '</div></body></html>';
 
         @$document->loadHTML($text);
 
         $this->searchNodeWithLink($document->documentElement->childNodes->item(1)->childNodes->item(0), $document);
-        
+
         $this->replaceLink($document);
 
         $text = $document->saveXML();
-      
+
         $matches = null;
         preg_match('/<html><head><meta http-equiv="Content-Type" content="text\/html; charset=utf-8"\/><\/head><body><div>(.*)<\/div><\/body><\/html>/s', $text, $matches);
         if ($matches)
@@ -307,18 +307,18 @@ class bmTextProcessor extends bmCustomTextProcessor
           $text = $matches[1];
         }
       }
-      
+
       return $text;
     }
-    
+
     private $textNodeToReplace = array();
     //сначала пробежимся по DOM, занесём в массив все текстовык ноды с ссылками, потом заменим эти ноды
-    
+
     private function searchNodeWithLink(DOMElement $node, DOMDocument $document)
     {
       $childs = $node->childNodes;
       foreach ($childs as $child)
-      {                  
+      {
         if ($child instanceof DOMElement)
         {
           if ($child->nodeName != 'a')
@@ -327,27 +327,27 @@ class bmTextProcessor extends bmCustomTextProcessor
           }
         }
         if ($child->nodeName == '#text')
-        {  
+        {
           if (preg_match($this->linkRegExp, $child->nodeValue))
-          {            
+          {
             $this->textNodeToReplace[] = $child;
           }
         }
       }
     }
-    
+
     private function replaceLink($document)
     {
       foreach ($this->textNodeToReplace as $child)
-      {   
+      {
         $parent = $child->parentNode;
-        
+
         /*$i = 0;
-        
+
         foreach ($parent->childNodes as $node)
         {
           if ($i > 0)
-          {     
+          {
             if ($node->nodeName == 'br')
             {
               $parent->removeChild($node);
@@ -359,10 +359,10 @@ class bmTextProcessor extends bmCustomTextProcessor
             $i++;
           }
         }*/
-        
+
         $child->nodeValue = preg_replace_callback($this->linkRegExp, array($this, 'insertLink'), $child->nodeValue);
         $child->nodeValue = $this->processVideoLink($child->nodeValue);
-        
+
         $document2 = new DOMDocument('1.0', 'utf-8');
         @$document2->loadHTML('<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/></head><body><div>' . $child->nodeValue . '</div></body></html>');
         $body = $document2->documentElement->childNodes->item(1)->childNodes->item(0);
@@ -374,15 +374,15 @@ class bmTextProcessor extends bmCustomTextProcessor
         $parent->removeChild($child);
       }
       $this->textNodeToReplace = array();
-    }    
-    
-    
+    }
+
+
 
     public function getYouTubePageVideo($videoId)
     {
-      return 'http://ru.youtube.com/watch?v=' . $videoId;  
+      return 'http://ru.youtube.com/watch?v=' . $videoId;
     }
- 
+
     /*-----------------------------------  search  --------------------------------------*/
     public function prepareSearchCache(&$string)
     {
@@ -406,8 +406,8 @@ class bmTextProcessor extends bmCustomTextProcessor
       $string = preg_replace('/#/S', 'DIEZ', $string);
       $string = preg_replace('~[\~`=@$%^*\(\)\|\{\}\[\]\'"<>]~S', '', $string);
       $string = preg_replace('~[\.,!?;:+_\-/]~S', ' ', $string);
-      
-      $string = $this->convertNumerater($string);      
+
+      $string = $this->convertNumerater($string);
       $string = preg_replace('~([\d]+)([\x{430}-\x{44F}a-z]+)~uS', '\1 \2', $string);
       $string = preg_replace('~([\x{430}-\x{44F}a-z]+)([\d]+)~uS', '\1 \2', $string);
 
@@ -417,7 +417,7 @@ class bmTextProcessor extends bmCustomTextProcessor
       //$string = $this->pregReplaceInString('(i|im|the|to|as|a|an|of|on|at|for|cd[\s]?[\d]{1,})', ' ', $string);
       //$string = $this->pregReplaceInString('(feat|ft|vs[\.]?)', ' FEAT ', $string);
       //$string = $this->pregReplaceInString('([\x{430}-\x{44F}]{1,2})', ' ', $string);
-      
+
       //$string = $this->pregReplaceInString('([\x{430}-\x{44F}a-z]{1,3})[-\/_& ]([\x{430}-\x{44F}a-z]{1,3})', '\1\2', $string);
       //$string = $this->pregReplaceInString('([\x{430}-\x{44F}a-z]{1,3})[-\/_&[\s]]', '\1\2', $string);
       //$string = $this->pregReplaceInString('[-\/_&[\s]]([\x{430}-\x{44F}a-z]{1,3})', '\1\2', $string);
@@ -432,17 +432,17 @@ class bmTextProcessor extends bmCustomTextProcessor
       {
         //if (($len = strlen($word)) < 3)
         if (($len = mb_strlen($word, 'utf-8')) < 3)
-        {  
+        {
           //$string = str_replace($word, $word . str_repeat('A', 3 - $len), $string);
           $string = $this->pregReplaceInString($word, $word . str_repeat('Σ', 3 - $len), $string);
-        }  
+        }
       }
-      
+
       return $string;
-    }  
-    
-    
-    
+    }
+
+
+
     private function pregReplaceInString($pattern, $replace, $string)
     {
       $pattern = addslashes($pattern);
@@ -474,12 +474,12 @@ class bmTextProcessor extends bmCustomTextProcessor
       }
       return $string;
     }
-     
-    public function selectWords($input, $words, $templateName = '')   
+
+    public function selectWords($input, $words, $templateName = '')
     {
       mb_regex_encoding('UTF-8');
       mb_internal_encoding('UTF-8');
-      
+
       if ($templateName == '')
       {
         $template = '<strong>{$currentWord}</strong>';
@@ -488,17 +488,17 @@ class bmTextProcessor extends bmCustomTextProcessor
       {
         $template = $this->application->getTemplate($templateName);
       }
-      
+
       if (!is_array($words))
       {
         $words = str_replace(' ', '|', $words);
       }
       else
       {
-        $words = implode('|', $words);      
+        $words = implode('|', $words);
       }
       $words = addcslashes($words, '/\'?');
-      
+
       $counter = 0;
       $input = mb_convert_encoding($input, 'UTF-8');
 
@@ -519,18 +519,18 @@ class bmTextProcessor extends bmCustomTextProcessor
       }
       return $input;
     }
-    
+
     public function pack($string)
     {
       return unpack('I*', md5(mb_convert_case(trim($string), MB_CASE_LOWER), true));
     }
-    
+
     public function unpack($pack)
     {
       $result = unpack('H*', pack('I', $pack[1]) . pack('I', $pack[2]) . pack('I', $pack[3]) . pack('I', $pack[4]));
       return $result[1];
     }
-    
+
     public function hashToPack($hash)
     {
       $result = pack('H*', $hash);
@@ -538,22 +538,104 @@ class bmTextProcessor extends bmCustomTextProcessor
       return $result;
     }
 
-    
-    
+
+
     public function segmentateNumber($number)
     {
       $result = number_format($number, 0, ',', ' ');
       $result = str_replace(' ', '<span class="tsp">&nbsp;</span>', $result);
       return $result;
     }
-    
+
     public function subString($string, $length, $encode = 'utf-8')
     {
       if ((mb_strlen($string) - $length) > 3)
       {
-        $string = mb_substr($string, 0, $length, $encode);      
+        $string = mb_substr($string, 0, $length, $encode);
         $string = trim($string) . '...';
       }
+      return $string;
+    }
+
+    public function makeSafeURL($string)
+    {
+      $table = array(
+        'А' => 'A',
+        'Б' => 'B',
+        'В' => 'V',
+        'Г' => 'G',
+        'Д' => 'D',
+        'Е' => 'E',
+        'Ё' => 'YO',
+        'Ж' => 'ZH',
+        'З' => 'Z',
+        'И' => 'I',
+        'Й' => 'J',
+        'К' => 'K',
+        'Л' => 'L',
+        'М' => 'M',
+        'Н' => 'N',
+        'О' => 'O',
+        'П' => 'P',
+        'Р' => 'R',
+        'С' => 'S',
+        'Т' => 'T',
+        'У' => 'U',
+        'Ф' => 'F',
+        'Х' => 'H',
+        'Ц' => 'C',
+        'Ч' => 'CH',
+        'Ш' => 'SH',
+        'Щ' => 'CSH',
+        'Ь' => '',
+        'Ы' => 'Y',
+        'Ъ' => '',
+        'Э' => 'E',
+        'Ю' => 'YU',
+        'Я' => 'YA',
+
+        'а' => 'a',
+        'б' => 'b',
+        'в' => 'v',
+        'г' => 'g',
+        'д' => 'd',
+        'е' => 'e',
+        'ё' => 'yo',
+        'ж' => 'zh',
+        'з' => 'z',
+        'и' => 'i',
+        'й' => 'j',
+        'к' => 'k',
+        'л' => 'l',
+        'м' => 'm',
+        'н' => 'n',
+        'о' => 'o',
+        'п' => 'p',
+        'р' => 'r',
+        'с' => 's',
+        'т' => 't',
+        'у' => 'u',
+        'ф' => 'f',
+        'х' => 'h',
+        'ц' => 'c',
+        'ч' => 'ch',
+        'ш' => 'sh',
+        'щ' => 'csh',
+        'ь' => '',
+        'ы' => 'y',
+        'ъ' => '',
+        'э' => 'e',
+        'ю' => 'yu',
+        'я' => 'ya'
+      );
+      $string = str_replace(
+          array_keys($table),
+          array_values($table),$string
+      );
+      $string = preg_replace('/[^\w\d]/', '-', $string);
+      $string = preg_replace('/-+/', '-', $string);
+
+
       return $string;
     }
 
@@ -571,7 +653,7 @@ class bmTextProcessor extends bmCustomTextProcessor
     {
       return '<%'.base64_encode('%'.$match[1]).'>';
     }
-    
+
     private function typo_savetag_decode($match)
     {  $t=base64_decode($match[1]);
       if($t[0]!='%')return '<%'.$match[1].'>';
@@ -757,10 +839,10 @@ class bmTextProcessor extends bmCustomTextProcessor
 
       return $text;
     }
-    
+
     private function post_typo($text)
     {
-      
+
       //Сохраняем нужное
       $text=preg_replace_callback('/<((script|style|code|save|nobr)[^>]*>.+<\/\2)>/Uus', 'typo_savetag_encode', $text);
       $text=preg_replace_callback('/<([^%][^>]*)>/su', 'typo_tag_encode', $text);

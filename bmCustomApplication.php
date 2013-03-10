@@ -135,6 +135,7 @@
 				$this->user->lastVisit = $this->session->createTime;
 				$this->timeOnline = time() - $this->session->createTime;        
 				$this->user->store();
+				$result = true;
 			}
 			
 			$dataLink = $this->dataLink;
@@ -288,17 +289,18 @@
     */
 		public function getTemplate($templateName, $escape = true, $read = false, $path = projectRoot)
 		{
-			$template = $this->debug ? false : $this->cacheLink->get(C_TEMPLATE_PREFIX . $templateName);
+			//$template = $this->debug ? false : $this->cacheLink->get(C_TEMPLATE_PREFIX . $templateName);
+			$template = (BM_C_CACHE_TEMPLATES !== true)? false : $this->cacheLink->get(C_TEMPLATE_PREFIX . $templateName);
       
       if ($template === false || $read !== false)
 			{
-				$template = trim(file_get_contents($path . '/templates/' . $templateName . '.html'));
+				$template = file_get_contents($path . '/templates/' . $templateName . '.html');
 
 				$this->cacheLink->set(C_TEMPLATE_PREFIX . $templateName, $template);
 			}
 			if ($escape)
 			{
-				$template = addcslashes(trim($template), '"');
+				$template = addcslashes($template, '"');
 			}
 			return $template;
 		}

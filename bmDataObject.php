@@ -274,7 +274,6 @@
       {
         foreach ($this->map as $propertyName => $property) 
         {                                                                                                                          
-          //ar_dump($propertyName);
           $this->properties[$propertyName] = $this->formatProperty($propertyName, $property['dataType'], $cache->$propertyName);   
         }  
         $this->dirty['store'] = false; 
@@ -370,13 +369,13 @@
           $cacheObject->identifier = $saveIdentifier;
         }
         
-        $this->application->cacheLink->set($this->objectName . '_' . $this->properties['identifier'], $cacheObject, BM_CACHE_SHORT_TTL);
+        $this->application->cacheLink->set($this->objectName . '_' . $this->properties['identifier'], $cacheObject, BM_CACHE_LIFELONG_TTL);
       }
       
       
       if ($this->storage == 'dods')
       {
-        $this->application->cacheLink->set($this->objectName . '_' . $this->properties['identifier'], $cacheObject, BM_CACHE_LONG_TTL, true);  
+        $this->application->cacheLink->set($this->objectName . '_' . $this->properties['identifier'], $cacheObject, BM_CACHE_LIFELONG_TTL, true);  
         $result = $this->application->cacheLink->get($this->objectName . '_' . $this->properties['identifier']); 
       }
     }
@@ -439,7 +438,6 @@
       
       if ($this->application->debug == false || $this->storage == 'dods')
       {
-
         $result = $this->application->cacheLink->get($objectName . '_' . $objectId); 
       }
       else
@@ -461,7 +459,7 @@
         } 
         else 
         {
-          $this->application->cacheLink->set($objectName . '_' . $objectId, $result, BM_CACHE_SHORT_TTL);
+          $this->application->cacheLink->set($objectName . '_' . $objectId, $result, BM_CACHE_LIFELONG_TTL);
         }
       }
 
@@ -515,7 +513,7 @@
         
         while ($object = $qObjects->nextObject())
         {                    
-          $this->application->cacheLink->set($objectName . '_' . $object->identifier, $object, BM_CACHE_SHORT_TTL);  
+          $this->application->cacheLink->set($objectName . '_' . $object->identifier, $object, BM_CACHE_LIFELONG_TTL);  
           $object->load = false;
                                                                                                                           
           foreach ($objectsFilter as $order => $objectId) 
@@ -571,7 +569,8 @@
         }
         
         $qObjectIds->free();
-        $this->application->cacheLink->set($cacheKey, $result, BM_CACHE_SHORT_TTL);
+        
+        $this->application->cacheLink->set($cacheKey, $result, BM_CACHE_LIFELONG_TTL);
       }
     
       if (count($result) > 0)
@@ -674,8 +673,8 @@
         }
    
         $qObjects->free();
-        $this->application->cacheLink->set($cacheKey, $result, BM_CACHE_SHORT_TTL);
-        $this->application->cacheLink->set($cacheKey . '_objectArrays', $objectArrays, BM_CACHE_SHORT_TTL);
+        $this->application->cacheLink->set($cacheKey, $result, BM_CACHE_LIFELONG_TTL);
+        $this->application->cacheLink->set($cacheKey . '_objectArrays', $objectArrays, BM_CACHE_LIFELONG_TTL);
       }
  
       if (count($result) > 0)
@@ -752,6 +751,33 @@
     protected function validateCache()
     {
       $this->dirty['validateCache'] = false;
-    } 
+    }
+    
+    protected function itemDiff($sourceArray, $subtractedArray, $propertyName) 
+    {
+      return array_udiff($sourceArray, $subtractedArray, function($a, $b) use ($propertyName)
+      {
+        if ($a->$propertyName == $b->$propertyName)
+        {
+          return 0;
+        }
+        else
+        {
+          return $a->$propertyName > $b->$propertyName ? 1 : -1;
+        }
+      });
+    }
+    
+    protected function itemImplode($itemArray, $propertyName) 
+    {
+      $idArray = array();
+      
+      foreach ($itemArray as $item)
+      {
+        $idArray[] = $item->$propertyName;
+      }
+      
+      return implode(', ', $idArray);
+    }
   }
 ?>

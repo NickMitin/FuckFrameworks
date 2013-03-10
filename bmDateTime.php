@@ -99,7 +99,7 @@
       }
     }
     
-    private function formatHumanOld()
+    public function formatHumanOld()
     {
       
       $result = '';
@@ -128,7 +128,8 @@
 
           
           $hour = date("H", $date);
-          $hourString = 'ночью';
+          $minute = date('i', $date);
+          /*$hourString = 'ночью';
           if(($hour >= 6) && ($hour < 11))
           {
             $hourString = 'утром';
@@ -140,7 +141,8 @@
           if(($hour >= 17) && ($hour < 23))
           {
             $hourString = 'вечером';
-          }
+          }*/
+          $hourString = ' в ' . $hour . ':' . $minute;
           $result = $days[$dayOffset] . ' ' . $hourString;
           
         } elseif ($dayOffset < $todayInfo['wday'] + 7) {
@@ -160,6 +162,42 @@
         $result = 'в прошлом году';
       } else {
         $result = $yearOffset . ' ' . $this->declineNumber($yearOffset, array('год', 'года', 'лет')) . ' назад';
+      }
+      return $result;
+      
+    }
+    
+    public function formatHumanSho()
+    {
+      
+      $result = '';
+      $date = $this->dateTime->format('U');
+      $yearMonths = $yearMonths = array(1 => 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря');
+      $days = array('Cегодня', 'Вчера');
+      $today = time();
+      
+      $todayInfo = getdate($today);
+      $dateInfo = getdate($date);
+      $this->fixSunday($todayInfo);
+      $this->fixSunday($dateInfo);
+      
+      $dayOffset = $todayInfo['yday'] - $dateInfo['yday'];
+      $yearOffset = $todayInfo['year'] - $dateInfo['year'];
+       $hour = date("H", $date);
+       $minute = date('i', $date);
+       $hourString = ' в ' . $hour . ':' . $minute;
+       $hourString = '';
+      if ($today < $date) {
+        
+        $result = 'В будущем';
+        
+      } else {
+        if ($dayOffset < 2) {
+          $result = $days[$dayOffset] . ' ' . $hourString;
+        } else {
+        	$year = $yearOffset > 0 ? ' ' . $dateInfo['year'] : '';
+          $result = $dateInfo['mday'] . $year . ' ' . $yearMonths[$dateInfo['mon']] . $hourString;
+        }
       }
       return $result;
       

@@ -139,7 +139,7 @@
             header('location: ' . $routeData['redirect'], true);
             exit;
           }
-          require_once(documentRoot . $routeData['route']);
+          require_once(projectRoot . $routeData['route']);
           $parameters = array();
           $matchCount = count($matches) - 1;
           if (array_key_exists('parameters', $routeData))
@@ -196,7 +196,7 @@
         $pageId = $this->application->getObjectIdByFieldName('textPage', 'url', $path);
         if ($pageId > 0)
         {
-          require_once(documentRoot . '/modules/view/textPage/index.php');
+          require_once(projectRoot . '/modules/view/textPage/index.php');
           $page = new bmTextPagePage($this->application);
           $result = $page->generate();  
         }
@@ -205,12 +205,12 @@
       {
         #HTTP/1.1 200 OK
         header('HTTP/1.1 404 Not Found', true, 404);
-        require_once(documentRoot . '/modules/errors/404.php');
+        require_once(projectRoot . '/modules/errors/404.php');
         $page = new bm404Page($this->application);
         $result = $page->generate();
         $status = 404;
       }
-
+      #ob_start('ob_gzhandler');
       return $result;
     }
     

@@ -32,6 +32,7 @@
     private $savedPropertyValues = array();
     private $addedFieldIds = array();
     private $droppedFieldIds = array();
+    private $skippedMethods = array();
     
     /**
     * элемент массива - stdClass со свойствами fieldId, oldFieldName
@@ -291,10 +292,8 @@
         {
           $defaultValue = "'" . $defaultValue . "'";
         }
-        if (($this->properties['type'] == 1 && $field->type == 0) || $this->properties['type'] == 0) // TODO: Зачем? // Андрей Колпаков
-        {
-          $mappingItems[] = "        '" . $field->propertyName . "' => array(\n          'fieldName' => '" . $field->fieldName . "',\n          'dataType' => " . $this->dataTypeToString($field->dataType) . ",\n          'defaultValue' => " . $defaultValue . "\n        )";
-        }
+        $mappingItems[] = "        '" . $field->propertyName . "' => array(\n          'fieldName' => '" . $field->fieldName . "',\n          'dataType' => " . $this->dataTypeToString($field->dataType) . ",\n          'defaultValue' => " . $defaultValue . "\n        )";
+        
       }
       
       if (count($mappingItems) > 0)
@@ -317,6 +316,7 @@
       $deleteFunction = $this->toDeleteFunction();
       
       eval('$class  = "' . $this->application->getTemplate('/autogeneration/class') . '";');
+      
       return $class;
     }
     
@@ -493,66 +493,71 @@
     public function toGetterFunction($item, $referenceMap, $currentPropertyName)
     {
       $result = '';
-      
-      $objectName = $this->properties['name']; 
-      $propertyName = $item->referenceField->propertyName;
+
+			$propertyName = $item->referenceField->propertyName;      
       $ucPropertyName = ucfirst($propertyName);
-      $tableName = $referenceMap->name;
       
-      foreach ($referenceMap->fields as $referenceFieldItem)
-      {
-        if ($referenceFieldItem->referenceField->referencedObjectId == $this->properties['identifier'])
-        {
-          if ($referenceFieldItem->referenceField->propertyName != $currentPropertyName)
-          {
-            $thisObjectFieldName = $referenceFieldItem->referenceField->fieldName . 'Id';
-          }
-        }
-      }
+      $skipMethod = in_array("get{$ucPropertyName}s", $this->skippedMethods);
+      $skipMethodBefore = ($skipMethod)? "\n/*\n" : "";
+    	$skipMethodAfter = ($skipMethod)? "*/\n" : "";
+
+      $objectName = $this->properties['name']; 
+	    $tableName = $referenceMap->name;
       
-      if ($item->type == BM_RT_MAIN || $item->type == BM_RT_REFERRED)
-      {
-        if ($referenceMap->isComplex())
-        {
-          $selectFieldsArray = array();
-          $mapArray = array();
-          
-          foreach ($referenceMap->fields as $referenceFieldItem)
-          {
-            if ($referenceFieldItem->referenceField->dataType == BM_VT_OBJECT)
-            {
-              $selectFieldsArray[] = '          `' . $tableName . '`.`' . $referenceFieldItem->referenceField->fieldName . 'Id` AS `' . $referenceFieldItem->referenceField->propertyName . 'Id`';
-              $mapArray[] = '\'' . $referenceFieldItem->referenceField->propertyName . ' IS ' . $referenceFieldItem->referenceField->referencedObject->name . '\' => ' . $referenceFieldItem->referenceField->dataType;
-            }
-            else
-            { 
-              $selectFieldsArray[] = '          `' . $tableName . '`.`' . $referenceFieldItem->referenceField->fieldName . '` AS `' . $referenceFieldItem->referenceField->propertyName . '`';
-              $mapArray[] = '\'' . $referenceFieldItem->referenceField->propertyName . '\' => ' . $referenceFieldItem->referenceField->dataType;  
-            }
-          }
-          
-          $selectFields = implode(",\n", $selectFieldsArray);
-          
-          $map = '$map = array(' . implode(', ', $mapArray). ');';
-          
-          eval('$result .= "' . $this->application->getTemplate('/autogeneration/getterComplexFunction') . '";');    
-        }
-        else
-        {
-          if ($referenceFieldItem->referenceField->dataType == BM_VT_OBJECT)
-          {
-            $fieldName = $item->referenceField->fieldName . 'Id';  
-          }
-          else
-          {
-            $fieldName = $item->referenceField->fieldName;
-          }
-          
-          $referencedObjectName = $item->referenceField->referencedObject->name;
-          
-          eval('$result .= "' . $this->application->getTemplate('/autogeneration/getterSimpleFunction') . '";');    
-        }
-      }
+	    foreach ($referenceMap->fields as $referenceFieldItem)
+	    {
+	      if ($referenceFieldItem->referenceField->referencedObjectId == $this->properties['identifier'])
+	      {
+	        if ($referenceFieldItem->referenceField->propertyName != $currentPropertyName)
+	        {
+	          $thisObjectFieldName = $referenceFieldItem->referenceField->fieldName . 'Id';
+	        }
+	      }
+	    }
+	    
+	    if ($item->type == BM_RT_MAIN || $item->type == BM_RT_REFERRED)
+	    {
+	      if ($referenceMap->isComplex())
+	      {
+		      $selectFieldsArray = array();
+		      $mapArray = array();
+		      
+		      foreach ($referenceMap->fields as $referenceFieldItem)
+		      {
+		        if ($referenceFieldItem->referenceField->dataType == BM_VT_OBJECT)
+		        {
+		          $selectFieldsArray[] = '          `' . $tableName . '`.`' . $referenceFieldItem->referenceField->fieldName . 'Id` AS `' . $referenceFieldItem->referenceField->propertyName . 'Id`';
+		          $mapArray[] = '\'' . $referenceFieldItem->referenceField->propertyName . ' IS ' . $referenceFieldItem->referenceField->referencedObject->name . '\' => ' . $referenceFieldItem->referenceField->dataType;
+		        }
+		        else
+		        { 
+		          $selectFieldsArray[] = '          `' . $tableName . '`.`' . $referenceFieldItem->referenceField->fieldName . '` AS `' . $referenceFieldItem->referenceField->propertyName . '`';
+		          $mapArray[] = '\'' . $referenceFieldItem->referenceField->propertyName . '\' => ' . $referenceFieldItem->referenceField->dataType;  
+		        }
+		      }
+		      
+		      $selectFields = implode(",\n", $selectFieldsArray);
+		      
+		      $map = '$map = array(' . implode(', ', $mapArray). ');';
+		      
+		      eval('$result .= "' . $skipMethodBefore . $this->application->getTemplate('/autogeneration/getterComplexFunction') . $skipMethodAfter . '";');
+	      }
+	      else
+	      {
+	        if ($referenceFieldItem->referenceField->dataType == BM_VT_OBJECT)
+	        {
+	          $fieldName = $item->referenceField->fieldName . 'Id';  
+	        }
+	        else
+	        {
+	          $fieldName = $item->referenceField->fieldName;
+	        }
+	        
+	        $referencedObjectName = $item->referenceField->referencedObject->name;
+	        
+	        eval('$result .= "' . $skipMethodBefore . $this->application->getTemplate('/autogeneration/getterSimpleFunction') . $skipMethodAfter . '";');    
+	      }
+	    }
       
       return $result;  
     }
@@ -578,11 +583,13 @@
           if ($referenceFieldItem->type == BM_RT_REFERRED)
           {
             $otherObjectPropertyName = $referenceFieldItem->referenceField->referencedObject->name;    
+            $otherObjectFieldName = $referenceFieldItem->referenceField->fieldName . 'Id';
           } 
         }
         else
         {
           $otherObjectPropertyName = $referenceFieldItem->referenceField->propertyName;  
+          $otherObjectFieldName = $referenceFieldItem->referenceField->fieldName . 'Id';
         } 
       }                                    
       
@@ -656,7 +663,26 @@
           $insertStrings = implode(' . \', \' . ', $insertStringsArray);
           $sqlFields = implode(', ', $sqlFieldsArray);
           
-          eval('$result .= "' . $this->application->getTemplate('/autogeneration/manipulationComplexItem') . '";');  
+          
+          $skipMethod = in_array("add{$ucPropertyName}", $this->skippedMethods);
+					$skipMethodBefore = ($skipMethod)? "\n/*\n" : "";
+      		$skipMethodAfter = ($skipMethod)? "*/\n" : "";
+					eval('$result .= "' . $skipMethodBefore . $this->application->getTemplate('/autogeneration/manipulationComplexItem/add') . $skipMethodAfter . '";');
+          
+          $skipMethod = in_array("remove{$ucPropertyName}", $this->skippedMethods);
+          $skipMethodBefore = ($skipMethod)? "\n/*\n" : "";
+      		$skipMethodAfter = ($skipMethod)? "*/\n" : "";
+					eval('$result .= "' . $skipMethodBefore . $this->application->getTemplate('/autogeneration/manipulationComplexItem/removeOne') . $skipMethodAfter . '";');
+          
+          $skipMethod = in_array("remove{$ucPropertyName}s", $this->skippedMethods);
+          $skipMethodBefore = ($skipMethod)? "\n/*\n" : "";
+      		$skipMethodAfter = ($skipMethod)? "*/\n" : "";
+          eval('$result .= "' . $skipMethodBefore . $this->application->getTemplate('/autogeneration/manipulationComplexItem/removeAll') . $skipMethodAfter . '";');
+          
+          $skipMethod = in_array("save{$ucPropertyName}s", $this->skippedMethods);
+          $skipMethodBefore = ($skipMethod)? "\n/*\n" : "";
+      		$skipMethodAfter = ($skipMethod)? "*/\n" : "";
+					eval('$result .= "' . $skipMethodBefore . $this->application->getTemplate('/autogeneration/manipulationComplexItem/save') . $skipMethodAfter . '";');
         }
         else
         {
@@ -674,7 +700,27 @@
             $otherObjectPropertyName = $this->properties['name'];
           }
           
-          eval('$result .= "' . $this->application->getTemplate('/autogeneration/manipulationSimpleItem') . '";');  
+          
+          
+          $skipMethod = in_array("add{$ucPropertyName}", $this->skippedMethods);
+					$skipMethodBefore = ($skipMethod)? "\n/*\n" : "";
+      		$skipMethodAfter = ($skipMethod)? "*/\n" : "";
+					eval('$result .= "' . $skipMethodBefore . $this->application->getTemplate('/autogeneration/manipulationSimpleItem/add') . $skipMethodAfter . '";');
+          
+          $skipMethod = in_array("remove{$ucPropertyName}", $this->skippedMethods);
+          $skipMethodBefore = ($skipMethod)? "\n/*\n" : "";
+      		$skipMethodAfter = ($skipMethod)? "*/\n" : "";
+					eval('$result .= "' . $skipMethodBefore . $this->application->getTemplate('/autogeneration/manipulationSimpleItem/removeOne') . $skipMethodAfter . '";');
+          
+          $skipMethod = in_array("remove{$ucPropertyName}s", $this->skippedMethods);
+          $skipMethodBefore = ($skipMethod)? "\n/*\n" : "";
+      		$skipMethodAfter = ($skipMethod)? "*/\n" : "";
+          eval('$result .= "' . $skipMethodBefore . $this->application->getTemplate('/autogeneration/manipulationSimpleItem/removeAll') . $skipMethodAfter . '";');
+          
+          $skipMethod = in_array("save{$ucPropertyName}s", $this->skippedMethods);
+          $skipMethodBefore = ($skipMethod)? "\n/*\n" : "";
+      		$skipMethodAfter = ($skipMethod)? "*/\n" : "";
+					eval('$result .= "' . $skipMethodBefore . $this->application->getTemplate('/autogeneration/manipulationSimpleItem/save') . $skipMethodAfter . '";');
         }
       }
       
@@ -788,7 +834,7 @@
     
     public function toDeleteMainReference($referredObjectName)
     {
-      $result = '\$this->remove' . ucfirst($referredObjectName) . 's();' . "\n\n      ";
+      $result = '$this->remove' . ucfirst($referredObjectName) . 's();' . "\n\n      ";
       
       return $result;
     }
@@ -1055,9 +1101,11 @@
     
     public function generateFiles()
     {
+      $this->skippedMethods = $this->getMethodsToSkip();
+      
       $this->checkDirty();
       $fileName = projectRoot . '/controllers/bm' . ucfirst($this->properties['name']) . '.php';
-        
+      
       if (!file_exists($fileName))
       {
         file_put_contents($fileName, $this->toClass());   
@@ -1066,18 +1114,19 @@
       {
         $content = file_get_contents($fileName);
         
-        $getterCaseProperties = array();
-        $referenceFunctionProperties = array();
+        //$getterCaseProperties = array();
+        //$referenceFunctionProperties = array();
         
         $content = preg_replace('/\/\*FF::AC::MAPPING::\{\*\/(.+)\/\*FF::AC::MAPPING::\}\*\//ism', $this->toMapping(), $content);        
-        preg_match_all('/\/\*FF::AC::GETTER_CASE::(.+)::\{\*\//', $content, $getterCaseProperties, PREG_PATTERN_ORDER);
-        preg_match_all('/\/\*FF::AC::REFERENCE_FUNCTIONS::(.+)::\{\*\//', $content, $referenceFunctionProperties, PREG_PATTERN_ORDER);
+        //preg_match_all('/\/\*FF::AC::GETTER_CASE::(.+)::\{\*\//', $content, $getterCaseProperties, PREG_PATTERN_ORDER);
+        //preg_match_all('/\/\*FF::AC::REFERENCE_FUNCTIONS::(.+)::\{\*\//', $content, $referenceFunctionProperties, PREG_PATTERN_ORDER);
         
-        $customizedReferenceFunctionProperties = array_diff($getterCaseProperties[1], $referenceFunctionProperties[1]);
+        //$customizedReferenceFunctionProperties = array_diff($getterCaseProperties[1], $referenceFunctionProperties[1]);
         
         $content = preg_replace('/\/\*FF::AC::TOP::GETTER::\{\*\/(.+)\/\*FF::AC::TOP::GETTER::\}\*\//ism', $this->toGetterCases(), $content);        
         $content = preg_replace('/\/\*FF::AC::DELETE_FUNCTION::\{\*\/(.+)\/\*FF::AC::DELETE_FUNCTION::\}\*\//ism', $this->toDeleteFunction(), $content);        
         
+/*
         $referenceFunctions = '';
         $referenceMaps = $this->getReferenceMaps();
         
@@ -1101,12 +1150,15 @@
         }
         
         $referenceFunctionsBlock = '';
-        eval('$referenceFunctionsBlock .= "' . $this->application->getTemplate('/autogeneration/referenceFunctionsBlock') . '";');  
+        eval('$referenceFunctionsBlock .= "' . $this->application->getTemplate('/autogeneration/referenceFunctionsBlock') . '";');
+*/  
+        $content = preg_replace('/\/\*FF::AC::TOP::REFERENCE_FUNCTIONS::\{\*\/(.+)\/\*FF::AC::TOP::REFERENCE_FUNCTIONS::\}\*\//ism', $this->toReferenceFunctions(), $content);        
         
-        $content = preg_replace('/\/\*FF::AC::TOP::REFERENCE_FUNCTIONS::\{\*\/(.+)\/\*FF::AC::TOP::REFERENCE_FUNCTIONS::\}\*\//ism', $referenceFunctionsBlock, $content);        
-        
-        file_put_contents($fileName, $content);   
+        file_put_contents($fileName, $content);
       }
+      
+      //$this->skippedMethods = array();
+     
       
       
       
@@ -1223,9 +1275,12 @@
         $this->application->dataLink->query($sql);
         $this->application->log->add($sql);
                 
-        $sql = "DROP TABLE `" . $this->name . "`;";
-        $this->application->dataLink->query($sql);
-        $this->application->log->add($sql);
+        if ($this->application->dataLink->tableExists($this->name))
+        {
+          $sql = "DROP TABLE `" . $this->name . "`;";
+          $this->application->dataLink->query($sql);
+          $this->application->log->add($sql);
+        }
             
         $this->deleteFiles();
       }
@@ -1241,7 +1296,7 @@
     {
       if ($this->properties['identifier'] == 0)
       {
-        $sql = "CREATE TABLE `" . $this->properties['name'] . "` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`)) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
+        $sql = "CREATE TABLE IF NOT EXISTS `" . $this->properties['name'] . "` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`)) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
         if (!$this->application->dataLink->query($sql))
         {
           throw new Exception();
@@ -1267,9 +1322,12 @@
     
     public function renameTable()
     {
-      $sql = "RENAME TABLE `" . $this->savedPropertyValues['name'] . "` TO `" . $this->properties['name'] . "`;";
-      $this->application->dataLink->query($sql);
-      $this->application->log->add($sql);
+      if ($this->application->dataLink->tableExists($this->savedPropertyValues['name']) && !$this->application->dataLink->tableExists($this->properties['name']))
+      {
+        $sql = "RENAME TABLE `" . $this->savedPropertyValues['name'] . "` TO `" . $this->properties['name'] . "`;";
+        $this->application->dataLink->query($sql);
+        $this->application->log->add($sql);
+      }
     }
     
     public function getFields($load = true)
@@ -1310,6 +1368,54 @@
       $map = array('referenceMap' => BM_VT_OBJECT, 'referenceFieldType' => BM_VT_INTEGER);
       
       return $this->getComplexLinks($sql, $cacheKey, $map, E_REFERENCEMAP_NOT_FOUND, $load);      
+    }
+    
+    
+    public function getMethodsToSkip()
+    {
+    	$skipMethods = array();
+    	
+    	$className = 'bm' . ucfirst($this->properties['name']);
+    	$controllerPath = projectRoot . '/controllers/' . $className . '.php';
+    	if (file_exists($controllerPath))
+    	{
+					// 1. Get the functions list from REFERENCE_FUNCTIONS code block.
+				$referenceBlockMethods = array();
+  			$content = file_get_contents($controllerPath);
+  			$matches = array();
+  			preg_match('/\/\*FF::AC::TOP::REFERENCE_FUNCTIONS::\{\*\/(.+)\/\*FF::AC::TOP::REFERENCE_FUNCTIONS::\}\*\//ism', $content, $matches);
+				if (isset($matches[1]))
+  			{
+            // remove all commented code blocks
+  				$contentBlock = preg_replace('/(\/\*[^\*\/]*\*\/)/ism', '', $matches[1]);
+					$matches = array();
+					preg_match_all('/function ([a-zA-Z]{1}[a-zA-Z0-9]{0,})\(/ism', $contentBlock, $matches);
+					if (isset($matches[1]))
+					{
+						$referenceBlockMethods = $matches[1];
+					}
+  			}
+        
+          // 2. Get all class's functions except 'delete' and special functions ('__construct, etc.').
+        $classMethods = array();
+        $matches = array();
+        preg_match_all('/function ([a-zA-Z]{1}[a-zA-Z0-9]{0,})\(/ism', $content, $matches);
+        if (isset($matches[1]))
+        {
+          foreach ($matches[1] as $classMethod)
+          {
+            if (($classMethod != 'delete') && (mb_strpos($classMethod, '__') === false) && (!in_array($classMethod, $classMethods)))
+            {
+              $classMethods[] = $classMethod;
+            }
+          }
+        }
+   			
+  			$skipMethods = array_diff($classMethods, $referenceBlockMethods);
+    	}
+
+    	
+			return $skipMethods;
     }
   }
 
