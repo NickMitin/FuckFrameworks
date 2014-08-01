@@ -43,6 +43,7 @@
     
     public function add($string) 
     {
+      return;
       $log = fopen($this->logFile, 'a+');
       
       $logEntry = '-- ' . date('Y.m.d H:i:s') . "\n" . $string . "\n\n";
