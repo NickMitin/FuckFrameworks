@@ -1,36 +1,36 @@
 <?php
-	/*
-	* Copyright (c) 2009, "The Blind Mice Studio"
-	* All rights reserved.
-	* 
-	* Redistribution and use in source and binary forms, with or without
-	* modification, are permitted provided that the following conditions are met:
-	* - Redistributions of source code must retain the above copyright
-	*	 notice, this list of conditions and the following disclaimer.
-	* - Redistributions in binary form must reproduce the above copyright
-	*	 notice, this list of conditions and the following disclaimer in the
-	*	 documentation and/or other materials provided with the distribution.
-	* - Neither the name of the "The Blind Mice Studio" nor the
-	*	 names of its contributors may be used to endorse or promote products
-	*	 derived from this software without specific prior written permission.
+  /*
+  * Copyright (c) 2009, "The Blind Mice Studio"
+  * All rights reserved.
+  * 
+  * Redistribution and use in source and binary forms, with or without
+  * modification, are permitted provided that the following conditions are met:
+  * - Redistributions of source code must retain the above copyright
+  *   notice, this list of conditions and the following disclaimer.
+  * - Redistributions in binary form must reproduce the above copyright
+  *   notice, this list of conditions and the following disclaimer in the
+  *   documentation and/or other materials provided with the distribution.
+  * - Neither the name of the "The Blind Mice Studio" nor the
+  *   names of its contributors may be used to endorse or promote products
+  *   derived from this software without specific prior written permission.
 
-	* THIS SOFTWARE IS PROVIDED BY "The Blind Mice Studio" ''AS IS'' AND ANY
-	* EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-	* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-	* DISCLAIMED. IN NO EVENT SHALL "The Blind Mice Studio" BE LIABLE FOR ANY
-	* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-	* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-	* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-	* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-	* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-	* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-	* 
-	*/
+  * THIS SOFTWARE IS PROVIDED BY "The Blind Mice Studio" ''AS IS'' AND ANY
+  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  * DISCLAIMED. IN NO EVENT SHALL "The Blind Mice Studio" BE LIABLE FOR ANY
+  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * 
+  */
 
 	
 class bmMySQLLink extends bmFFObject {
 
-	private $mysqli = 0;
+	private $linkId = 0;
 	
 	public $persistentConnection = 0;
 	public $server = 'localhost';
@@ -41,8 +41,8 @@ class bmMySQLLink extends bmFFObject {
 	public $queriesCount = 0;
 	public $profiler = '';
 	public $queryDubles = array();
-	
-	public $queriesQuantity = 0; // for debug puroses // Andrew Kolpakov
+  
+  public $queriesQuantity = 0; // for debug puroses // Andrew Kolpakov
 	
 	public function __construct($application, $parameters = array()) {
 		parent::__construct($application, $parameters);
@@ -51,60 +51,62 @@ class bmMySQLLink extends bmFFObject {
 
 	public function connect() {
 		
-		$fileName = projectRoot . '/conf/db_' . $this->database . '.conf';
-		if (!file_exists($fileName))
-		{
-			$fileName = projectRoot . '/conf/db_default.conf';	
-		}
+    $fileName = projectRoot . '/conf/db_' . $this->database . '.conf';
+    if (!file_exists($fileName))
+    {
+      $fileName = projectRoot . '/conf/db_default.conf';  
+    }
+    
+    require($fileName);
 		
-		require($fileName);
 		if ($this->linkId == 0) 
-		{
+    {
 			if ($this->persistentConnection) 
-			{
-				$this->mysqli = new mysqli('p:' . $this->server, $this->user, $this->password, $this->database);
+      {
+				$this->linkId = mysql_pconnect($this->server, $this->user, $this->password);
 			}
-			else 
-			{
-				$this->mysqli = new mysqli($this->server, $this->user, $this->password, $this->database);
+      else 
+      {
+				$this->linkId = mysql_connect($this->server,$this->user, $this->password, true);
+			}
+			if (!$this->linkId) {
+				print  "Connection failed";
 			}
 			
-			if (!$this->mysqli)
-			{
-				print	"Connection failed";
-			}
-					 
-			$this->mysqli->set_charset("utf8");
-		}	 
+			if(!mysql_select_db($this->database, $this->linkId))
+      {
+				print "Select database failed";
+			}       
+			mysql_query("set names 'utf8';");
+		}   
 	}
 
-	public function query($sqltext) 
-	{
-		if (($this->mysqli) && ($sqltext != '')) 
+	public function query($sqltext) { 
+		if (($this->linkId) && ($sqltext != '')) 
 		{
 			//file_put_contents(documentRoot . '/sql.txt' ,$_SERVER["REQUEST_URI"] . "\n" . '=============================================<br />' . $sqltext . '<br />==============================' . "\n", FILE_APPEND);
+      
+      $timeStart = microtime(true);  
+      $result = mysql_query($sqltext, $this->linkId);
+      ++$this->queriesCount;
+      $timeEnd = microtime(true);
+      $time = $timeEnd - $timeStart;
+      if (BM_C_VERBOSE >= 10)
+      {
+        echo '<hr>';
+        echo $sqltext . '<br />';
+        echo $time;
+        echo '</hr>';
+      }
 			
-			$timeStart = microtime(true);	
-			$result = $this->mysqli->query($sqltext, $this->linkId);
-			++$this->queriesCount;
-			$timeEnd = microtime(true);
-			$time = $timeEnd - $timeStart;
-			if (BM_C_VERBOSE >= 10)
-			{
-				echo '<hr>';
-				echo $sqltext . '<br />';
-				echo $time;
-				echo '</hr>';
-			}
-			
-			if ($result) {
+      if ($result) {
 				return $result;
 			} else {
-				if ($this->application->debug) 
-				{
-					print $sqltext . "\n" . $this->mysqli->error;
-					echo '<pre>';
-				}
+        if ($this->application->debug) 
+        {
+          print $sqltext . "\n" . mysql_error($this->linkId);
+          echo '<pre>';
+        }
 			}
 		}
 		
@@ -112,90 +114,87 @@ class bmMySQLLink extends bmFFObject {
 	}
 
 	public function disconnect() {
-		if ($this->mysqli) 
-		{
-			$this->mysqli->close();
-			$this->mysqli = null;;	
+		if ($this->linkId != 0) 
+    {
+			mysql_close($this->linkId);
+      $this->linkId = 0;  
 		}
 	}
 	
 	public function nextObject($cursor) {
-		return $cursor->fetch_object();
+		return mysql_fetch_object($cursor);
 	}
 	
 	public function nextHash($cursor) {
-		return $cursor->fetch_assoc();
+		return mysql_fetch_assoc($cursor);
 	}
 	
 	public function nextRow($cursor) {
-		return $cursor->fetch_row();
+		return mysql_fetch_row($cursor);
 	}
 	
 	public function formatInput($value) {
-		return $this->mysqli->escape_string($value);
+		return mysql_real_escape_string($value, $this->linkId);
 	}
-	
-	public function ffTypeToNativeType($type, $defaultValue = '') 
-	{
-		$defaultValue = $this->formatInput($defaultValue, $type);
-		switch ($type)
-		{
-			case BM_VT_TEXT:
-				$result = " TEXT NOT NULL DEFAULT '" . $defaultValue . "'";
-			break;
-			case BM_VT_STRING:
-				$result = " VARCHAR(255) NOT NULL DEFAULT '" . $defaultValue . "'";
-			break;
-			case BM_VT_INTEGER:
-				$result = " INT(10) NOT NULL DEFAULT '" . $defaultValue . "'";
-			break;
-			case BM_VT_FLOAT:
-				$result = " DOUBLE NOT NULL DEFAULT '" . $defaultValue . "'";
-			break;
-			case BM_VT_DATETIME:
-				$result = " DATETIME NOT NULL DEFAULT '" . $defaultValue . "'";
-			break;
-			case BM_VT_OBJECT:
-				$result = " INT(10) UNSIGNED";
-			break;
-			default:
-				$result = " VARCHAR(255) NOT NULL DEFAULT '" . $this->formatInput($defaultValue) . "'";
-			break;
-		}
-		return $result;
-	}
+  
+  public function ffTypeToNativeType($type, $defaultValue = '') 
+  {
+    $defaultValue = $this->formatInput($defaultValue, $type);
+    switch ($type)
+    {
+      case BM_VT_TEXT:
+        $result = " TEXT NOT NULL DEFAULT '" . $defaultValue . "'";
+      break;
+      case BM_VT_STRING:
+        $result = " VARCHAR(255) NOT NULL DEFAULT '" . $defaultValue . "'";
+      break;
+      case BM_VT_INTEGER:
+        $result = " INT(10) NOT NULL DEFAULT '" . $defaultValue . "'";
+      break;
+      case BM_VT_FLOAT:
+        $result = " DOUBLE NOT NULL DEFAULT '" . $defaultValue . "'";
+      break;
+      case BM_VT_DATETIME:
+        $result = " DATETIME NOT NULL DEFAULT '" . $defaultValue . "'";
+      break;
+      case BM_VT_OBJECT:
+        $result = " INT(10) UNSIGNED";
+      break;
+      default:
+        $result = " VARCHAR(255) NOT NULL DEFAULT '" . $this->formatInput($defaultValue) . "'";
+      break;
+    }
+    return $result;
+  }
 
 	
 	public function rowCount($cursor) {
-		return $cursor->num_rows;
+		return mysql_num_rows($cursor);
 	}
 	
 	public function free($cursor) {
-		return $cursor->free();
+		return mysql_free_result($cursor);
 	}
 	
 	public function insertId() {
-		return $this->mysqli->insert_id;
+		return mysql_insert_id($this->linkId);
 	}
 	
 	function getValue($sqlText, $rowNumber = 0, $fieldName = 0) 
 	{
 		$cursor = $this->query($sqlText);
-		$result = null;
-		if ($cursor->num_rows > 0) {
-			if ($cursor->data_seek($rowNumber))
-			{
-				$result = $cursor->fetch_row();
-				$result = $result[$fieldName];
-			}
-		}																									 
+		if (mysql_num_rows($cursor) > 0) {
+			$result = mysql_result($cursor, $rowNumber, $fieldName);
+		} else {
+			$result = null;
+		}                                                     
 		$this->free($cursor);
 		return $result;
 	}
 	
 	function getObject($sqlText) {
 		$cursor = $this->query($sqlText);
-		if ($cursor->num_rows == 1) {
+		if (mysql_num_rows($cursor) == 1) {
 			$result = $this->nextObject($cursor);
 		} else {
 			$result = false;
@@ -213,7 +212,7 @@ class bmMySQLLink extends bmFFObject {
 	public function getColumn($sqlText, $index = 0)
 	{
 		$cursor = $this->query($sqlText);
-		if ($cursor->num_rows > 0) {
+		if (mysql_num_rows($cursor) > 0) {
 			$result = array();
 			while ($row = $this->nextRow($cursor))
 			{
@@ -225,14 +224,14 @@ class bmMySQLLink extends bmFFObject {
 		$this->free($cursor);
 		return $result;
 	}
-	
-	public function tableExists($tableName)
-	{
-		$cursor = $this->query("SHOW TABLES LIKE '" . $this->formatInput($tableName) . "';");
-		$result = ($cursor->num_rows > 0);
-		$this->free($cursor);
-		return $result;
-	}	 
+  
+  public function tableExists($tableName)
+  {
+    $cursor = $this->query("SHOW TABLES LIKE '" . $this->formatInput($tableName) . "';");
+    $result = (mysql_num_rows($cursor) > 0);
+    $this->free($cursor);
+    return $result;
+  }   
 
 }
 

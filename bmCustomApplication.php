@@ -93,11 +93,15 @@
 		public $templatecache = array();
 		public $doctype = '<DOCTYPE html>';
 		public $action = '';
+
+		/**
+		 * @var bmMySQLLink|null
+		 */
 		public $dataLink = null;
 		public $user = null;		
 		public $session = null;
 		public $debug = BM_C_DEBUG;
-    public $locale = ''; 
+		public $locale = ''; 
 		
 		/**
 		* Конструктор класса
@@ -109,7 +113,7 @@
 		public function __construct($application, $parameters = array())
 		{
 			$this->locale = C_LOCALE;
-      parent::__construct($application, $parameters);
+			parent::__construct($application, $parameters);
 			$this->action = $this->cgi->getGPC('action', '');
 			
 			$this->dataLink = new bmMySQLLink($this);
@@ -128,14 +132,13 @@
 		*/
 		public function login($email, $password, $isMD5 = false)
 		{
-      $result = false;
+			$result = false;
 			if (($this->session->userId != C_DEFAULT_USER_ID) && ($this->session->userId != 0))
 			{
 				$this->user->identifier = $this->session->userId;
 				$this->user->lastVisit = $this->session->createTime;
 				$this->timeOnline = time() - $this->session->createTime;        
 				$this->user->store();
-				$result = true;
 			}
 			
 			$dataLink = $this->dataLink;
@@ -156,25 +159,15 @@
 							LIMIT 1;";
 			$user = $dataLink->getObject($sql);
 			
-      if ($user)
+			if ($user)
 			{
 				$result = true;
 				$this->session->userId = $user->id;
 				$this->session->createTime = time();
 				$this->session->store();
 				
-        $this->user->identifier = $user->id;
+				$this->user->identifier = $user->id;
 				$this->user->load();
-				/*
-        $sql = "INSERT IGNORE INTO 
-								`link_user_session`
-								SET 
-									`userId` = '" . $dataLink->formatInput($this->session->userId) . "',
-									`sessionHash` = '" . $dataLink->formatInput($this->session->identifier) . "',
-									`ipAddress` = '" . $dataLink->formatInput($this->session->ipAddress) . "';";
-									
-				$dataLink->query($sql);
-        */
 			}
 		 
 			return $result;
@@ -195,17 +188,7 @@
 				
 				$this->user->lastVisit = $this->session->createTime;
 				$this->user->timeOnline = time() - $this->session->createTime;
-        //$this->user->password = '';
-				//$this->user->store();
-				
 				$dataLink = $this->dataLink;
-				/*
-        $sql = "DELETE FROM 
-									`link_user_session`
-								WHERE 
-									`userId` = '" . $dataLink->formatInput($this->session->userId) . "';"; 
-				$dataLink->query($sql);
-				*/
 				$this->session->userId = C_DEFAULT_USER_ID;
 				$this->session->createTime = time();
 				$this->session->save();      
@@ -289,18 +272,17 @@
     */
 		public function getTemplate($templateName, $escape = true, $read = false, $path = projectRoot)
 		{
-			//$template = $this->debug ? false : $this->cacheLink->get(C_TEMPLATE_PREFIX . $templateName);
-			$template = (BM_C_CACHE_TEMPLATES !== true)? false : $this->cacheLink->get(C_TEMPLATE_PREFIX . $templateName);
+			$template = $this->debug ? false : $this->cacheLink->get(C_TEMPLATE_PREFIX . $templateName);
       
       if ($template === false || $read !== false)
 			{
-				$template = file_get_contents($path . '/templates/' . $templateName . '.html');
+				$template = trim(file_get_contents($path . '/templates/' . $templateName . '.html'));
 
 				$this->cacheLink->set(C_TEMPLATE_PREFIX . $templateName, $template);
 			}
 			if ($escape)
 			{
-				$template = addcslashes($template, '"');
+				$template = addcslashes(trim($template), '"');
 			}
 			return $template;
 		}

@@ -54,16 +54,16 @@
               $value = floatval($propertyValue);
             break;
             case BM_VT_PASSWORD:
-              $value = "'" . (string)$propertyValue . "'";
+              $value = "'" . $dataLink->formatInput($propertyValue) . "'";
             break;
             case BM_VT_IMAGE:
-              $value = "'" . (string)$propertyValue . "'";
+              $value = "'" . $dataLink->formatInput($propertyValue) . "'";
             break;
             case BM_VT_FILE:
-              $value = "'" . (string)$propertyValue . "'";
+              $value = "'" . $dataLink->formatInput($propertyValue) . "'";
             break;
             case BM_VT_DATETIME:
-              $value = "'" . (string)$propertyValue . "'";
+              $value = "'" . $dataLink->formatInput($propertyValue) . "'";
             break;
           }
         }

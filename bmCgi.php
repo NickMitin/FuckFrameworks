@@ -88,7 +88,6 @@
     */
     public function getGPC($name, $defaultValue, $type = BM_VT_ANY) 
     {
-       
       $value = array_key_exists($name, $_GET) ? $_GET[$name] : (array_key_exists($name, $_POST) ? $_POST[$name] : (array_key_exists($name, $_COOKIE) ? $_COOKIE[$name] : $defaultValue)); 
       switch ($type) 
       {
@@ -102,9 +101,7 @@
         case BM_VT_STRING:
           $value = trim($value);
         break;
-
       }
-      
       return $value;
     }
 

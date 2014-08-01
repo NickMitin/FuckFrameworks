@@ -1,5 +1,6 @@
 <?php
-  /*
+
+/*
   * Copyright (c) 2009, "The Blind Mice Studio"
   * All rights reserved.
   * 
@@ -27,193 +28,203 @@
   * 
   */
 
-  final class bmGenerator extends bmFFObject 
-  {
-    
-    private $routes = array();
-    
-    private function ffTypeToString($type)
-    {
-      $result = 'BM_VT_ERROR';
-      switch ($type)
-      {
-        case BM_VT_INTEGER: 
-          $result = 'BM_VT_INTEGER';
-        break;
-        case BM_VT_FLOAT: 
-          $result = 'BM_VT_FLOAT';
-        break;
-        case BM_VT_DATETIME: 
-          $result = 'BM_VT_DATETIME';
-        break;
-        case BM_VT_STRING: 
-          $result = 'BM_VT_STRING';
-        break;
-        case BM_VT_ANY: 
-          $result = 'BM_VT_ANY';
-        break;
-      }
-      return $result;
-    }
-    
-    public function __construct($application, $parameters = array())
-    {
-      parent::__construct($application, $parameters);
-      $this->routes = $application->cacheLink->get('sitePages');
-      
-      $this->routes = false;
-      
-      if ($this->routes == false)
-      {
-        require_once(projectRoot . '/conf/generator.conf');
-        $application->cacheLink->set('sitePages', $this->routes);
-      }
-    }
-    
-    public function addRoute($uri, $handlerFile, $handlerClassName, $parameters = array())
-    {
-      $route = array();
-      $route['route'] = $handlerFile;
-      $route['class'] = $handlerClassName;
-      if (count($parameters) > 0)
-      {
-        $route['parameters'] = $parameters;
-      }
-      $this->routes[$uri] = $route;
-    }
-    
-    public function serialize()
-    {
-      $routes = array();
-      foreach ($this->routes as $uri => $route)
-      {
-        $routeString = "  '" . $uri . "' => array\n  (\n    'route' => '" . $route['route'] . "',\n    'class' => '" . $route['class'] . "'";
-        if (array_key_exists('parameters', $route))
-        {
-          $parameters = array();
-          foreach ($route['parameters'] as $name => $type)
-          {
-            $parameters[] = "      '" . $name . "' => " . $this->ffTypeToString($type);
-          }
-          $routeString .= ",\n    'parameters' => array\n    (\n" . implode(",\n", $parameters) . "\n    )";
-        }
-        $routeString .= "\n  )";
-        $routes[] = $routeString;
-      }
-      $routes = "<?php\n\n\$this->routes = array\n(\n" . implode(",\n", $routes) . "\n);";
-      file_put_contents(projectRoot . '/conf/generator.conf', $routes);
-    }
-    
-    public function generate($path)
-    {   
-      $pathParts = explode('?', $path);
-      
-      if (count($pathParts) > 1)
-      {
-        $path = $pathParts[0];
-        if (trim($pathParts[1]) != '')
-        {
-          $getParameters = explode('&', $pathParts[1]);
-          foreach ($getParameters as $getParameter)
-          {
-            if (mb_strpos($getParameter, '=') !== false)
-            {
-              list($key, $value) = explode('=', $getParameter);
-              $_GET[urldecode($key)] = $value;
-            }
-          }
-        }
-      }
+final class bmGenerator extends bmFFObject
+{
 
-      $result = '';
-      $status = 200;
-      $routes = $this->routes;
-      $forceEmpty = false;
-      $success = false;
-      foreach ($routes as $route => $routeData)
-      {
-        if (preg_match($route, $path, $matches))
-        {
-          if (array_key_exists('redirect', $routeData))
-          {
-            header('location: ' . $routeData['redirect'], true);
-            exit;
-          }
-          require_once(projectRoot . $routeData['route']);
-          $parameters = array();
-          $matchCount = count($matches) - 1;
-          if (array_key_exists('parameters', $routeData))
-          {
-            if ($matchCount > 0)
-            {
-              $routeParameters = array_slice($routeData['parameters'], 0, $matchCount);
+	private $routes = array();
 
-              $i = 1;
-              foreach ($routeParameters as $name => $type)
-              {
-                $parameters[$name] = $this->application->validateValue($matches[$i], $type);              
-                $i++;
-              }
-            }
-            if(count($routeParameters = array_slice($routeData['parameters'], $matchCount)) > 0)
-            {
-              foreach ($routeParameters as $name => $type)
-              {
-                $parameters[$name] = $this->application->cgi->getGPC($name, '', $type);  
-              }
-            }
-            
-          }
-          
-          $entity = new $routeData['class']($this->application, $parameters);
-          if ($entity instanceof bmCustomRemoteProcedure)
-          {
-            $result = $entity->execute();
-            $forceEmpty = $entity->forceEmpty;
-            if ($result == '' && !$forceEmpty)
-            {
-              $result = 'OK';
-            }
-          }
-          else
-          {
-            $timeStart = microtime(true); 
-            
-            $result = $entity->generate();
-            
-            $timeEnd = microtime(true);
-            $time = $timeEnd - $timeStart;
-            
-            if (BM_C_VERBOSE >= 1) echo '<br />' . $time;
-            if (BM_C_VERBOSE >= 2) echo '<br />' . $this->application->dataLink->queriesCount;
-          }
-          $success = true;
-          break;
-        }
-      }
-      if (!$success)
-      {
-        $pageId = $this->application->getObjectIdByFieldName('textPage', 'url', $path);
-        if ($pageId > 0)
-        {
-          require_once(projectRoot . '/modules/view/textPage/index.php');
-          $page = new bmTextPagePage($this->application);
-          $result = $page->generate();  
-        }
-      }
-      if ($result == '' && !$forceEmpty)
-      {
-        #HTTP/1.1 200 OK
-        header('HTTP/1.1 404 Not Found', true, 404);
-        require_once(projectRoot . '/modules/errors/404.php');
-        $page = new bm404Page($this->application);
-        $result = $page->generate();
-        $status = 404;
-      }
-      #ob_start('ob_gzhandler');
-      return $result;
-    }
-    
-  }
-  
+	private function ffTypeToString($type)
+	{
+		$result = 'BM_VT_ERROR';
+		switch ($type)
+		{
+			case BM_VT_INTEGER:
+				$result = 'BM_VT_INTEGER';
+				break;
+			case BM_VT_FLOAT:
+				$result = 'BM_VT_FLOAT';
+				break;
+			case BM_VT_DATETIME:
+				$result = 'BM_VT_DATETIME';
+				break;
+			case BM_VT_STRING:
+				$result = 'BM_VT_STRING';
+				break;
+			case BM_VT_ANY:
+				$result = 'BM_VT_ANY';
+				break;
+		}
+
+		return $result;
+	}
+
+	public function __construct($application, $parameters = array())
+	{
+		parent::__construct($application, $parameters);
+		$this->routes = $application->cacheLink->get('sitePages');
+
+		$this->routes = false;
+
+		if ($this->routes == false)
+		{
+			require_once(projectRoot . '/conf/generator.conf');
+			$application->cacheLink->set('sitePages', $this->routes);
+		}
+	}
+
+	public function addRoute($uri, $handlerFile, $handlerClassName, $parameters = array())
+	{
+		$route = array();
+		$route['route'] = $handlerFile;
+		$route['class'] = $handlerClassName;
+		if (count($parameters) > 0)
+		{
+			$route['parameters'] = $parameters;
+		}
+		$this->routes[$uri] = $route;
+	}
+
+	public function serialize()
+	{
+		$routes = array();
+		foreach ($this->routes as $uri => $route)
+		{
+			$routeString = "  '" . $uri . "' => array\n  (\n    'route' => '" . $route['route'] . "',\n    'class' => '" . $route['class'] . "'";
+			if (array_key_exists('parameters', $route))
+			{
+				$parameters = array();
+				foreach ($route['parameters'] as $name => $type)
+				{
+					$parameters[] = "      '" . $name . "' => " . $this->ffTypeToString($type);
+				}
+				$routeString .= ",\n    'parameters' => array\n    (\n" . implode(",\n", $parameters) . "\n    )";
+			}
+			$routeString .= "\n  )";
+			$routes[] = $routeString;
+		}
+		$routes = "<?php\n\n\$this->routes = array\n(\n" . implode(",\n", $routes) . "\n);";
+		file_put_contents(projectRoot . '/conf/generator.conf', $routes);
+	}
+
+	public function generate($path)
+	{
+		$pathParts = explode('?', $path);
+
+		if (count($pathParts) > 1)
+		{
+			$path = $pathParts[0];
+			if (trim($pathParts[1]) != '')
+			{
+				$getParameters = explode('&', $pathParts[1]);
+				foreach ($getParameters as $getParameter)
+				{
+					if (mb_strpos($getParameter, '=') !== false)
+					{
+						list($key, $value) = explode('=', $getParameter);
+						$_GET[urldecode($key)] = $value;
+					}
+				}
+			}
+		}
+
+		$result = '';
+		$status = 200;
+		$routes = $this->routes;
+		$forceEmpty = false;
+		$success = false;
+
+		$this->pathSections = explode("/", trim($path, "/"));
+
+		foreach ($routes as $route => $routeData)
+		{
+			if (preg_match($route, $path, $matches))
+			{
+				if (array_key_exists('redirect', $routeData))
+				{
+					header('location: ' . $routeData['redirect'], true);
+					exit;
+				}
+				require_once(projectRoot . $routeData['route']);
+				$parameters = array();
+				$matchCount = count($matches) - 1;
+				if (array_key_exists('parameters', $routeData))
+				{
+					if ($matchCount > 0)
+					{
+						$routeParameters = array_slice($routeData['parameters'], 0, $matchCount);
+
+						$i = 1;
+						foreach ($routeParameters as $name => $type)
+						{
+							$parameters[$name] = $this->application->validateValue($matches[$i], $type);
+							$i++;
+						}
+					}
+					if (count($routeParameters = array_slice($routeData['parameters'], $matchCount)) > 0)
+					{
+						foreach ($routeParameters as $name => $type)
+						{
+							$parameters[$name] = $this->application->cgi->getGPC($name, '', $type);
+						}
+					}
+
+				}
+
+				$entity = new $routeData['class']($this->application, $parameters);
+				if ($entity instanceof bmCustomRemoteProcedure)
+				{
+					$result = $entity->execute();
+					$forceEmpty = $entity->forceEmpty;
+					if ($result == '' && !$forceEmpty)
+					{
+						$result = 'OK';
+					}
+				}
+				else
+				{
+					$timeStart = microtime(true);
+
+					$result = $entity->generate();
+
+					$timeEnd = microtime(true);
+					$time = $timeEnd - $timeStart;
+
+					if (BM_C_VERBOSE >= 1)
+					{
+						echo '<br />' . $time;
+					}
+					if (BM_C_VERBOSE >= 2)
+					{
+						echo '<br />' . $this->application->dataLink->queriesCount;
+					}
+				}
+				$success = true;
+				break;
+			}
+		}
+		if (!$success)
+		{
+			$pageId = $this->application->getObjectIdByFieldName('textPage', 'url', $path);
+			if ($pageId > 0)
+			{
+				require_once(documentRoot . '/modules/view/textPage/index.php');
+				$page = new bmTextPagePage($this->application);
+				$result = $page->generate();
+			}
+		}
+		if ($result == '' && !$forceEmpty)
+		{
+			#HTTP/1.1 200 OK
+			header('HTTP/1.1 404 Not Found', true, 404);
+			require_once(projectRoot . '/modules/errors/404.php');
+			$page = new bm404Page($this->application);
+			$result = $page->generate();
+			$status = 404;
+		}
+
+		return $result;
+	}
+
+}
+
 ?>

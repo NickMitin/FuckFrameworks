@@ -2,7 +2,7 @@
   /*
   * Copyright (c) 2009, "The Blind Mice Studio"
   * All rights reserved.
-  *
+  * 
   * Redistribution and use in source and binary forms, with or without
   * modification, are permitted provided that the following conditions are met:
   * - Redistributions of source code must retain the above copyright
@@ -24,47 +24,47 @@
   * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
   * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
   * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
+  * 
   */
 
-
+	
   abstract class bmHTMLPage extends bmPage
   {
-
+    
     public $title = '';
     public $docType = '<!DOCTYPE html>';
-
+    
     private $scripts = array();
     private $CSS = array();
     private $meta = array();
     private $RSSLinks = array();
-
+    
     protected $content = '';
     protected $metaData = '';
     protected $clientTemplates = '';
     protected $pageTemplate = '';
-
+    
     public function generate() {
-
+      
       $this->metaData = implode("\n", $this->meta) . "\n" . implode("\n", $this->scripts) . "\n" . implode("\n", $this->CSS) . "\n" . implode("\n", $this->RSSLinks) . "\n";
       return $this->docType;
-
+      
     }
-
+    
     public function addHTMLMetaDatum($dataType, $source, $path)
     {
       if (!array_key_exists($source, $this->$dataType)) {
         $this->{$dataType}[$source] = $path;
       }
     }
-
+    
     public function getClientTemplates($templateNames)
     {
       if (!is_array($templateNames))
       {
         $templateNames = array($templateNames);
       }
-
+      
       $templates = '';
       $templateSet = $this->application->getTemplate('global/div_templateSet');
       $templateClient = $this->application->getTemplate('global/div_template');
@@ -79,75 +79,61 @@
 
     public function addScript($source)
     {
-      $src = (mb_strpos($source, 'http') === 0)? $source :
-        $src = $this->application->contentProvider->getStaticServer() . '/scripts/' . $source . '.js?build=' . BM_C_BUILD;
-
-      $this->addHTMLMetaDatum('scripts', $source, '<script type="text/javascript" src="' . $src . '"></script>');
-
-/*
       $src = mb_strpos($source, 'http') === 0 ? $source : $this->application->contentProvider->getStaticServer() . '/scripts/' . $source . '.js';
       $this->addHTMLMetaDatum('scripts', $source, '<script type="text/javascript" src="' . $src . '?build=' . BM_C_BUILD . '"></script>');
- */
     }
-
+    
     public function addScripts($scripts)
     {
       if (!is_array($scripts))
       {
         $scripts = array($scripts);
       }
-
+      
       foreach ($scripts as $source)
       {
         $this->addScript($source);
       }
     }
-
+    
     public function addCSS($source)
     {
-      if (BM_C_COMPILE_STYLES !== true)
-      {
-        $this->addHTMLMetaDatum('CSS', $source, '<link rel="stylesheet" type="text/css" href="' . $this->application->contentProvider->getStaticServer() . '/styles/' . $source . '.css?build=' . BM_C_BUILD . '" />');
-      }
-      else
-      {
-        $this->addHTMLMetaDatum('CSS', $source, '<link rel="stylesheet" type="text/css" href="' . $this->application->contentProvider->getStaticServer() . '/styles/compiled/' . $source . '-' . BM_C_BUILD . '.css?build=' . BM_C_BUILD . '" />');
-      }
+      $this->addHTMLMetaDatum('CSS', $source, '<link rel="stylesheet" type="text/css" href="' . $this->application->contentProvider->getStaticServer() . '/styles/' . $source . '.css?build=' . BM_C_BUILD . '" />');
     }
-
+    
     public function addCSSs($CSSs)
     {
       if (!is_array($CSSs))
       {
         $CSSs = array($CSSs);
       }
-
+      
       foreach ($CSSs as $source)
       {
         $this->addCSS($source);
       }
     }
-
+    
     public function addMeta($name, $content)
     {
       $this->addHTMLMetaDatum('meta', $name, '<meta http-equiv="' . $name . '" content="' . $content . '" />');
     }
-
+    
     public function addKeywords($keywords)
     {
       $this->addHTMLMetaDatum('meta', 'keywords', '<meta name="keywords" content="' . $keywords . '" />');
     }
-
+    
     public function addDescription($description)
     {
       $this->addHTMLMetaDatum('meta', 'description', '<meta name="description" content="' . $description . '" />');
     }
-
+    
     public function addCustomMeta($key, $name, $content)
     {
       $this->addHTMLMetaDatum('meta', $name, '<meta ' . $key . '="' . $name . '" content="' . $content . '" />');
     }
-
+    
     public function addMetas($meta)
     {
       foreach ($meta as $name => $content)
@@ -155,19 +141,19 @@
         $this->addMeta($name, $content);
       }
     }
-
+  
     public function addRSSLink($source, $title)
     {
       $this->addHTMLMetaDatum('RSSLinks', $source, '<link href="' . $source .'" title="' . $title . '" type="application/rss+xml" rel="alternate"/>');
     }
-
+    
     public function addRSSLinks($links)
     {
       if (!is_array($links))
       {
         $links = array($links);
       }
-
+      
       foreach ($links as $source => $title)
       {
         $this->addRSSLink($source, $title);

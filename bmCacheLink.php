@@ -72,11 +72,6 @@
     {
       return $this->cacherObject->get($key);
     }
-    
-    public function getKeys($keyPattern)
-    {
-			return $this->cacherObject->getKeys($keyPattern);
-    }
 
     /**
     * Сохраняет значение в кеш с указанным ключем и временем жизни
@@ -102,11 +97,6 @@
     public function delete($key)
     {
       return $this->cacherObject->delete($key);
-    }
-    
-    public function deleteKeys($keyNames)
-    {
-      return $this->cacherObject->deleteKeys($keyNames);
     }
     
     public function deleteByPrefix($key)
