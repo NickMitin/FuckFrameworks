@@ -800,9 +800,11 @@ abstract class bmDataObject extends bmFFObject
 	 * значение полей объекта в виде массива
 	 * @return array
 	 */
-	public function toArray() {
+	public function toArray()
+	{
 		$output = [];
-		foreach($this->map as $field=>$fieldInfo) {
+		foreach ($this->map as $field => $fieldInfo)
+		{
 			$output[$field] = $this->__get($field);
 		}
 		return $output;

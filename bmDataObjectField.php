@@ -1,5 +1,6 @@
 <?php
-  /*
+
+/*
   * Copyright (c) 2009, "The Blind Mice Studio"
   * All rights reserved.
   * 
@@ -27,131 +28,153 @@
   * 
   */
 
-  final class bmDataObjectField extends bmMetaDataObject
-  {
-    
-    public function __construct($application, $parameters = array())
-    {
-      $this->objectName = 'dataObjectField';
-      
-      $this->map = array(
-        'propertyName' => array(
-          'fieldName' => 'propertyName',
-          'dataType' => BM_VT_STRING,
-          'defaultValue' => ''
-        ),
-        'fieldName' => array(
-          'fieldName' => 'fieldName',
-          'dataType' => BM_VT_STRING,
-          'defaultValue' => ''
-        ),
-        'dataType' => array(
-          'fieldName' => 'dataType',
-          'dataType' => BM_VT_INTEGER,
-          'defaultValue' => 0
-        ),
-        'localName' => array(
-          'fieldName' => 'localName',
-          'dataType' => BM_VT_STRING,
-          'defaultValue' => ''
-        ),
-        'defaultValue' => array(
-          'fieldName' => 'defaultValue',
-          'dataType' => BM_VT_STRING,
-          'defaultValue' => ''
-        ),
-        'type' => array(
-          'fieldName' => 'type',
-          'dataType' => BM_VT_INTEGER,
-          'defaultValue' => 0
-        )
-      );  
-      
-      parent::__construct($application, $parameters);  
-    }
-    
-    public function __get($propertyName)
-    {
-      $this->checkDirty();
-      switch ($propertyName)
-      {
-        case 'dataObjectMapId':
-          if (!array_key_exists('dataObjectMapId', $this->properties))
-          {
-            $this->properties['dataObjectMapId'] = $this->getDataObjectMap(false);
-          }
-          return $this->properties['dataObjectMapId'];
-        break;
-        case 'dataObjectMap':
-          $this->properties['dataObjectMap'] = $this->getDataObjectMap($this);
-        break;
-        case 'localNames':
-          if (!array_key_exists('localNames', $this->properties))
-          {
-            if (trim($this->properties['localName'] != ''))
-            {
-              $this->properties['localNames'] = unserialize($this->properties['localName']);
-            }
-            else
-            {
-              $this->properties['localNames'] = array('nominative' => '');
-            }
-          }
-          return $this->properties['localNames'];
-        break;
-        default:
-          return parent::__get($propertyName);
-        break;
-      }
-    }
-    
-    public function setDataObjectMap($dataObjectMapId, $type)
-    {
-      $this->dirty['saveDataObjectMap'] = true;
-      $item = new stdClass();
-      $item->dataObjectMapId = $dataObjectMapId;
-      $item->type = $type;
-      $this->properties['dataObjectMapId'][] = $item;
-    }
-    
-    public function saveDataObjectMap()
-    {
-      
-      $cacheLink = $this->application->cacheLink;
-      $dataLink = $this->application->dataLink;
-      
-      $objectDataMapId = $this->properties['dataObjectMapId'];
-      $sql = "DELETE FROM `link_dataObjectMap_dataObjectField` WHERE `dataObjectMapId` = " . $dataLink->formatInput($this->identifier, BM_VT_INTEGER);
-      $dataLink->query($sql);
-      $this->application->log->add($sql);
-            
-      $sql = "INSERT IGNORE INTO
+final class bmDataObjectField extends bmMetaDataObject
+{
+
+	/**
+	 * @var bmMigration
+	 */
+	protected $migration;
+
+	public function __construct($application, $parameters = array(), $migration = null)
+	{
+		$this->objectName = 'dataObjectField';
+
+		$this->map = array(
+			'propertyName' => array(
+				'fieldName' => 'propertyName',
+				'dataType' => BM_VT_STRING,
+				'defaultValue' => ''
+			),
+			'fieldName' => array(
+				'fieldName' => 'fieldName',
+				'dataType' => BM_VT_STRING,
+				'defaultValue' => ''
+			),
+			'dataType' => array(
+				'fieldName' => 'dataType',
+				'dataType' => BM_VT_INTEGER,
+				'defaultValue' => 0
+			),
+			'localName' => array(
+				'fieldName' => 'localName',
+				'dataType' => BM_VT_STRING,
+				'defaultValue' => ''
+			),
+			'defaultValue' => array(
+				'fieldName' => 'defaultValue',
+				'dataType' => BM_VT_STRING,
+				'defaultValue' => ''
+			),
+			'type' => array(
+				'fieldName' => 'type',
+				'dataType' => BM_VT_INTEGER,
+				'defaultValue' => 0
+			)
+		);
+
+		parent::__construct($application, $parameters);
+		$this->migration = $migration;
+	}
+
+	public function compere(bmDataObjectField $object)
+	{
+		if ($this->properties['propertyName'] != $object->propertyName
+			|| $this->properties['fieldName'] != $object->fieldName
+			|| $this->properties['dataType'] != $object->dataType
+			|| $this->properties['localName'] != $object->localName
+			|| $this->properties['defaultValue'] != $object->defaultValue
+			|| $this->properties['type'] != $object->type
+		)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	public function __get($propertyName)
+	{
+		$this->checkDirty();
+		switch ($propertyName)
+		{
+			case 'dataObjectMapId':
+				if (!array_key_exists('dataObjectMapId', $this->properties))
+				{
+					$this->properties['dataObjectMapId'] = $this->getDataObjectMap(false);
+				}
+				return $this->properties['dataObjectMapId'];
+				break;
+			case 'dataObjectMap':
+				$this->properties['dataObjectMap'] = $this->getDataObjectMap($this);
+				break;
+			case 'localNames':
+				if (!array_key_exists('localNames', $this->properties))
+				{
+					if (trim($this->properties['localName'] != ''))
+					{
+						$this->properties['localNames'] = unserialize($this->properties['localName']);
+					}
+					else
+					{
+						$this->properties['localNames'] = array('nominative' => '');
+					}
+				}
+				return $this->properties['localNames'];
+				break;
+			default:
+				return parent::__get($propertyName);
+				break;
+		}
+	}
+
+	public function setDataObjectMap($dataObjectMapId, $type)
+	{
+		$this->dirty['saveDataObjectMap'] = true;
+		$item = new stdClass();
+		$item->dataObjectMapId = $dataObjectMapId;
+		$item->type = $type;
+		$this->properties['dataObjectMapId'][] = $item;
+	}
+
+	public function saveDataObjectMap()
+	{
+
+		$cacheLink = $this->application->cacheLink;
+		$dataLink = $this->application->dataLink;
+
+		$objectDataMapId = $this->properties['dataObjectMapId'];
+		$sql = "DELETE FROM `link_dataObjectMap_dataObjectField` WHERE `dataObjectMapId` = " . $dataLink->formatInput($this->identifier, BM_VT_INTEGER);
+		$dataLink->query($sql);
+		$this->application->log->add($sql);
+
+		$sql = "INSERT IGNORE INTO
                 `link_dataObjectMap_dataObjectField`
                 (`dataObjectFieldId`, `dataObjectMapId`, `type`)  
                 VALUES
                   (" . $this->properties['identifier'] . ", " . $dataLink->formatInput($objectDataMapId[0]->dataObjectMapId, BM_VT_INTEGER) . ", " . $dataLink->formatInput($objectDataMapId[0]->type, BM_VT_INTEGER) . ");";
-                  
-      $dataLink->query($sql);
-      $this->application->log->add($sql);
-            
-      $cacheLink->delete('dataObjectField_dataObjectMap_' . $this->properties['identifier']);
-      $cacheLink->delete('dataObjectField_dataObjectMap_' . $this->properties['identifier'] . '_objectArrays');
-      $this->dirty['saveDataObjectMap'] = false;      
-    }
-    
-    public function delete()
-    {
-      $this->dirty = array();
-      $sql = "DELETE FROM `" . $this->objectName . "` WHERE `id` = " . $this->properties['identifier'] . ";";
-      $this->application->dataLink->query($sql);
-      $this->application->log->add($sql);
-    }
-    
-    public function getDataObjectMap($load = true)
-    {
-      $cacheKey = null;
-      
-      $sql = "
+
+		$dataLink->query($sql);
+		$this->application->log->add($sql);
+
+		$cacheLink->delete('dataObjectField_dataObjectMap_' . $this->properties['identifier']);
+		$cacheLink->delete('dataObjectField_dataObjectMap_' . $this->properties['identifier'] . '_objectArrays');
+		$this->dirty['saveDataObjectMap'] = false;
+	}
+
+	public function delete()
+	{
+		$this->dirty = array();
+		$sql = "DELETE FROM `" . $this->objectName . "` WHERE `id` = " . $this->properties['identifier'] . ";";
+		$this->application->dataLink->query($sql);
+		$this->application->log->add($sql);
+	}
+
+	public function getDataObjectMap($load = true)
+	{
+		$cacheKey = null;
+
+		$sql = "
         SELECT 
           `link_dataObjectMap_dataObjectField`.`dataObjectMapId` AS `identifier`
         FROM 
@@ -160,33 +183,33 @@
           `link_dataObjectMap_dataObjectField`.`dataObjectFieldId` = " . $this->properties['identifier'] . "
         LIMIT 1;
       ";
-      
-      return $this->getSimpleLink($sql, $cacheKey, 'dataObjectMap', E_DATAOBJECTMAP_NOT_FOUND, $load);
-    }
-    
-    public function generateFiles()
-    {
-      $dataObjectMap = $this->dataObjectMap;
-      
-      if ($dataObjectMap !== null)
-      {
-        $dataObjectMap->generateFiles();
-      }
-    }
-    
-    public function store()
-    {
-      $this->dirty['generateFiles'] = true;
-      $this->application->log->add($this->prepareSQL());
-      parent::store();
-    }
-    
-    public function save()
-    {
-      $this->dirty['generateFiles'] = true;
-      $this->checkDirty();                                                 
-    }
-    
-  }
-  
+
+		return $this->getSimpleLink($sql, $cacheKey, 'dataObjectMap', E_DATAOBJECTMAP_NOT_FOUND, $load);
+	}
+
+	public function generateFiles()
+	{
+		$dataObjectMap = $this->dataObjectMap;
+
+		if ($dataObjectMap !== null)
+		{
+			$dataObjectMap->generateFiles();
+		}
+	}
+
+	public function store()
+	{
+		$this->dirty['generateFiles'] = true;
+		$this->application->log->add($this->prepareSQL());
+		parent::store();
+	}
+
+	public function save()
+	{
+		$this->dirty['generateFiles'] = true;
+		$this->checkDirty();
+	}
+
+}
+
 ?>

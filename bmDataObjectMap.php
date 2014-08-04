@@ -35,11 +35,16 @@ final class bmDataObjectMap extends bmMetaDataObject
 	private $droppedFieldIds = array();
 
 	/**
+	 * @var bmMigration
+	 */
+	protected $migration;
+
+	/**
 	 * элемент массива - stdClass со свойствами fieldId, oldFieldName
 	 */
 	private $renamedFields = array();
 
-	public function __construct($application, $parameters = array())
+	public function __construct($application, $parameters = array(), $migration = null)
 	{
 		$this->objectName = 'dataObjectMap';
 
@@ -56,6 +61,7 @@ final class bmDataObjectMap extends bmMetaDataObject
 			)
 		);
 		parent::__construct($application, $parameters);
+		$this->migration = $migration;
 	}
 
 	public function __get($propertyName)
@@ -188,15 +194,53 @@ final class bmDataObjectMap extends bmMetaDataObject
 
 		foreach ($this->addedFieldIds as $id)
 		{
-			$dataObjectField = new bmDataObjectField($this->application, array('identifier' => $id));
+			$dataObjectField = new bmDataObjectField($this->application, array('identifier' => $id), $this->migration);
 
 			$insertStrings[] = 'ADD COLUMN `' . $dataObjectField->fieldName . '` ' . $dataLink->ffTypeToNativeType($dataObjectField->dataType, $dataObjectField->defaultValue);
+			if ($this->migration)
+			{
+				$this->migration->addCommit("Добавление поля `{$dataObjectField->fieldName}` объекту `{$this->properties['name']}`");
+				$this->migration->addField($this->properties['name'], $dataObjectField->fieldName);
+				$this->migration->addSql(
+					"
+					insert ignore into
+						dataObjectField
+						(`propertyName`, `fieldName`, `dataType`, `localName`, `defaultValue`, `type`)
+					values
+						(
+							" . $dataLink->quoteSmart($dataObjectField->propertyName) . ",
+							" . $dataLink->quoteSmart($dataObjectField->fieldName) . ",
+							" . $dataLink->quoteSmart($dataObjectField->dataType) . ",
+							" . $dataLink->quoteSmart($dataObjectField->localName) . ",
+							" . $dataLink->quoteSmart($dataObjectField->defaultValue) . ",
+							" . $dataLink->quoteSmart($dataObjectField->type) . "
+						)"
+				);
+				$this->migration->addSql(
+					"
+											INSERT IGNORE INTO
+												`link_dataObjectMap_dataObjectField`
+												select p1.dataObjectMapId, p2.dataObjectFieldId from
+													(
+														select id as dataObjectMapId from `dataObjectMap` where name = " . $dataLink->quoteSmart($this->properties['name']) . "
+								) p1,
+								( select max(id) as dataObjectFieldId from dataObjectField ) p2
+
+
+				"
+				);
+
+			}
 		}
 
 		if (!$dataLink->select("SHOW COLUMNS FROM `" . $this->name . "` WHERE field='deleted'")->rowCount())
 		{
 			$sql = "ALTER TABLE `" . $this->name . "` ADD `deleted` tinyint(1) unsigned NOT NULL AFTER `id`";
 			$dataLink->query($sql);
+			if ($this->migration)
+			{
+				$this->migration->addSql($sql);
+			}
 			$this->application->log->add($sql);
 		}
 
@@ -215,9 +259,43 @@ final class bmDataObjectMap extends bmMetaDataObject
 
 		foreach ($this->droppedFieldIds as $id)
 		{
-			$dataObjectField = new bmDataObjectField($this->application, array('identifier' => $id));
+			$dataObjectField = new bmDataObjectField($this->application, array('identifier' => $id), $this->migration);
 
 			$insertStrings[] = 'DROP COLUMN `' . $dataObjectField->fieldName . '`';
+
+			if ($this->migration)
+			{
+				$this->migration->addCommit("Удаление поля `{$dataObjectField->fieldName}` у объекта `{$this->properties['name']}`");
+				$this->migration->addSql(
+					"
+					set @idData = (
+						select dof.id from
+									dataObjectField dof
+									inner join link_dataObjectMap_dataObjectField ldd on ldd.dataObjectFieldId = dof.id
+									inner join dataObjectMap dom on dom.id = ldd.dataObjectMapId
+								where
+									dof.fieldName = " . $dataLink->quoteSmart($dataObjectField->fieldName) . "
+									and dom.name = " . $dataLink->quoteSmart($this->properties['name']) . "
+					)"
+				);
+				$this->migration->addSql(
+					"
+						delete from
+							dataObjectField
+						where
+							`id` = @idData
+						"
+				);
+				$this->migration->addSql(
+					"
+											DELETE FROM
+												`link_dataObjectMap_dataObjectField`
+											WHERE
+												`dataObjectMapId` = (select id as dataObjectMapId from `dataObjectMap` where name = " . $dataLink->quoteSmart($this->properties['name']) . ")
+							and `dataObjectFieldId` = @idData
+					"
+				);
+			}
 
 			$dataObjectField->delete();
 		}
@@ -229,14 +307,45 @@ final class bmDataObjectMap extends bmMetaDataObject
 				implode(', ', $insertStrings) . ";";
 
 			$dataLink->query($sql);
+			if ($this->migration)
+			{
+				$this->migration->addSql($sql);
+			}
 			$this->application->log->add($sql);
 		}
 
-		$insertStrings = array();
+		$insertStrings = $insertStringsMigration = array();
 		foreach ($this->renamedFields as $item)
 		{
-			$dataObjectField = new bmDataObjectField($this->application, array('identifier' => $item->fieldId));
+			$dataObjectField = new bmDataObjectField($this->application, array('identifier' => $item->fieldId), $this->migration);
 			$insertStrings[] = 'CHANGE `' . $item->oldFieldName . '` `' . $dataObjectField->fieldName . '` ' . $dataLink->ffTypeToNativeType($dataObjectField->dataType, $dataObjectField->defaultValue);
+			if ($this->migration
+				&& array_key_exists('oldDataObjectField', $this->properties)
+				&& array_key_exists($item->oldFieldName, $this->properties['oldDataObjectField'])
+				&& !$dataObjectField->compere($this->properties['oldDataObjectField'][$item->oldFieldName])
+			)
+			{
+				$insertStringsMigration[] = 'CHANGE `' . $item->oldFieldName . '` `' . $dataObjectField->fieldName . '` ' . $dataLink->ffTypeToNativeType($dataObjectField->dataType, $dataObjectField->defaultValue);
+				$this->migration->addCommit("Переименование поля `{$item->oldFieldName}` в `{$dataObjectField->fieldName}` у объекта `{$this->properties['name']}`");
+				$this->migration->addSql(
+					"
+					update
+						dataObjectField dof
+						inner join link_dataObjectMap_dataObjectField ldd on ldd.dataObjectFieldId = dof.id
+						inner join dataObjectMap dom on dom.id = ldd.dataObjectMapId
+					set
+						dof.propertyName = " . $dataLink->quoteSmart($dataObjectField->propertyName) . ",
+						dof.fieldName = " . $dataLink->quoteSmart($dataObjectField->fieldName) . ",
+						dof.dataType = " . $dataLink->quoteSmart($dataObjectField->dataType) . ",
+						dof.localName = " . $dataLink->quoteSmart($dataObjectField->localName) . ",
+						dof.defaultValue = " . $dataLink->quoteSmart($dataObjectField->defaultValue) . ",
+						dof.type = " . $dataLink->quoteSmart($dataObjectField->type) . "
+					where
+						dof.fieldName = " . $dataLink->quoteSmart($item->oldFieldName) . "
+						and dom.name = " . $dataLink->quoteSmart($this->properties['name']) . "
+					"
+				);
+			}
 		}
 
 		if (count($insertStrings) > 0)
@@ -247,6 +356,14 @@ final class bmDataObjectMap extends bmMetaDataObject
 
 			$dataLink->query($sql);
 			$this->application->log->add($sql);
+		}
+
+		if ($this->migration && count($insertStringsMigration) > 0)
+		{
+			$sql = "ALTER TABLE
+                  `" . $this->name . "`" .
+				implode(', ', $insertStringsMigration) . ";";
+			$this->migration->addSql($sql);
 		}
 
 		$this->dirty['updateTableFields'] = false;
@@ -299,10 +416,9 @@ final class bmDataObjectMap extends bmMetaDataObject
 			{
 				$defaultValue = "'" . $defaultValue . "'";
 			}
-			if (($this->properties['type'] == 1 && $field->type == 0) || $this->properties['type'] == 0) // TODO: Зачем? // Андрей Колпаков
-			{
-				$mappingItems[] = "        '" . $field->propertyName . "' => array(\n          'fieldName' => '" . $field->fieldName . "',\n          'dataType' => " . $this->dataTypeToString($field->dataType) . ",\n          'defaultValue' => " . $defaultValue . "\n        )";
-			}
+
+			$mappingItems[] = "\t\t\t\t'" . $field->propertyName . "' => array(\n\t\t\t\t\t'fieldName' => '" . $field->fieldName . "',\n\t\t\t\t\t'dataType' => " . $this->dataTypeToString($field->dataType) . ",\n\t\t\t\t\t'defaultValue' => " . $defaultValue . "\n\t\t\t\t)";
+
 		}
 
 		if (count($mappingItems) > 0)
@@ -1108,7 +1224,7 @@ final class bmDataObjectMap extends bmMetaDataObject
 			{
 				$tableField->FFDefault = $tableField->Default;
 			}
-			$dataField = new bmDataObjectField($this->application);
+			$dataField = new bmDataObjectField($this->application, array(), $this->migration);
 			if ($tableField->Property == 'id')
 			{
 				$tableField->Property = 'identifier';
@@ -1295,6 +1411,40 @@ final class bmDataObjectMap extends bmMetaDataObject
 			{
 				$sql = "DROP TABLE `" . $this->name . "`;";
 				$this->application->dataLink->query($sql);
+				if ($this->migration)
+				{
+					$this->migration->addCommit("Удаление  объекта `{$this->objectName}`");
+					$this->migration->addSql("
+							DELETE FROM
+								`dataObjectField`
+							where
+								`id` in (
+										select
+											dof.*
+										from
+											dataObjectField dof
+											inner join link_dataObjectMap_dataObjectField ldd on ldd.dataObjectFieldId = dof.id
+											inner join dataObjectMap dom on dom.id = ldd.dataObjectMapId
+										where
+											dom.name = " . $this->application->dataLink->quoteSmart($this->properties['name']) . "
+										)
+							");
+
+					$this->migration->addSql("
+						DELETE FROM
+							`link_dataObjectMap_dataObjectField`
+						WHERE
+							`dataObjectMapId` in (select id as dataObjectMapId from `dataObjectMap` where name = " . $this->application->dataLink->quoteSmart($this->properties['name']) . ")
+					");
+
+					$this->migration->addSql("
+						delete from
+							`dataObjectMap`
+						values
+							`name` = " . $this->application->dataLink->quoteSmart($this->properties['name']) . "
+					");
+					$this->migration->addSql($sql);
+				}
 				$this->application->log->add($sql);
 			}
 
@@ -1310,7 +1460,6 @@ final class bmDataObjectMap extends bmMetaDataObject
 
 	public function store()
 	{
-		var_dump($this->properties);
 		if ($this->properties['identifier'] == 0)
 		{
 			$sql = "CREATE TABLE IF NOT EXISTS `" . $this->properties['name'] . "` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT, PRIMARY KEY (`id`), `deleted` tinyint(1) unsigned) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
@@ -1320,6 +1469,20 @@ final class bmDataObjectMap extends bmMetaDataObject
 			}
 
 			$this->application->log->add($sql);
+			if ($this->migration)
+			{
+				$this->migration->addCommit("Создание объекта `{$this->properties['name']}`");
+				$this->migration->addObject($this->properties['name']);
+				$this->migration->addSql("
+					insert ignore into
+						dataObjectMap
+						(`name`, `type`)
+					values
+						(" . $this->application->dataLink->quoteSmart($this->properties['name']) . ",
+						 " . $this->application->dataLink->quoteSmart($this->properties['type']) . ")
+				");
+				$this->migration->addSql($sql);
+			}
 			$this->application->log->add($this->prepareSQL());
 
 			// $dataObjectField = new bmDataObjectField($this->application, array('propertyName' => 'identifier', 'fieldName' => 'id', 'type' => BM_VT_INTEGER, 'defaultValue' => 0));
@@ -1343,6 +1506,16 @@ final class bmDataObjectMap extends bmMetaDataObject
 		{
 			$sql = "RENAME TABLE `" . $this->savedPropertyValues['name'] . "` TO `" . $this->properties['name'] . "`;";
 			$this->application->dataLink->query($sql);
+			if ($this->migration)
+			{
+				$this->migration->addCommit("Переименование объекта `$this->savedPropertyValues['name']` в {$this->properties['name']}`");
+				$this->migration->addObject($this->properties['name']);
+				$this->migration->addSql("update dataObjectMap set `name` = "
+					. $this->application->dataLink->quote_smart($this->properties['name'])
+					. " where `name` = " . $this->application->dataLink->quoteSmart($this->savedPropertyValues['name']) . ""
+				);
+				$this->migration->addSql($sql);
+			}
 			$this->application->log->add($sql);
 		}
 	}
