@@ -96,9 +96,10 @@ final class bmReferenceMap extends bmMetaDataObject
 		parent::__set($propertyName, $value);
 	}
 
-	public function addField($fieldId, $type)
+	public function addField($fieldId, $type, $referencedObjectId)
 	{
 		$fieldIds = $this->fieldIds;
+		$this->properties['referencedObjectIdMigrate'] = $referencedObjectId;
 
 		if (!$this->itemExists($fieldId, 'referenceFieldId', $fieldIds))
 		{
@@ -114,9 +115,10 @@ final class bmReferenceMap extends bmMetaDataObject
 		}
 	}
 
-	public function changeFieldType($fieldId, $type)
+	public function changeFieldType($fieldId, $type, $oldReferenceField)
 	{
 		$fieldIds = $this->fieldIds;
+		$this->properties['oldReferenceField'] = $oldReferenceField;
 
 		$key = $this->searchItem($fieldId, 'referenceFieldId', $fieldIds);
 
@@ -151,11 +153,12 @@ final class bmReferenceMap extends bmMetaDataObject
 		$this->dirty['saveFields'] = true;
 	}
 
-	public function renameField($fieldId, $oldFieldName)
+	public function renameField($fieldId, $oldFieldName, $oldReferenceField)
 	{
 		$item = new stdClass();
 		$item->fieldId = $fieldId;
 		$item->oldFieldName = $oldFieldName;
+		$this->properties['oldReferenceField'] = $oldReferenceField;
 
 		$this->renamedFields[] = $item;
 

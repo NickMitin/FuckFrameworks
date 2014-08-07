@@ -174,10 +174,126 @@ abstract class bmDataObject extends bmFFObject
 		$this->dirtyQueue[$method] = true;
 	}
 
-	public function __get($propertyName)
+	private function _isUploadFile($codeError)
+	{
+		switch ($codeError)
+		{
+			case UPLOAD_ERR_OK:
+				return null;
+				break;
+			case UPLOAD_ERR_INI_SIZE:
+				return 'Размер принятого файла превысил максимально
+							допустимый размер, который задан директивой
+							upload_max_filesize конфигурационного файла php.ini';
+				break;
+			case UPLOAD_ERR_FORM_SIZE:
+				return 'Размер загружаемого файла превысил значение MAX_FILE_SIZE,
+							указанное в HTML-форме';
+				break;
+			case UPLOAD_ERR_PARTIAL:
+				return 'Загружаемый файл был получен только частично.';
+				break;
+			case UPLOAD_ERR_NO_FILE:
+				return 'Файл не был загружен.';
+				break;
+			case UPLOAD_ERR_NO_TMP_DIR:
+				return 'Отсутствует временная папка.';
+				break;
+			case UPLOAD_ERR_CANT_WRITE:
+				return 'Не удалось записать файл на диск.';
+				break;
+			case UPLOAD_ERR_EXTENSION:
+				return 'PHP-расширение остановило загрузку файла.';
+				break;
+		}
+	}
+
+	public function addObjectImages($imageGroup, $file)
+	{
+		$name = $type = $tmp_name = $error = $size = [];
+		extract($file);
+		$errors = [];
+		if (array_key_exists($imageGroup, $error) && $error[$imageGroup])
+		{
+			foreach ($error[$imageGroup] as $key => $codeError)
+			{
+				$errorMessage = $this->_isUploadFile($codeError);
+				if ($errorMessage)
+				{
+					$errors[$name[$imageGroup][$key]] = $errorMessage;
+					continue;
+				}
+
+				$nameFile = $name[$imageGroup][$key];
+				$nameFile = pathinfo($nameFile);
+				$extensionFile = mb_strtolower($nameFile['extension']);
+				$extensionFile = $extensionFile == 'jpeg' ? 'jpg' : $extensionFile;
+				$nameFile = $nameFile['filename'];
+				$tmpNameFile = $tmp_name[$imageGroup][$key];
+				$sizeFile = $size[$imageGroup][$key];
+				$fileName = sha1(time() . sha1($nameFile)) . '.' . $extensionFile;
+				$fileSub = mb_substr($fileName, 0, 2);
+
+				$folder = rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $imageGroup . '/originals/' . $fileSub . '/';
+
+				if (!is_dir($folder))
+				{
+					mkdir($folder, 0777, true);
+				}
+
+				if (!move_uploaded_file($tmpNameFile, $folder . $fileName))
+				{
+					$errors[$name[$imageGroup][$key]] = "Файл несмог загрузиться в ({$folder})";
+					continue;
+				}
+
+				list($width, $height) = getimagesize($folder . $fileName);
+
+				$image = new bmImage($this->application);
+
+				$image->name = $nameFile;
+				$image->caption = $nameFile;
+				$image->fileName = $fileName;
+				$image->size = $sizeFile;
+				$image->width = $width;
+				$image->height = $height;
+				$image->save();
+				$image->addLinkObject($this->objectName, $this->properties['identifier'], $imageGroup);
+
+			}
+			return $errors;
+		}
+		return null;
+	}
+
+	public function getObjectImages($imageGroup)
+	{
+		$objectName = $this->application->dataLink->quoteSmart($this->objectName);
+		$group = $this->application->dataLink->quoteSmart($imageGroup);
+		$identifier = intval($this->properties['identifier']);
+
+		$map = array(0 => 'image', 'image IS image' => 5, 'group' => 1);
+		$cacheKey = '';
+
+		$sql = "
+			select
+				`link_image_object`.`imageId` as `imageId`,
+				`link_image_object`.`group` as `group`
+			from
+				`link_image_object`
+			where
+				`link_image_object`.`object` = {$objectName}
+				and `link_image_object`.`objectId` = {$identifier}
+				and `link_image_object`.`group` = {$group}
+			";
+
+		return $this->getComplexLinks($sql, $cacheKey, $map, E_OBJECTS_NOT_FOUND, true);
+	}
+
+	public function getProperty($propertyName)
 	{
 		$this->checkDirty();
-		$result = parent::__get($propertyName);
+		$result = parent::getProperty($propertyName);
 		if (array_key_exists($propertyName, $this->map))
 		{
 			switch ($this->map[$propertyName]['dataType'])
@@ -199,6 +315,11 @@ abstract class bmDataObject extends bmFFObject
 		{
 			return $result;
 		}
+	}
+
+	public function __get($propertyName)
+	{
+		return $this->getProperty($propertyName);
 	}
 
 	public function __set($propertyName, $value)
