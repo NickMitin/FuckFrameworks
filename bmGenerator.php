@@ -137,7 +137,7 @@ final class bmGenerator extends bmFFObject
 
 		foreach ($routes as $route => $routeData)
 		{
-			if (preg_match("{$route}i", $path, $matches))
+			if (preg_match($route, $path, $matches))
 			{
 				if (array_key_exists('redirect', $routeData))
 				{

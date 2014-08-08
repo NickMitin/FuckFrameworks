@@ -49,6 +49,7 @@ abstract class bmDataObject extends bmFFObject
 	public $storage = 'rdbs+dods';
 	private $cacheQueue = array();
 
+
 	public function __construct(bmApplication $application, $parameters = array())
 	{
 		$this->map['identifier'] = array(
@@ -174,6 +175,8 @@ abstract class bmDataObject extends bmFFObject
 		$this->dirtyQueue[$method] = true;
 	}
 
+
+
 	private function _isUploadFile($codeError)
 	{
 		switch ($codeError)
@@ -208,12 +211,64 @@ abstract class bmDataObject extends bmFFObject
 		}
 	}
 
+
+	public function addObjectImage($imageGroup, $file)
+	{
+		$name = $type = $tmp_name = $error = $size = [];
+		extract($file);
+		if (UPLOAD_ERR_NO_FILE != $error)
+		{
+			$errorMessage = $this->_isUploadFile($error);
+			if ($errorMessage)
+			{
+				return $errorMessage;
+			}
+
+			$nameFile = $name;
+			$nameFile = pathinfo($nameFile);
+			$extensionFile = mb_strtolower($nameFile['extension']);
+			$extensionFile = $extensionFile == 'jpeg' ? 'jpg' : $extensionFile;
+			$nameFile = $nameFile['filename'];
+			$tmpNameFile = $tmp_name;
+			$sizeFile = $size;
+			$fileName = sha1(time() . sha1($nameFile)) . '.' . $extensionFile;
+			$fileSub = mb_substr($fileName, 0, 2);
+
+			$folder = rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $imageGroup . '/originals/' . $fileSub . '/';
+
+			if (!is_dir($folder))
+			{
+				mkdir($folder, 0777, true);
+			}
+
+			if (!move_uploaded_file($tmpNameFile, $folder . $fileName))
+			{
+				return "Файл несмог загрузиться в ({$folder})";
+			}
+
+			list($width, $height) = getimagesize($folder . $fileName);
+
+			$image = new bmImage($this->application);
+
+			$image->name = $nameFile;
+			$image->caption = $nameFile;
+			$image->fileName = $fileName;
+			$image->size = $sizeFile;
+			$image->width = $width;
+			$image->height = $height;
+			$image->save();
+			$image->addLinkObject($this->objectName, $this->properties['identifier'], $imageGroup);
+			return $image;
+		}
+		return null;
+	}
+
 	public function addObjectImages($imageGroup, $file)
 	{
 		$name = $type = $tmp_name = $error = $size = [];
 		extract($file);
 		$errors = [];
-		if (array_key_exists($imageGroup, $error) && $error[$imageGroup])
+		if (array_key_exists($imageGroup, $error) && $error[$imageGroup] && !in_array(UPLOAD_ERR_NO_FILE, $error[$imageGroup]))
 		{
 			foreach ($error[$imageGroup] as $key => $codeError)
 			{
@@ -281,13 +336,49 @@ abstract class bmDataObject extends bmFFObject
 				`link_image_object`.`group` as `group`
 			from
 				`link_image_object`
+				inner join `image` on `image`.`id` = `link_image_object`.`imageId`
 			where
 				`link_image_object`.`object` = {$objectName}
 				and `link_image_object`.`objectId` = {$identifier}
 				and `link_image_object`.`group` = {$group}
+				and `image`.`deleted` <> " . BM_C_DELETE_OBJECT . "
+			order by
+				`link_image_object`.`imageId` desc
 			";
 
 		return $this->getComplexLinks($sql, $cacheKey, $map, E_OBJECTS_NOT_FOUND, true);
+	}
+
+	public function deleteObjectImages($imageGroup, $excludeImgs = null)
+	{
+		if ($excludeImgs)
+		{
+			if (!is_array($excludeImgs))
+			{
+				$excludeImgs = (array)$excludeImgs;
+			}
+			$excludeImgs = implode(',', $excludeImgs);
+		}
+		$objectName = $this->application->dataLink->quoteSmart($this->objectName);
+		$group = $this->application->dataLink->quoteSmart($imageGroup);
+		$identifier = intval($this->properties['identifier']);
+
+		$cacheKey = '';
+
+		$sql = "
+			update
+				`link_image_object`
+				inner join `image` on `image`.`id` = `link_image_object`.`imageId`
+			set
+				`image`.`deleted` = " . BM_C_DELETE_OBJECT . "
+			where
+				`link_image_object`.`object` = {$objectName}
+				and `link_image_object`.`objectId` = {$identifier}
+				and `link_image_object`.`group` = {$group}
+				and `image`.`id` not in ({$excludeImgs})
+				and `image`.`deleted` <> " . BM_C_DELETE_OBJECT . "";
+
+		return $this->application->dataLink->query($sql);
 	}
 
 	public function getProperty($propertyName)

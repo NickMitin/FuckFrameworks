@@ -57,7 +57,7 @@
           $expire = 0;
         }
       }
-      
+
       setcookie($name, $value, $expire, $path, $domain);
       $_COOKIE[$name] = $value;
     }
