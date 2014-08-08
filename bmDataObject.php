@@ -368,7 +368,7 @@ abstract class bmDataObject extends bmFFObject
 		return null;
 	}
 
-	public function getObjectImages($imageGroup)
+	public function getObjectImages($imageGroup, $isDeleted = false)
 	{
 		$objectName = $this->application->dataLink->quoteSmart($this->objectName);
 		$group = $this->application->dataLink->quoteSmart($imageGroup);
@@ -388,7 +388,7 @@ abstract class bmDataObject extends bmFFObject
 				`link_image_object`.`object` = {$objectName}
 				and `link_image_object`.`objectId` = {$identifier}
 				and `link_image_object`.`group` = {$group}
-				and `image`.`deleted` <> " . BM_C_DELETE_OBJECT . "
+				and `image`.`deleted` <> " . ($isDeleted ? BM_C_DELETE_OBJECT-1 : BM_C_DELETE_OBJECT) . "
 			order by
 				`link_image_object`.`imageId` desc
 			";
@@ -396,7 +396,7 @@ abstract class bmDataObject extends bmFFObject
 		return $this->getComplexLinks($sql, $cacheKey, $map, E_OBJECTS_NOT_FOUND, true);
 	}
 
-	public function getObjectFiles($imageGroup)
+	public function getObjectFiles($imageGroup, $isDeleted = false)
 	{
 		$objectName = $this->application->dataLink->quoteSmart($this->objectName);
 		$group = $this->application->dataLink->quoteSmart($imageGroup);
@@ -416,7 +416,7 @@ abstract class bmDataObject extends bmFFObject
 				`link_file_object`.`object` = {$objectName}
 				and `link_file_object`.`objectId` = {$identifier}
 				and `link_file_object`.`group` = {$group}
-				and `file`.`deleted` <> " . BM_C_DELETE_OBJECT . "
+				and `file`.`deleted` <> " . ($isDeleted ? BM_C_DELETE_OBJECT-1 : BM_C_DELETE_OBJECT) . "
 			order by
 				`link_file_object`.`fileId` desc
 			";
