@@ -263,6 +263,53 @@ abstract class bmDataObject extends bmFFObject
 		return null;
 	}
 
+
+	public function addObjectFile($imageGroup, $file)
+	{
+		$name = $type = $tmp_name = $error = $size = [];
+		extract($file);
+		if (UPLOAD_ERR_NO_FILE != $error)
+		{
+			$errorMessage = $this->_isUploadFile($error);
+			if ($errorMessage)
+			{
+				return $errorMessage;
+			}
+
+			$nameFile = $name;
+			$nameFile = pathinfo($nameFile);
+			$extensionFile = mb_strtolower($nameFile['extension']);
+			$nameFile = $nameFile['filename'];
+			$tmpNameFile = $tmp_name;
+			$sizeFile = $size;
+			$fileName = sha1(time() . sha1($nameFile)) . '.' . $extensionFile;
+			$fileSub = mb_substr($fileName, 0, 2);
+
+			$folder = rtrim(documentRoot, '/') . BM_C_FILE_FOLDER . $imageGroup . '/' . $fileSub . '/';
+
+			if (!is_dir($folder))
+			{
+				mkdir($folder, 0777, true);
+			}
+
+			if (!move_uploaded_file($tmpNameFile, $folder . $fileName))
+			{
+				return "Файл несмог загрузиться в ({$folder})";
+			}
+
+			$fileObject = new bmFile($this->application);
+
+			$fileObject->name = $nameFile;
+			$fileObject->caption = $nameFile;
+			$fileObject->fileName = $fileName;
+			$fileObject->size = $sizeFile;
+			$fileObject->save();
+			$fileObject->addLinkObject($this->objectName, $this->properties['identifier'], $imageGroup);
+			return $fileObject;
+		}
+		return null;
+	}
+
 	public function addObjectImages($imageGroup, $file)
 	{
 		$name = $type = $tmp_name = $error = $size = [];
@@ -349,6 +396,34 @@ abstract class bmDataObject extends bmFFObject
 		return $this->getComplexLinks($sql, $cacheKey, $map, E_OBJECTS_NOT_FOUND, true);
 	}
 
+	public function getObjectFiles($imageGroup)
+	{
+		$objectName = $this->application->dataLink->quoteSmart($this->objectName);
+		$group = $this->application->dataLink->quoteSmart($imageGroup);
+		$identifier = intval($this->properties['identifier']);
+
+		$map = array(0 => 'file', 'file IS file' => 5, 'group' => 1);
+		$cacheKey = '';
+
+		$sql = "
+			select
+				`link_file_object`.`fileId` as `fileId`,
+				`link_file_object`.`group` as `group`
+			from
+				`link_file_object`
+				inner join `file` on `file`.`id` = `link_file_object`.`fileId`
+			where
+				`link_file_object`.`object` = {$objectName}
+				and `link_file_object`.`objectId` = {$identifier}
+				and `link_file_object`.`group` = {$group}
+				and `file`.`deleted` <> " . BM_C_DELETE_OBJECT . "
+			order by
+				`link_file_object`.`fileId` desc
+			";
+
+		return $this->getComplexLinks($sql, $cacheKey, $map, E_OBJECTS_NOT_FOUND, true);
+	}
+
 	public function deleteObjectImages($imageGroup, $excludeImgs = null)
 	{
 		if ($excludeImgs)
@@ -377,6 +452,38 @@ abstract class bmDataObject extends bmFFObject
 				and `link_image_object`.`group` = {$group}
 				and `image`.`id` not in ({$excludeImgs})
 				and `image`.`deleted` <> " . BM_C_DELETE_OBJECT . "";
+
+		return $this->application->dataLink->query($sql);
+	}
+
+	public function deleteObjectFiles($imageGroup, $excludeImgs = null)
+	{
+		if ($excludeImgs)
+		{
+			if (!is_array($excludeImgs))
+			{
+				$excludeImgs = (array)$excludeImgs;
+			}
+			$excludeImgs = implode(',', $excludeImgs);
+		}
+		$objectName = $this->application->dataLink->quoteSmart($this->objectName);
+		$group = $this->application->dataLink->quoteSmart($imageGroup);
+		$identifier = intval($this->properties['identifier']);
+
+		$cacheKey = '';
+
+		$sql = "
+			update
+				`link_file_object`
+				inner join `file` on `file`.`id` = `link_file_object`.`fileId`
+			set
+				`file`.`deleted` = " . BM_C_DELETE_OBJECT . "
+			where
+				`link_file_object`.`object` = {$objectName}
+				and `link_file_object`.`objectId` = {$identifier}
+				and `link_file_object`.`group` = {$group}
+				and `file`.`id` not in ({$excludeImgs})
+				and `file`.`deleted` <> " . BM_C_DELETE_OBJECT . "";
 
 		return $this->application->dataLink->query($sql);
 	}
