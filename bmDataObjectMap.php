@@ -128,11 +128,12 @@ final class bmDataObjectMap extends bmMetaDataObject
 		$this->dirty['updateTableFields'] = true;
 	}
 
-	public function renameField($fieldId, $oldFieldName)
+	public function renameField($fieldId, $oldFieldName, $oldDataObjectField)
 	{
 		$item = new stdClass();
 		$item->fieldId = $fieldId;
 		$item->oldFieldName = $oldFieldName;
+		$this->properties['oldDataObjectField'] = $oldDataObjectField;
 
 		$this->renamedFields[] = $item;
 
@@ -252,6 +253,10 @@ final class bmDataObjectMap extends bmMetaDataObject
 				implode(', ', $insertStrings) . ";";
 
 			$dataLink->query($sql);
+			if ($this->migration)
+			{
+				$this->migration->addSql($sql);
+			}
 			$this->application->log->add($sql);
 		}
 
