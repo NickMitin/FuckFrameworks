@@ -623,66 +623,42 @@ final class bmDataObjectMap extends bmMetaDataObject
 	{
 		$result = '';
 
-		$objectName = $this->properties['name'];
-		$propertyName = $item->referenceField->propertyName;
-		$ucPropertyName = ucfirst($propertyName);
-		$tableName = $referenceMap->name;
-
-		foreach ($referenceMap->fields as $referenceFieldItem)
-		{
-			if ($referenceFieldItem->referenceField->referencedObjectId == $this->properties['identifier'])
-			{
-				if ($referenceFieldItem->referenceField->propertyName != $currentPropertyName)
-				{
-					$thisObjectFieldName = $referenceFieldItem->referenceField->fieldName . 'Id';
-				}
-			}
-		}
+		$object = $item->referenceField->propertyName;
+		$ucPropertyName = ucfirst($object);
+		$link = $referenceMap->name;
 
 		if ($item->type == BM_RT_MAIN || $item->type == BM_RT_REFERRED)
 		{
 			if ($referenceMap->isComplex())
 			{
-				$selectFieldsArray = array();
-				$mapArray = array();
+				$fields = $objects = array();
 
 				foreach ($referenceMap->fields as $referenceFieldItem)
 				{
-					if ($referenceFieldItem->referenceField->dataType == BM_VT_OBJECT)
+					if (
+						$referenceFieldItem->referenceField->dataType == BM_VT_OBJECT
+						&& $object != $referenceFieldItem->referenceField->fieldName
+						&& $this->properties['name'] != $referenceFieldItem->referenceField->fieldName
+					)
 					{
-						$selectFieldsArray[] = '          `' . $tableName . '`.`' . $referenceFieldItem->referenceField->fieldName . 'Id` AS `' . $referenceFieldItem->referenceField->propertyName . 'Id`';
-						$mapArray[] = '\'' . $referenceFieldItem->referenceField->propertyName . ' IS ' . $referenceFieldItem->referenceField->referencedObject->name . '\' => ' . $referenceFieldItem->referenceField->dataType;
+						$objects[] = "'{$referenceFieldItem->referenceField->fieldName}',";
 					}
-					else
+					elseif ($referenceFieldItem->referenceField->dataType != BM_VT_OBJECT)
 					{
-						$selectFieldsArray[] = '          `' . $tableName . '`.`' . $referenceFieldItem->referenceField->fieldName . '` AS `' . $referenceFieldItem->referenceField->propertyName . '`';
-						$mapArray[] = '\'' . $referenceFieldItem->referenceField->propertyName . '\' => ' . $referenceFieldItem->referenceField->dataType;
+						$fields[] = "'{$referenceFieldItem->referenceField->fieldName}' => {$referenceFieldItem->referenceField->dataType},";
 					}
 				}
 
-				$selectFields = implode(",\n", $selectFieldsArray);
-
-				$map = '$map = array(' . implode(', ', $mapArray) . ');';
+				$fields = implode(' ', $fields);
+				$objects = implode(' ', $objects);
 
 				eval('$result .= "' . $this->application->getTemplate('/autogeneration/getterComplexFunction') . '";');
 			}
 			else
 			{
-				if ($referenceFieldItem->referenceField->dataType == BM_VT_OBJECT)
-				{
-					$fieldName = $item->referenceField->fieldName . 'Id';
-				}
-				else
-				{
-					$fieldName = $item->referenceField->fieldName;
-				}
-
-				$referencedObjectName = $item->referenceField->referencedObject->name;
-
 				eval('$result .= "' . $this->application->getTemplate('/autogeneration/getterSimpleFunction') . '";');
 			}
 		}
-
 		return $result;
 	}
 
@@ -690,119 +666,69 @@ final class bmDataObjectMap extends bmMetaDataObject
 	{
 		$result = '';
 
-		$propertyName = $item->referenceField->propertyName;
-		$ucPropertyName = ucfirst($propertyName);
-		$tableName = $referenceMap->name;
+		$object = $item->referenceField->propertyName;
+		$ucPropertyName = ucfirst($object);
+		$link = $referenceMap->name;
 
-		foreach ($referenceMap->fields as $referenceFieldItem)
+		if ($item->type == BM_RT_MAIN || $item->type == BM_RT_REFERRED)
 		{
-			if ($referenceFieldItem->referenceField->referencedObjectId == $this->properties['identifier'] && $referenceFieldItem->type == BM_RT_MAIN)
-			{
-				$thisObjectFieldName = $referenceFieldItem->referenceField->fieldName . 'Id';
-				$thisPropertyName = $referenceFieldItem->referenceField->propertyName;
-			}
-
 			if ($referenceMap->isComplex())
 			{
-				if ($referenceFieldItem->type == BM_RT_REFERRED)
-				{
-					$otherObjectPropertyName = $referenceFieldItem->referenceField->referencedObject->name;
-					$otherObjectFieldName = $referenceFieldItem->referenceField->fieldName . 'Id';
-				}
-			}
-			else
-			{
-				$otherObjectPropertyName = $referenceFieldItem->referenceField->propertyName;
-				$otherObjectFieldName = $referenceFieldItem->referenceField->fieldName . 'Id';
-			}
-		}
-
-		if ($item->type == BM_RT_REFERRED)
-		{
-			$objectName = $this->properties['name'];
-
-			if ($referenceMap->isComplex())
-			{
-				$parametersArray = array();
-				$itemParametersArray = array();
-				$insertStringsArray = array();
-				$sqlFieldsArray = array();
-				$selfObjectCount = 0;
+				$fields = $objects = $param = array();
 
 				foreach ($referenceMap->fields as $referenceFieldItem)
 				{
-					$propertyNameValue = $referenceFieldItem->referenceField->propertyName;
-					$fieldNameValue = $referenceFieldItem->referenceField->fieldName . 'Id';
-					$dataTypeValue = $referenceFieldItem->referenceField->dataType;
-
-					if ($referenceFieldItem->referenceField->referencedObjectId != $this->properties['identifier'])
+					if ($this->properties['name'] != $referenceFieldItem->referenceField->fieldName)
 					{
 						if ($referenceFieldItem->referenceField->dataType == BM_VT_OBJECT)
 						{
-							$fieldNameValue = $referenceFieldItem->referenceField->fieldName . 'Id';
-							$parametersArray[] = '$' . $propertyNameValue . 'Id';
-							$itemParametersArray[] = '        $item->' . $propertyNameValue . 'Id = ' . '$' . $propertyNameValue . 'Id';
-							$insertStringsArray[] = '$dataLink->formatInput($item->' . $propertyNameValue . 'Id, ' . $dataTypeValue . ')';
-						}
-						elseif ($referenceFieldItem->referenceField->dataType == BM_VT_STRING || $referenceFieldItem->referenceField->dataType == BM_VT_TEXT || $referenceFieldItem->referenceField->dataType == BM_VT_DATETIME || $referenceFieldItem->referenceField->dataType == BM_VT_PASSWORD || $referenceFieldItem->referenceField->dataType == BM_VT_FLOAT)
-						{
-							$fieldNameValue = $referenceFieldItem->referenceField->fieldName;
-							$parametersArray[] = '$' . $propertyNameValue;
-							$itemParametersArray[] = '        $item->' . $propertyNameValue . ' = ' . '$' . $propertyNameValue;
-							$insertStringsArray[] = '\'\\\'\' . ' . '$dataLink->formatInput($item->' . $propertyNameValue . ', ' . $dataTypeValue . ')' . ' . \'\\\'\'';
+							array_push($param, "\t * \$param['{$referenceFieldItem->referenceField->fieldName}Id']");
 						}
 						else
 						{
-							$fieldNameValue = $referenceFieldItem->referenceField->fieldName;
-							$parametersArray[] = '$' . $propertyNameValue;
-							$itemParametersArray[] = '        $item->' . $propertyNameValue . ' = ' . '$' . $propertyNameValue;
-							$insertStringsArray[] = '$dataLink->formatInput($item->' . $propertyNameValue . ', ' . $dataTypeValue . ')';
+							array_push($param, "\t * \$param['{$referenceFieldItem->referenceField->fieldName}']");
 						}
-						$sqlFieldsArray[] = '`' . $fieldNameValue . '`';
 					}
-					else
+					if (
+						$referenceFieldItem->referenceField->dataType == BM_VT_OBJECT
+						&& $object != $referenceFieldItem->referenceField->fieldName
+						&& $this->properties['name'] != $referenceFieldItem->referenceField->fieldName
+					)
 					{
-						if ($selfObjectCount == 0)
-						{
-							$insertStringsArray[] = "\$dataLink->formatInput(\$this->properties['identifier'], BM_VT_INTEGER)";
-							$sqlFieldsArray[] = '`' . $fieldNameValue . '`';
-							++$selfObjectCount;
-						}
-						else
-						{
-							$insertStringsArray[] = '$dataLink->formatInput($item->' . $propertyNameValue . 'Id, ' . $dataTypeValue . ')';
-							$sqlFieldsArray[] = '`' . $fieldNameValue . '`';
-							$parametersArray[] = '$' . $propertyNameValue . 'Id';
-							$itemParametersArray[] = '        $item->' . $propertyNameValue . 'Id = ' . '$' . $propertyNameValue . 'Id';
-
-							++$selfObjectCount;
-						}
+						$objects[] = "'{$referenceFieldItem->referenceField->fieldName}',";
+					}
+					elseif ($referenceFieldItem->referenceField->dataType != BM_VT_OBJECT)
+					{
+						$fields[] = "'{$referenceFieldItem->referenceField->fieldName}' => {$referenceFieldItem->referenceField->dataType},";
 					}
 				}
 
-
-				$parameters = implode(', ', $parametersArray);
-				$itemParameters = implode(";\n", $itemParametersArray);
-				$insertStrings = implode(' . \', \' . ', $insertStringsArray);
-				$sqlFields = implode(', ', $sqlFieldsArray);
+				$fields = implode(' ', $fields);
+				$objects = implode(' ', $objects);
+				$param = implode("\n", $param);
 
 				eval('$result .= "' . $this->application->getTemplate('/autogeneration/manipulationComplexItem') . '";');
 			}
 			else
 			{
-				$sqlFieldsArray = array();
+				$param = array();
+
 				foreach ($referenceMap->fields as $referenceFieldItem)
 				{
-					$fieldNameValue = $referenceFieldItem->referenceField->fieldName . 'Id';
-					$sqlFieldsArray[] = $fieldNameValue;
+					if ($this->properties['name'] != $referenceFieldItem->referenceField->fieldName)
+					{
+						if ($referenceFieldItem->referenceField->dataType == BM_VT_OBJECT)
+						{
+							array_push($param, "\t * \$param['{$referenceFieldItem->referenceField->fieldName}Id']");
+						}
+						else
+						{
+							array_push($param, "\t * \$param['{$referenceFieldItem->referenceField->fieldName}']");
+						}
+					}
 				}
 
-				$sqlFields = implode(', ', $sqlFieldsArray);
-
-				if (!isset($otherObjectPropertyName))
-				{
-					$otherObjectPropertyName = $this->properties['name'];
-				}
+				$param = implode("\n", $param);
 
 				eval('$result .= "' . $this->application->getTemplate('/autogeneration/manipulationSimpleItem') . '";');
 			}
@@ -1297,87 +1223,6 @@ final class bmDataObjectMap extends bmMetaDataObject
 
 			file_put_contents($fileName, $content);
 		}
-
-
-		//if (!file_exists($fileName))
-		//      {
-		//        file_put_contents($fileName, $this->toClass());
-		//      }
-		//      else
-		//      {
-		//        $content = file_get_contents($fileName);
-		//        $content = preg_replace('/\/\*FF::AC::MAPPING::\{\*\/(.+)\/\*FF::AC::MAPPING::\}\*\//ism', $this->toMapping(), $content);
-		// $content = preg_replace('/\/\*FF::AC::GETTER::\{\*\/(.+)\/\*FF::AC::GETTER::\}\*\//ism', $this->toGetter(), $content);
-		//
-		//        echo $content; exit;
-		//
-		//        file_put_contents($fileName, $content);
-		//      }
-		/*
-		  $fileName = documentRoot . '/modules/admin/' . $this->properties['name'] . '/';
-		  if (!file_exists($fileName))
-		  {
-			mkdir($fileName, 0755, true);
-		  }
-		  $fileName .= 'index.php';
-		  if (!file_exists($fileName))
-		  {
-			file_put_contents($fileName, $this->toEditor($ancestorPage));
-		  }
-		  else
-		  {
-			$content = file_get_contents($fileName);
-			list($newFields, $existingFields) = $this->toEditorFields();
-			$content = preg_replace('/\/\*FF::EDITOR::NEWFIELDS::\{\*\/.+\/\*FF::EDITOR::NEWFIELDS::\}\*\//ism', $newFields, $content);
-			$content = preg_replace('/\/\*FF::EDITOR::EXISTINGFIELDS::\{\*\/.+\/\*FF::EDITOR::EXISTINGFIELDS::\}\*\//ism', $existingFields, $content);
-			file_put_contents($fileName, $content);
-		  }
-
-		  $fileName = documentRoot . '/modules/admin/' . $this->properties['name'] . '/rp/';
-		  if (!file_exists($fileName))
-		  {
-			mkdir($fileName, 0755, true);
-		  }
-
-		  $fileName .= 'save.php';
-		  if (!file_exists($fileName))
-		  {
-			file_put_contents($fileName, $this->toSaveProcedure());
-		  }
-		  else
-		  {
-			$content = file_get_contents($fileName);
-			list($cgiProperties, $objectProperties) = $this->toSaveProcedureProperties();
-			$content = preg_replace('/\/\*FF::SAVE::CGIPROPERTIES::\{\*\/.+\/\*FF::SAVE::CGIPROPERTIES::\}\*\//ism', $cgiProperties, $content);
-			$content = preg_replace('/\/\*FF::SAVE::OBJECTPROPERTIES::\{\*\/.+\/\*FF::SAVE::OBJECTPROPERTIES::\}\*\//ism', $objectProperties, $content);
-			file_put_contents($fileName, $content);
-		  }
-
-		  $fileName = projectRoot . '/templates/admin/' . $this->properties['name'] . '/';
-		  if (!file_exists($fileName))
-		  {
-			mkdir($fileName, 0755, true);
-		  }
-
-		  $fileName .= $this->properties['name'] . '.html';
-		  if (!file_exists($fileName))
-		  {
-			file_put_contents($fileName, $this->toEditorTemplate());
-		  }
-		  else
-		  {
-			$content = file_get_contents($fileName);
-			$editors = $this->toEditorTemplateEditors();
-			$content = preg_replace('/<!--\s+FF::AC::EDITORS::\{\s+-->.+<!--\s+FF::AC::EDITORS::\}\s+-->/ism', $editors, $content);
-			file_put_contents($fileName, $content);
-		  }
-		  */
-		//$generator = $this->application->generator;
-		//$generator->addRoute('~^/admin/' . $this->properties['name'] . '/rp/save/(\d+)/?$~', '/modules/admin/' . $this->properties['name'] . '/rp/save.php', 'bmSave' . ucfirst($this->properties['name']), array($this->properties['name'] . 'Id' => BM_VT_INTEGER));
-		//$generator->addRoute('~^/admin/' . $this->properties['name'] . '/(new|\d+)/?$~', '/modules/admin/' . $this->properties['name'] . '/index.php', 'bm' . ucfirst($this->properties['name']) . 'EditPage', array($this->properties['name'] . 'Id' => BM_VT_INTEGER));
-		//$generator->addRoute('~^/' . $this->properties['name'] . '/(.+)/?$~', '/modules/view/' . $this->properties['name'] . '/index.php', 'bm' . ucfirst($this->properties['name']) . 'Page', array($this->properties['name'] . 'Id' => BM_VT_INTEGER));
-		//$generator->serialize();
-
 	}
 
 	private function deleteFiles()
