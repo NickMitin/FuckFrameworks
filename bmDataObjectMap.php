@@ -435,12 +435,62 @@ final class bmDataObjectMap extends bmMetaDataObject
 	}
 
 
+	public function toProperty()
+	{
+		$this->checkDirty();
+		$fields = $this->fields;
+		$property = '';
+		$propertyItems = array();
+		if ($fields)
+		{
+			foreach ($fields as $field)
+			{
+				$var = $field->fieldName;
+				$default = $field->defaultValue ? $field->defaultValue : 'null';
+				$type = 'mixed';
+				switch ($field->dataType)
+				{
+					case BM_VT_STRING:
+					case BM_VT_TEXT:
+					case BM_VT_ANY:
+					case BM_VT_IMAGE:
+					case BM_VT_FILE:
+					case BM_VT_PASSWORD:
+						$type = 'string';
+						break;
+					case BM_VT_DATETIME:
+						$type = 'bmDateTime';
+						break;
+					case BM_VT_INTEGER:
+						$type = 'int';
+						break;
+					case BM_VT_FLOAT:
+						$type = 'float';
+						break;
+				}
+				array_push($propertyItems, " * @property {$type} \${$var}\n *  default = {$default}");
+			}
+		}
+
+		if ($propertyItems)
+		{
+			$property = "\n" . implode("\n", $propertyItems);
+		}
+		$className = 'bm' . ucfirst($this->properties['name']);
+
+		eval('$property  = "' . $this->application->getTemplate('/autogeneration/property') . '";');
+
+		return $property;
+	}
+
+
 	public function toClass()
 	{
 		$this->checkDirty();
 		$license = file_get_contents(projectRoot . '/conf/license.conf');
 		$className = 'bm' . ucfirst($this->properties['name']);
 		$mapping = $this->toMapping();
+		$property = $this->toProperty();
 		$getterCasesBlock = $this->toGetterCases();
 		$referenceFunctionsBlock = $this->toReferenceFunctions();
 		$deleteFunction = $this->toDeleteFunction();
@@ -1193,6 +1243,7 @@ final class bmDataObjectMap extends bmMetaDataObject
 
 			$content = preg_replace('/\/\*FF::AC::TOP::GETTER::\{\*\/(.+)\/\*FF::AC::TOP::GETTER::\}\*\//ism', $this->toGetterCases(), $content);
 			$content = preg_replace('/\/\*FF::AC::DELETE_FUNCTION::\{\*\/(.+)\/\*FF::AC::DELETE_FUNCTION::\}\*\//ism', $this->toDeleteFunction(), $content);
+			$content = preg_replace('/\/\*\*\s+\*\s?Class[^\/]+\//ism', $this->toProperty(), $content);
 
 			$referenceFunctions = '';
 			$referenceMaps = $this->getReferenceMaps();
