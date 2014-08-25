@@ -101,19 +101,19 @@ final class bmDataObjectField extends bmMetaDataObject
 			case 'dataObjectMapId':
 				if (!array_key_exists('dataObjectMapId', $this->properties))
 				{
-					$this->properties['dataObjectMapId'] = $this->getDataObjectMap(false);
+					$this->properties['dataObjectMapId'] = $this->getDataObjectMap();
 				}
 				return $this->properties['dataObjectMapId'];
 				break;
 			case 'dataObjectMap':
-				$this->properties['dataObjectMap'] = $this->getDataObjectMap($this);
+				$this->properties['dataObjectMap'] = $this->getDataObjectMap();
 				break;
 			case 'localNames':
 				if (!array_key_exists('localNames', $this->properties))
 				{
 					if (trim($this->properties['localName'] != ''))
 					{
-						$this->properties['localNames'] = unserialize($this->properties['localName']);
+						$this->properties['localNames'] = @unserialize($this->properties['localName']);
 					}
 					else
 					{

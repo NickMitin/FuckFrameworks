@@ -163,6 +163,68 @@ abstract class bmFFObject
 		}
 	}
 
+	public function getAbstractClasses()
+	{
+		$abstractClasses = array(
+			'bmHTMLPage',
+			'bmCustomRemoteProcedure'
+		);
+
+		$controllerPaths = glob(realpath(projectRoot . '/classes') . '/bm*.php');
+		if (is_array($controllerPaths))
+		{
+			foreach ($controllerPaths as $controllerPath)
+			{
+				$fileName = basename($controllerPath);
+
+				$matches = array();
+				preg_match('/^(bm[a-zA-Z0-9_]{1,}).php$/', $fileName, $matches);
+
+				if (isset($matches[1]))
+				{
+					$className = $matches[1];
+
+					$class = new ReflectionClass($className);
+					if ($class->isAbstract() && !in_array($className, $abstractClasses))
+					{
+						$abstractClasses[] = $className;
+					}
+				}
+			}
+		}
+
+		// custom multiple sort
+		$abstractPageClasses = array();
+		$abstractRPClasses = array();
+		$abstractCustomClasses = array();
+
+
+		foreach ($abstractClasses as $abstractClass)
+		{
+			if (preg_match('/^bm[a-zA-Z0-9]{1,}Page$/', $abstractClass) == 1)
+			{
+				$abstractPageClasses[] = $abstractClass;
+			}
+			else
+			{
+				if (preg_match('/^bm[a-zA-Z0-9]{1,}Procedure$/', $abstractClass) == 1)
+				{
+					$abstractRPClasses[] = $abstractClass;
+				}
+				else
+				{
+					$abstractCustomClasses[] = $abstractClass;
+				}
+			}
+		}
+
+		sort($abstractPageClasses);
+		sort($abstractRPClasses);
+		sort($abstractCustomClasses);
+
+		return array_merge($abstractPageClasses, $abstractRPClasses, $abstractCustomClasses);
+	}
+
 }
 
 ?>

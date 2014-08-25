@@ -49,6 +49,311 @@ abstract class bmDataObject extends bmFFObject
 	public $storage = 'rdbs+dods';
 	private $cacheQueue = array();
 
+	public function getMethodObjects($link, $param, $load = true)
+	{
+		$cacheKey = strpos($link, 'link_') !== false ? substr($link, 5) : $link;
+		$cacheKey .= '_' . $this->properties['identifier'];
+
+		if (!$param['fields'])
+		{
+			$sql = "
+				SELECT
+				  `{$link}`.`{$param['object']}Id` AS `identifier`
+				FROM
+				  `{$link}`
+				WHERE
+				  `{$link}`.`{$this->objectName}Id` = " . $this->properties['identifier'] . ";
+			  ";
+
+			if (!$load)
+			{
+				$this->properties["old" . ucfirst($param['object']) . "Ids"] = $this->getSimpleLinks($sql, $cacheKey, $param['object'], E_OBJECTS_NOT_FOUND, $load);
+
+				return $this->properties["old" . ucfirst($param['object']) . "Ids"];
+			}
+			else
+			{
+				return $this->getSimpleLinks($sql, $cacheKey, $param['object'], E_OBJECTS_NOT_FOUND, $load);
+			}
+		}
+		else
+		{
+			$where = [];
+			$map = array(
+				"{$this->objectName} IS {$this->objectName}" => 5,
+				"{$param['object']} IS {$param['object']}" => 5
+			);
+			foreach ($param['fields'] as $field => $type)
+			{
+				array_push($where, "`{$link}`.`{$field}` AS `{$field}`");
+				$map[$field] = $type;
+			}
+
+			if ($param['objects'])
+			{
+				foreach ($param['objects'] as $field)
+				{
+					array_push($where, "`{$link}`.`{$field}Id` AS `{$field}Id`");
+					$map["{$field} IS {$field}"] = 5;
+				}
+			}
+
+			$where = implode(",\n", $where);
+			$sql = "
+				SELECT
+				  `{$link}`.`{$this->objectName}Id` AS `{$this->objectName}Id`,
+				  `{$link}`.`{$param['object']}Id` AS `{$param['object']}Id`,
+
+				  {$where}
+				FROM
+				  `{$link}`
+				WHERE
+				  `{$link}`.`{$this->objectName}Id` = " . $this->properties['identifier'] . ";
+			  ";
+
+			if (!$load)
+			{
+				$this->properties["old" . ucfirst($param['object']) . "Ids"] = $this->getComplexLinks($sql, $cacheKey, $map, E_OBJECTS_NOT_FOUND, $load);
+
+				return $this->properties["old" . ucfirst($param['object']) . "Ids"];
+			}
+			else
+			{
+				return $this->getComplexLinks($sql, $cacheKey, $map, E_OBJECTS_NOT_FOUND, $load);
+			}
+		}
+	}
+
+	public function addMethodObject($object, $param)
+	{
+		$objectIds = $this->{$object . 'Ids'};
+
+		$objectId = $param[$object . 'Id'];
+
+		if (count($param) > 1)
+		{
+			if (!$this->itemExists($objectId, $object . 'Id', $objectIds))
+			{
+				$item = new stdClass();
+				foreach ($param as $var => $val)
+				{
+					$item->{$var} = $val;
+				}
+				$this->properties[$object . 'Ids'][] = $item;
+
+				$this->dirty['save' . ucfirst($object) . 's'] = true;
+			}
+		}
+		else
+		{
+			if (!in_array($objectId, $objectIds))
+			{
+				$this->properties[$object . 'Ids'][] = $objectId;
+			}
+
+			$this->dirty['save' . ucfirst($object) . 's'] = true;
+		}
+
+
+		return $this;
+	}
+
+	public function removeMethodObject($object, $objectId, $link)
+	{
+		$objectIds = $this->{$object . 'Ids'};
+
+		if ($link)
+		{
+
+			$key = $this->searchItem($objectId, $object . 'Id', $objectIds);
+
+			if ($key !== false)
+			{
+				unset($this->properties[$object . 'Ids'][$key]);
+				$this->dirty['save' . ucfirst($object) . 's'] = true;
+			}
+		}
+		else
+		{
+			foreach ($objectIds as $key => $identifier)
+			{
+				if ($identifier == $objectId)
+				{
+					unset($this->properties[$object . 'Ids'][$key]);
+				}
+			}
+
+			$this->dirty['save' . ucfirst($object) . 's'] = true;
+		}
+
+		return $this;
+	}
+
+	public function removesMethodObject($object)
+	{
+		$this->properties[$object . 'Ids'] = array();
+
+		$this->dirty['save' . ucfirst($object) . 's'] = true;
+
+		return $this;
+	}
+
+	protected function saveMethodObject($link, $param)
+	{
+		$cacheKeyLink = strpos($link, 'link_') !== false ? substr($link, 5) : $link;
+		$object = $param['object'];
+
+		if ($param['fields'])
+		{
+			$dataLink = $this->application->dataLink;
+			$cacheLink = $this->application->cacheLink;
+
+			$cacheKeysToDelete = array();
+			$cacheKeysToDelete[] = $cacheKeyLink . 's_' . $this->properties['identifier'];
+
+			$oldObjectIds = $this->properties['old' . ucfirst($object) . 'Ids'];
+			$objectIds = $this->properties[$object . 'Ids'];
+
+			$itemsToDelete = $this->itemDiff($oldObjectIds, $objectIds, $object . 'Id');
+			$itemsToAdd = $this->itemDiff($objectIds, $oldObjectIds, $object . 'Id');
+
+			foreach ($itemsToDelete as $itemToDelete)
+			{
+				$objectId = $itemToDelete->{$object . 'Id'};
+				$cacheKeysToDelete[] = $cacheKeyLink . 's_' . $objectId;
+			}
+
+			foreach ($cacheKeysToDelete as $cacheKey)
+			{
+				$cacheLink->delete($cacheKey);
+			}
+
+			if (count($itemsToDelete) > 0)
+			{
+				$sql = "
+					DELETE FROM
+						`{$link}`
+				  	WHERE
+						`{$this->objectName}Id` = " . $this->properties['identifier'] . "
+            	  		AND `{$object}Id` IN (" . $this->itemImplode($itemsToDelete, $object . 'Id') . ");";
+
+				$dataLink->query($sql);
+			}
+
+			$insertStrings = $insertStringsField = array();
+
+			foreach ($itemsToAdd as $item)
+			{
+				$insertStringsField = array(
+					"`{$this->objectName}Id`",
+					"`{$object}Id`",
+				);
+				$itemVal = '('
+					. $dataLink->formatInput($this->properties['identifier'], BM_VT_INTEGER)
+					. ', '
+					. $dataLink->formatInput($item->{$object . 'Id'}, 5);
+
+				if ($param['objects'])
+				{
+					foreach ($param['objects'] as $fieldObject)
+					{
+						$itemVal .= ', ' . $dataLink->formatInput($item->{$fieldObject . 'Id'}, 5);
+						array_push($insertStringsField, "`{$fieldObject}Id`");
+					}
+				}
+				if ($param['fields'])
+				{
+					foreach ($param['fields'] as $field => $type)
+					{
+						$itemVal .= ', ' . $dataLink->formatInput($item->{$field}, $type);
+						array_push($insertStringsField, "`{$field}`");
+					}
+				}
+				$itemVal .= ')';
+				$insertStrings[] = $itemVal;
+			}
+
+			if (count($insertStrings) > 0)
+			{
+				$sql = "
+					INSERT IGNORE INTO
+                  		`{$link}`
+                  		(" . implode(', ', $insertStringsField) . ")
+                	VALUES
+                  		" . implode(', ', $insertStrings) . ";";
+
+				$dataLink->query($sql);
+			}
+
+			$this->enqueueCache('save' . ucfirst($object) . 's');
+			$this->dirty['save' . ucfirst($object) . 's'] = false;
+
+			$this->properties['old' . ucfirst($object) . 'Ids'] = $this->properties[$object . 'Ids'];
+		}
+		else
+		{
+			$dataLink = $this->application->dataLink;
+			$cacheLink = $this->application->cacheLink;
+
+			$cacheKeysToDelete = array();
+			$cacheKeysToDelete[] = $cacheKeyLink . 's_' . $this->properties['identifier'];
+
+			$oldObjectIds = $this->properties['old' . ucfirst($object) . 'Ids'];
+			$objectIds = $this->properties[$object . 'Ids'];
+
+			$idsToDelete = array_diff($oldObjectIds, $objectIds);
+			$idsToAdd = array_diff($objectIds, $oldObjectIds);
+
+			foreach ($idsToDelete as $idToDelete)
+			{
+				$cacheKeysToDelete[] = $cacheKeyLink . 's_' . $idToDelete;
+			}
+
+			foreach ($cacheKeysToDelete as $cacheKey)
+			{
+				$cacheLink->delete($cacheKey);
+			}
+
+			if (count($idsToDelete) > 0)
+			{
+				$sql = "
+          			DELETE FROM
+            			`{$link}`
+          			WHERE
+            			`{$this->objectName}Id` = " . $this->properties['identifier'] . "
+            		AND `{$object}Id` IN (" . implode(', ', $idsToDelete) . ");";
+
+				$dataLink->query($sql);
+			}
+
+			$insertStrings = array();
+
+			foreach ($idsToAdd as $identifier)
+			{
+				$insertStrings[] = '(' . $dataLink->formatInput($this->properties['identifier'], BM_VT_INTEGER)
+					. ", " . $dataLink->formatInput($identifier, BM_VT_INTEGER) . ')';
+			}
+
+			if (count($insertStrings) > 0)
+			{
+				$sql = "
+					INSERT IGNORE INTO
+                  		`{$link}`
+                  		(`{$this->objectName}Id`, `{$object}Id`)
+					VALUES
+                  		" . implode(', ', $insertStrings) . ";";
+
+				$dataLink->query($sql);
+			}
+
+			$this->enqueueCache('save' . ucfirst($object) . 's');
+			$this->dirty['save' . ucfirst($object) . 's'] = false;
+
+			$this->properties['old' . ucfirst($object) . 'Ids'] = $this->properties[$object . 'Ids'];
+		}
+
+		return $this;
+	}
 
 	public function __construct(bmApplication $application, $parameters = array())
 	{
@@ -174,7 +479,6 @@ abstract class bmDataObject extends bmFFObject
 	{
 		$this->dirtyQueue[$method] = true;
 	}
-
 
 
 	private function _isUploadFile($codeError)
@@ -388,7 +692,37 @@ abstract class bmDataObject extends bmFFObject
 				`link_image_object`.`object` = {$objectName}
 				and `link_image_object`.`objectId` = {$identifier}
 				and `link_image_object`.`group` = {$group}
-				and `image`.`deleted` <> " . ($isDeleted ? BM_C_DELETE_OBJECT-1 : BM_C_DELETE_OBJECT) . "
+				and `image`.`deleted` <> " . ($isDeleted ? BM_C_DELETE_OBJECT - 1 : BM_C_DELETE_OBJECT) . "
+			order by
+				`link_image_object`.`imageId` desc
+			";
+
+		return $this->getComplexLinks($sql, $cacheKey, $map, E_OBJECTS_NOT_FOUND, true);
+	}
+
+	public function getAnonymous($method)
+	{
+		return $this->$method();
+	}
+
+	public function getObjectImagesGroups()
+	{
+		$objectName = $this->application->dataLink->quoteSmart($this->objectName);
+		$identifier = intval($this->properties['identifier']);
+
+		$map = array(0 => 'image', 'image IS image' => 5, 'group' => 1, 'object' => 2);
+		$cacheKey = '';
+
+		$sql = "
+			select
+				`link_image_object`.`imageId` as `imageId`,
+				`link_image_object`.`group` as `group`,
+				`link_image_object`.`object` as `object`
+			from
+				`link_image_object`
+			where
+				`link_image_object`.`object` = {$objectName}
+				and `link_image_object`.`objectId` = {$identifier}
 			order by
 				`link_image_object`.`imageId` desc
 			";
@@ -416,7 +750,32 @@ abstract class bmDataObject extends bmFFObject
 				`link_file_object`.`object` = {$objectName}
 				and `link_file_object`.`objectId` = {$identifier}
 				and `link_file_object`.`group` = {$group}
-				and `file`.`deleted` <> " . ($isDeleted ? BM_C_DELETE_OBJECT-1 : BM_C_DELETE_OBJECT) . "
+				and `file`.`deleted` <> " . ($isDeleted ? BM_C_DELETE_OBJECT - 1 : BM_C_DELETE_OBJECT) . "
+			order by
+				`link_file_object`.`fileId` desc
+			";
+
+		return $this->getComplexLinks($sql, $cacheKey, $map, E_OBJECTS_NOT_FOUND, true);
+	}
+
+	public function getObjectFilesGroups()
+	{
+		$objectName = $this->application->dataLink->quoteSmart($this->objectName);
+		$identifier = intval($this->properties['identifier']);
+
+		$map = array(0 => 'file', 'file IS file' => 5, 'group' => 1, 'object' => 2);
+		$cacheKey = '';
+
+		$sql = "
+			select
+				`link_file_object`.`fileId` as `fileId`,
+				`link_file_object`.`group` as `group`,
+				`link_file_object`.`object` as `object`,
+			from
+				`link_file_object`
+			where
+				`link_file_object`.`object` = {$objectName}
+				and `link_file_object`.`objectId` = {$identifier}
 			order by
 				`link_file_object`.`fileId` desc
 			";

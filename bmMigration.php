@@ -9,8 +9,6 @@
 
 class bmMigration
 {
-
-
 	/**
 	 * @var bmMySQLLink
 	 */
