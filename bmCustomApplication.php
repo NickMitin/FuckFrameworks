@@ -143,23 +143,22 @@ abstract class bmCustomApplication extends bmFFObject
 
 		$dataLink = $this->dataLink;
 
-		$password = $dataLink->formatInput($password);
+		/*$password = $dataLink->formatInput($password);
 		if (!$isMD5)
 		{
 			$password = md5($password);
-		}
+		}*/
 
 		$sql = "SELECT
-								`id` AS `id`
+								`id` AS `id`, `password` AS `password`
 							FROM
 								`user`
 							WHERE
-								`email` = '" . $dataLink->formatInput($email) . "' AND 
-								`password` = '" . $password . "'
+								`email` = '" . $dataLink->formatInput($email) . "'
 							LIMIT 1;";
 		$user = $dataLink->getObject($sql);
 
-		if ($user)
+		if (password_verify($password, $user->password))
 		{
 			$result = true;
 			$this->session->userId = $user->id;
