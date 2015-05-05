@@ -1,0 +1,15 @@
+{
+	"name": "tbms/bazinga-lib",
+	"type": "tbms-extension",
+	"version": "1.0.0",
+	"minimum-stability": "dev",
+	"repositories": [
+		{
+			"type": "git",
+			"url": "http://github.com/NickMitin/FuckFrameworks"
+		}
+	],
+	"require": {
+		"php": ">=5.4.0"
+	}
+}
