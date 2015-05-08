@@ -32,6 +32,7 @@ final class bmGenerator extends bmFFObject
 {
 
 	private $routes = array();
+	public $pathSections;
 
 	private function ffTypeToString($type)
 	{
