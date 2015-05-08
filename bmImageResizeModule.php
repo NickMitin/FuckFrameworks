@@ -12,6 +12,7 @@ trait bmImageResizeModule
 	private $allowedDimensions = array(
 		'h100',
 		'200x200',
+		'80x80',
 	);
 
 	private function resize($fileUrl)
