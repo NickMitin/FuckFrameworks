@@ -13,6 +13,7 @@ trait bmImageResizeModule
 		'h100',
 		'200x200',
 		'80x80',
+		'220x150',
 	);
 
 	private function resize($fileUrl)
