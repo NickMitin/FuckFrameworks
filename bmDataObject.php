@@ -798,6 +798,10 @@ abstract class bmDataObject extends bmFFObject
     {
         return $this->getProperty($propertyName);
     }
+    public function __isset($propertyName)
+    {
+        return array_key_exists($propertyName, $this->map);
+    }
 
     public function __set($propertyName, $value)
     {
