@@ -13,6 +13,7 @@ trait bmImageResizeModule
 		'h100',
 		'200x200',
 		'80x80',
+		'120x120',
 		'220x150',
 	);
 
@@ -30,7 +31,6 @@ trait bmImageResizeModule
 
 		$originFile  = rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/originals/' . mb_substr($fileName, 0, 2) . '/' . $fileName;
 		$url  = BM_C_IMAGE_FOLDER . $file . '/' . $size . '/' . mb_substr($fileName, 0, 2) . '/' . $fileName;
-
 		if (in_array($size, $this->allowedDimensions) && file_exists($originFile))
 		{
 			$size = explode('x', $size);

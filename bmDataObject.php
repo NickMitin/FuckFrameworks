@@ -456,7 +456,7 @@ abstract class bmDataObject extends bmFFObject
     }
 
 
-    public function addObjectImage($imageGroup, $file)
+    public function addObjectImage($imageGroup, $file, $local = false)
     {
         $name = $type = $tmp_name = $error = $size = [];
         extract($file);
@@ -482,8 +482,17 @@ abstract class bmDataObject extends bmFFObject
                 mkdir($folder, 0777, true);
             }
 
-            if (!move_uploaded_file($tmpNameFile, $folder . $fileName)) {
-                return "Файл несмог загрузиться в ({$folder})";
+            if($local) {
+                if (!copy($tmpNameFile, $folder . $fileName))
+                {
+                    return "Файл не смог загрузиться в ({$folder})";
+                }
+            } else
+            {
+                if (!move_uploaded_file($tmpNameFile, $folder . $fileName))
+                {
+                    return "Файл не смог загрузиться в ({$folder})";
+                }
             }
 
             list($width, $height) = getimagesize($folder . $fileName);

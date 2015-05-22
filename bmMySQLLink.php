@@ -208,7 +208,7 @@ class bmMySQLLink extends bmFFObject
 		switch ($type)
 		{
 			case BM_VT_TEXT:
-				$result = " LONGTEXT NOT NULL DEFAULT '" . $defaultValue . "'";
+				$result = " LONGTEXT NOT NULL";
 				break;
 			case BM_VT_STRING:
 				$result = " VARCHAR(255) NOT NULL DEFAULT '" . $defaultValue . "'";
