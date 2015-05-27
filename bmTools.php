@@ -188,4 +188,19 @@ class bmTools
 		$then = mb_substr($string, 1, $strlen - 1, $encoding);
 		return mb_strtoupper($firstChar, $encoding) . $then;
 	}
+
+	static function formatSize( $size ) {
+		$bytes_array = array( 'б', 'Кб', 'Мб', 'Гб', 'Тб', 'Пб' );
+
+		$power = floor(log($size, 2)/10);
+		for($i=0;$i<$power;$i++) {
+			$size /= 1024;
+		}
+
+		$size = number_format($size, 1, ',', ' ');
+
+		return $size.' '.$bytes_array[$power];
+
+	}
+
 }

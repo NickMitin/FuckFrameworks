@@ -14,11 +14,14 @@ trait bmImageResizeModule
 		'200x200',
 		'80x80',
 		'120x120',
+		'140x100',
 		'220x150',
+		'470x262',
 	);
 
 	private function resize($fileUrl)
 	{
+		$modificator = '';
 		$returnTo = '';
 		$file = explode('/', $fileUrl);
 		$fileName = array_pop($file);
@@ -60,7 +63,25 @@ trait bmImageResizeModule
 
 
 			$image = \PHPImageWorkshop\ImageWorkshop::initFromPath($originFile);
-			$image->resizeInPixel($width, $height, true);
+			if($modificator == 'h' || $modificator == 'w')
+			{
+				$image->resizeInPixel($width, $height, true);
+			} else {
+				$expectedWidth = $width;
+				$expectedHeight = $height;
+
+				// Determine the largest expected side automatically
+				($expectedWidth > $expectedHeight) ? $largestSide = $expectedWidth : $largestSide = $expectedHeight;
+
+				// Get a squared layer
+				$image->cropMaximumInPixel(0, 0, "MM");
+
+				// Resize the squared layer with the largest side of the expected thumb
+				$image->resizeInPixel($largestSide, $largestSide);
+
+				// Crop the layer to get the expected dimensions
+				$image->cropInPixel($expectedWidth, $expectedHeight, 0, 0, 'MM');
+			}
 			$image->save($folder, $fileName, true, null, 100);
 
 			$returnTo = $url;
