@@ -16,6 +16,7 @@ trait bmImageResizeModule
 		'120x120',
 		'140x100',
 		'220x150',
+		'220x90',
 		'470x262',
 	);
 
