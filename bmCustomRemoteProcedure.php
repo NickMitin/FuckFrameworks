@@ -63,7 +63,7 @@
         switch ($this->type)
         {
           case BM_RP_TYPE_JSON:
-            return json_encode($this->output);
+            return json_encode($this->output, JSON_UNESCAPED_UNICODE);
           break;
           case BM_RP_TYPE_RAW:
             return $this->output;
