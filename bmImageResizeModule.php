@@ -1,27 +1,23 @@
 <?php
+
 /**
  * Created by PhpStorm.
  * User: vir-mir
  * Date: 08.08.14
  * Time: 20:07
  */
-
-trait bmImageResizeModule 
+trait bmImageResizeModule
 {
 
-	private $allowedDimensions = array(
-		'h100',
-		'200x200',
-		'80x80',
-		'120x120',
-		'140x100',
-		'220x150',
-		'220x90',
-		'470x262',
-	);
+	private $allowedDimensions = array();
 
 	private function resize($fileUrl)
 	{
+		if (!$this->allowedDimensions)
+		{
+			require_once(projectRoot . '/conf/allowedImageSizes.conf');
+		}
+
 		$modificator = '';
 		$returnTo = '';
 		$file = explode('/', $fileUrl);
@@ -33,12 +29,12 @@ trait bmImageResizeModule
 
 		$folder = rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/' . $size . '/' . mb_substr($fileName, 0, 2) . '/';
 
-		$originFile  = rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/originals/' . mb_substr($fileName, 0, 2) . '/' . $fileName;
-		$url  = BM_C_IMAGE_FOLDER . $file . '/' . $size . '/' . mb_substr($fileName, 0, 2) . '/' . $fileName;
+		$originFile = rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/originals/' . mb_substr($fileName, 0, 2) . '/' . $fileName;
+		$url = BM_C_IMAGE_FOLDER . $file . '/' . $size . '/' . mb_substr($fileName, 0, 2) . '/' . $fileName;
 		if (in_array($size, $this->allowedDimensions) && file_exists($originFile))
 		{
 			$size = explode('x', $size);
-			$width =  $height = null;
+			$width = $height = null;
 
 			if (count($size) > 1)
 			{
@@ -64,10 +60,12 @@ trait bmImageResizeModule
 
 
 			$image = \PHPImageWorkshop\ImageWorkshop::initFromPath($originFile);
-			if($modificator == 'h' || $modificator == 'w')
+			if ($modificator == 'h' || $modificator == 'w')
 			{
 				$image->resizeInPixel($width, $height, true);
-			} else {
+			}
+			else
+			{
 				$expectedWidth = $width;
 				$expectedHeight = $height;
 
