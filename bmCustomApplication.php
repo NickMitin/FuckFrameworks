@@ -377,6 +377,36 @@ abstract class bmCustomApplication extends bmFFObject
 		return ($result != null) ? $result : 0;
 	}
 
+	public function getObjectIdByFieldNames($objectName, $arrayFieldsValues)
+	{
+		$result = null;
+		$where = '';
+		if (is_array($arrayFieldsValues))
+		{
+			foreach ($arrayFieldsValues as $fieldName => $fieldValue)
+			{
+				if (mb_strlen($where) > 0)
+				{
+					$where .= ' AND ';
+				}
+
+				$where .= " (`" . $fieldName . "` = '" . $this->dataLinkWrite->formatInput(
+						$fieldValue,
+						BM_VT_STRING
+					) . "') ";
+			}
+		}
+
+		if (mb_strlen($where) > 0)
+		{
+			$sql = "SELECT `id` AS `identifier` FROM `" . $objectName . "` WHERE " . $where . ";";
+			$result = $this->dataLinkWrite->getValue($sql);
+		}
+
+		return ($result != null) ? $result : 0;
+	}
+
+
 	public function getObjectIdBySynonym($objectName, $synonym)
 	{
 		$sql = "SELECT `" . $objectName . "Id` AS `identifier` FROM `" . $objectName . "_synonym` WHERE `synonym` = '" . $this->dataLink->formatInput($synonym, BM_VT_STRING) . "';";
