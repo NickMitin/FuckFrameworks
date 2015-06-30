@@ -11,11 +11,70 @@ trait bmImageResizeModule
 
 	private $allowedDimensions = array();
 
+	/**
+	 * @param $imagePath
+	 * @param $dimension
+	 *
+	 * @return string
+	 */
+	private function getGeometry($imagePath, $dimension)
+	{
+		$geometry = '';
+		$imageSize = getimagesize($imagePath);
+
+		if (preg_match('/^\d+$/', $dimension))
+		{
+			$geometry = $dimension . 'x' . $dimension . '\>';
+		}
+		elseif (preg_match('/^w\d+$/', $dimension))
+		{
+			$geometry = substr($dimension, 1);
+			if ($imageSize[0] <= $geometry)
+			{
+				$geometry = 'copy';
+			}
+
+		}
+		elseif (preg_match('/^h\d+$/', $dimension))
+		{
+			$geometry = 'x' . substr($dimension, 1);
+		}
+		elseif (preg_match('/^\d+x\d+$/', $dimension))
+		{
+			$imageDimensions = explode('x', $dimension);
+			$width = $imageDimensions[0];
+			$height = $imageDimensions[1];
+
+			$geometry = 'x' . $width . ' -resize ' . "'" . $height . "x<'" . ' -gravity center -extent ' . $dimension;
+		}
+		elseif (preg_match('/^g\d+x\d+$/', $dimension))
+		{
+			$dimension = ltrim($dimension, 'g');
+			$geometry = "{$dimension}^ -gravity North -extent {$dimension}";
+		}
+		elseif (preg_match('/^s\d+$/', $dimension))
+		{
+			$imageDimension = substr($dimension, 1);
+			$dimensions = $imageDimension . 'x' . $imageDimension;
+
+			$geometry = $dimensions + '\>^';
+		}
+
+		return $geometry;
+	}
+
+	/**
+	 * @param $fileUrl
+	 *
+	 * @return string
+	 * @throws \PHPImageWorkshop\Core\Exception\ImageWorkshopLayerException
+	 * @throws \PHPImageWorkshop\Exception\ImageWorkshopException
+	 */
 	private function resize($fileUrl)
 	{
 		if (!$this->allowedDimensions)
 		{
-			require_once(projectRoot . '/conf/allowedImageSizes.conf');
+			include(projectRoot . '/conf/allowedImageSizes.conf');
 		}
 
 		$modificator = '';
@@ -28,60 +87,33 @@ trait bmImageResizeModule
 		$file = implode('/', $file);
 
 		$folder = rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/' . $size . '/' . mb_substr($fileName, 0, 2) . '/';
+		@mkdir($folder, 0777, true);
+		chmod(rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/' . $size . '/', 0777);
+		chmod(rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/' . $size . '/' . mb_substr($fileName, 0, 2) . '/', 0777);
 
 		$originFile = rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/originals/' . mb_substr($fileName, 0, 2) . '/' . $fileName;
 		$url = BM_C_IMAGE_FOLDER . $file . '/' . $size . '/' . mb_substr($fileName, 0, 2) . '/' . $fileName;
 		if (in_array($size, $this->allowedDimensions) && file_exists($originFile))
 		{
-			$size = explode('x', $size);
-			$width = $height = null;
+			$geometry = $this->getGeometry($originFile, $size);
 
-			if (count($size) > 1)
+
+			if ($geometry != 'copy')
 			{
-				$width = $size[0];
-				$height = $size[1];
+				imagemagick_convert(
+					' -resize ' . $geometry . ' ' . $originFile . ' ' . $folder . $fileName
+				);
 			}
 			else
 			{
-				$modificator = mb_substr($size[0], 0, 1);
-				switch ($modificator)
-				{
-					case 'h':
-						$height = mb_substr($size[0], 1);
-						break;
-					case 'w':
-						$width = mb_substr($size[0], 1);
-						break;
-					default:
-						$width = $size[0];
-						break;
-				}
+				copy(
+					$originFile,
+					$folder . $fileName
+				);
 			}
 
+			exec('chmod 0777 ' . $folder . $fileName);
 
-			$image = \PHPImageWorkshop\ImageWorkshop::initFromPath($originFile);
-			if ($modificator == 'h' || $modificator == 'w')
-			{
-				$image->resizeInPixel($width, $height, true);
-			}
-			else
-			{
-				$expectedWidth = $width;
-				$expectedHeight = $height;
-
-				// Determine the largest expected side automatically
-				($expectedWidth > $expectedHeight) ? $largestSide = $expectedWidth : $largestSide = $expectedHeight;
-
-				// Get a squared layer
-				$image->cropMaximumInPixel(0, 0, "MM");
-
-				// Resize the squared layer with the largest side of the expected thumb
-				$image->resizeInPixel($largestSide, $largestSide);
-
-				// Crop the layer to get the expected dimensions
-				$image->cropInPixel($expectedWidth, $expectedHeight, 0, 0, 'MM');
-			}
-			$image->save($folder, $fileName, true, null, 100);
 
 			$returnTo = $url;
 		}
