@@ -544,12 +544,7 @@ abstract class bmDataObject extends bmFFObject
 			if (!is_dir($folder))
 			{
 				mkdir($folder, 0777, true);
-
-				//todo: бляяя
-				chmod(rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER, 0777);
-				chmod(rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $imageGroup, 0777);
-				chmod(rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $imageGroup . '/originals/', 0777);
-				chmod(rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $imageGroup . '/originals/' . $fileSub . "/", 0777);
+				bmTools::chmodPath(BM_C_IMAGE_FOLDER . $imageGroup . '/originals/' . $fileSub, 0777);
 			}
 
 			if ($local)
@@ -1541,3 +1536,4 @@ abstract class bmDataObject extends bmFFObject
 }
 
 ?>
+

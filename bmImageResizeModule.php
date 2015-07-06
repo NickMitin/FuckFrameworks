@@ -88,8 +88,8 @@ trait bmImageResizeModule
 
 		$folder = rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/' . $size . '/' . mb_substr($fileName, 0, 2) . '/';
 		@mkdir($folder, 0777, true);
-		chmod(rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/' . $size . '/', 0777);
-		chmod(rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/' . $size . '/' . mb_substr($fileName, 0, 2) . '/', 0777);
+
+		bmTools::chmodPath(BM_C_IMAGE_FOLDER . $file . '/' . $size . '/' . mb_substr($fileName, 0, 2), 0777);
 
 		$originFile = rtrim(documentRoot, '/') . BM_C_IMAGE_FOLDER . $file . '/originals/' . mb_substr($fileName, 0, 2) . '/' . $fileName;
 		$url = BM_C_IMAGE_FOLDER . $file . '/' . $size . '/' . mb_substr($fileName, 0, 2) . '/' . $fileName;

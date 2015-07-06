@@ -186,21 +186,38 @@ class bmTools
 		$strlen = mb_strlen($string, $encoding);
 		$firstChar = mb_substr($string, 0, 1, $encoding);
 		$then = mb_substr($string, 1, $strlen - 1, $encoding);
+
 		return mb_strtoupper($firstChar, $encoding) . $then;
 	}
 
-	static function formatSize( $size ) {
-		$bytes_array = array( 'б', 'Кб', 'Мб', 'Гб', 'Тб', 'Пб' );
+	static function formatSize($size)
+	{
+		$bytes_array = array('б', 'Кб', 'Мб', 'Гб', 'Тб', 'Пб');
 
-		$power = floor(log($size, 2)/10);
-		for($i=0;$i<$power;$i++) {
+		$power = floor(log($size, 2) / 10);
+		for ($i = 0; $i < $power; $i++)
+		{
 			$size /= 1024;
 		}
 
 		$size = number_format($size, 1, ',', ' ');
 
-		return $size.' '.$bytes_array[$power];
+		return $size . ' ' . $bytes_array[$power];
 
+	}
+
+	static function chmodPath($relativePath, $mode)
+	{
+		$sections = explode('/', trim($relativePath, '/'));
+		if ($sections)
+		{
+			$currentPath = rtrim(documentRoot, '/');
+			foreach ($sections as $section)
+			{
+				$currentPath .= "/" . $section;
+				@chmod($currentPath, $mode);
+			}
+		}
 	}
 
 }
