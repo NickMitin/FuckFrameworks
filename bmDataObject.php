@@ -1535,5 +1535,3 @@ abstract class bmDataObject extends bmFFObject
 	}
 }
 
-?>
-
