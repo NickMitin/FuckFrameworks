@@ -1108,8 +1108,8 @@ abstract class bmDataObject extends bmFFObject
 			$fields = implode(',', $fields);
 
 			$sql = "INSERT INTO `" . $this->objectName . "` SET " . $fields . " ON DUPLICATE KEY UPDATE " . $fields . ";";
-			$objectId = $this->application->dataLink->query($sql);
-			if (($objectId = $this->application->dataLink->insertId()) != 0)
+			$objectId = $dataLink->query($sql);
+			if (($objectId = $dataLink->insertId()) != 0)
 			{
 				$this->properties['identifier'] = $objectId;
 				$cacheObject->identifier = $objectId;
