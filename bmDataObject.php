@@ -848,7 +848,13 @@ abstract class bmDataObject extends bmFFObject
 				and `image`.`id` not in ({$excludeImgs})
 				and `image`.`deleted` <> " . BM_C_DELETE_OBJECT . "";
 
-		return $this->application->dataLink->query($sql);
+		if(defined('USE_SEPARATE_DB_FOR_WRITE') &&  USE_SEPARATE_DB_FOR_WRITE == 1)
+		{
+			return $this->application->dataLinkWrite->query($sql);
+		} else {
+			return $this->application->dataLink->query($sql);
+		}
+
 	}
 
 	public function deleteObjectFiles($imageGroup, $excludeImgs = null)
@@ -880,7 +886,12 @@ abstract class bmDataObject extends bmFFObject
 				and `file`.`id` not in ({$excludeImgs})
 				and `file`.`deleted` <> " . BM_C_DELETE_OBJECT . "";
 
-		return $this->application->dataLink->query($sql);
+		if(defined('USE_SEPARATE_DB_FOR_WRITE') &&  USE_SEPARATE_DB_FOR_WRITE == 1)
+		{
+			return $this->application->dataLinkWrite->query($sql);
+		} else {
+			return $this->application->dataLink->query($sql);
+		}
 	}
 
 	public function getProperty($propertyName)
@@ -1036,7 +1047,13 @@ abstract class bmDataObject extends bmFFObject
 	public function store()
 	{
 		$saveIdentifier = $this->properties['identifier'];
-		$dataLink = $this->application->dataLink;
+
+		if(defined('USE_SEPARATE_DB_FOR_WRITE') &&  USE_SEPARATE_DB_FOR_WRITE == 1)
+		{
+			$dataLink = $this->application->dataLinkWrite;
+		} else {
+			$dataLink = $this->application->dataLink;
+		}
 		if (($this->properties['identifier'] === 0) || ($this->properties['identifier'] == ''))
 		{
 			$this->properties['identifier'] = 'NULL';

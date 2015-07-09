@@ -96,6 +96,7 @@ abstract class bmCustomApplication extends bmFFObject
 	 * @var bmMySQLLink|null
 	 */
 	public $dataLink = null;
+	public $dataLinkWrite = null;
 	public $user = null;
 	public $session = null;
 	public $debug = BM_C_DEBUG;
@@ -107,7 +108,6 @@ abstract class bmCustomApplication extends bmFFObject
 	 * @param bmApplication $application указатель на приложение. должен быть null
 	 * @param array $parameters параметры, необходимые для инициализации экземпляра приложения
 	 *
-	 * @return bmApplication
 	 */
 	public function __construct($application, $parameters = array())
 	{
@@ -116,6 +116,12 @@ abstract class bmCustomApplication extends bmFFObject
 		$this->action = $this->cgi->getGPC('action', '');
 
 		$this->dataLink = new bmMySQLLink($this);
+
+		if(defined('USE_SEPARATE_DB_FOR_WRITE') &&  USE_SEPARATE_DB_FOR_WRITE == 1)
+		{
+			$this->dataLinkWrite = new bmMySQLLink($this, array('database' => 'write'));
+		}
+
 		register_shutdown_function(array($this, 'save'));
 	}
 
