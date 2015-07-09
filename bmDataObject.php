@@ -205,7 +205,12 @@ abstract class bmDataObject extends bmFFObject
 
 		if ($param['fields'])
 		{
-			$dataLink = $this->application->dataLink;
+			if(defined('USE_SEPARATE_DB_FOR_WRITE') &&  USE_SEPARATE_DB_FOR_WRITE == 1)
+			{
+				$dataLink = $this->application->dataLinkWrite;
+			} else {
+				$dataLink = $this->application->dataLink;
+			}
 			$cacheLink = $this->application->cacheLink;
 
 			$cacheKeysToDelete = array();
@@ -292,7 +297,12 @@ abstract class bmDataObject extends bmFFObject
 		}
 		else
 		{
-			$dataLink = $this->application->dataLink;
+			if(defined('USE_SEPARATE_DB_FOR_WRITE') &&  USE_SEPARATE_DB_FOR_WRITE == 1)
+			{
+				$dataLink = $this->application->dataLinkWrite;
+			} else {
+				$dataLink = $this->application->dataLink;
+			}
 			$cacheLink = $this->application->cacheLink;
 
 			$cacheKeysToDelete = array();
