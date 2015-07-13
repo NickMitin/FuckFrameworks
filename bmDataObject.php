@@ -164,12 +164,12 @@ abstract class bmDataObject extends bmFFObject
 
 		if ($link)
 		{
-
-			$key = $this->searchItem($objectId, $object . 'Id', $objectIds);
+			$key = array_search($objectId, $this->properties[$object . 'Ids']);
 
 			if ($key !== false)
 			{
 				unset($this->properties[$object . 'Ids'][$key]);
+				array_unique($this->properties[$object . 'Ids']);
 				$this->dirty['save' . ucfirst($object) . 's'] = true;
 			}
 		}
@@ -192,6 +192,7 @@ abstract class bmDataObject extends bmFFObject
 	public function removesMethodObject($object)
 	{
 		$this->properties[$object . 'Ids'] = array();
+
 
 		$this->dirty['save' . ucfirst($object) . 's'] = true;
 
