@@ -89,6 +89,8 @@
 
       $this->map['identifier']['dataType'] = 1;
       $this->properties['identifier'] = $parameters['identifier'];
+
+      if(strlen($this->properties['identifier']) != 40 ) $this->properties['identifier'] = '';
       
       if ($this->properties['identifier'] != '')
       {          
@@ -96,7 +98,7 @@
       }
       else
       {
-        $this->identifier = md5(uniqid(microtime(true), true));
+        $this->identifier = sha1(uniqid(microtime(true).openssl_random_pseudo_bytes(20), true));
         $this->userId = C_DEFAULT_USER_ID;
         $this->createTime = time();               
       }      
