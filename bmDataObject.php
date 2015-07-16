@@ -1131,7 +1131,7 @@ abstract class bmDataObject extends bmFFObject
 				$cacheObject->identifier = $saveIdentifier;
 			}
 
-			$this->application->cacheLink->set($this->objectName . '_' . $this->properties['identifier'], $cacheObject, BM_CACHE_SHORT_TTL);
+			$this->application->cacheLink->set($this->objectName . '_' . $this->properties['identifier'], $cacheObject, BM_CACHE_LIFELONG_TTL);
 		}
 
 
