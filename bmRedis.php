@@ -58,7 +58,7 @@
 			parent::__construct($application, $parameters);
 			
 			$redis = new Redis();
-			$connectResult = $redis->pconnect('/tmp/px.sock');
+			$connectResult = $redis->pconnect('localhost');
 			
 			if ($connectResult)
 			{
@@ -149,7 +149,6 @@
 			if (($key != null) && ($this->cacher != null))
 			{
 				$key = $this->prefix . $key;
-
 				if ($expire > 0)
 				{					
 					$result = $this->cacher->setex($key, $expire, serialize($value));	// https://github.com/nicolasff/phpredis/#setex-psetex
