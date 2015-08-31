@@ -1222,7 +1222,7 @@ final class bmDataObjectMap extends bmMetaDataObject
 	public function generateFiles()
 	{
 		$this->checkDirty();
-		$fileName = projectRoot . '/classes/bm' . ucfirst($this->properties['name']) . '.php';
+		$fileName = projectRoot . '/classes/models/bm' . ucfirst($this->properties['name']) . '.php';
 
 		if (!file_exists($fileName))
 		{
@@ -1279,12 +1279,12 @@ final class bmDataObjectMap extends bmMetaDataObject
 	private function deleteFiles()
 	{
 		$this->checkDirty();
-		$fileName = projectRoot . '/classes/bm' . ucfirst($this->properties['name']) . '.php';
+		$fileName = projectRoot . '/classes/models/bm' . ucfirst($this->properties['name']) . '.php';
 		if (file_exists($fileName))
 		{
 			unlink($fileName);
 		}
-		$fileName = projectRoot . '/classes/bm' . ucfirst($this->properties['name']) . 'Cache.php';
+		$fileName = projectRoot . '/classes/models/bm' . ucfirst($this->properties['name']) . 'Cache.php';
 		if (file_exists($fileName))
 		{
 			unlink($fileName);
