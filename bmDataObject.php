@@ -154,7 +154,6 @@ abstract class bmDataObject extends bmFFObject
 			$this->dirty['save' . ucfirst($object) . 's'] = true;
 		}
 
-
 		return $this;
 	}
 
@@ -191,8 +190,8 @@ abstract class bmDataObject extends bmFFObject
 
 	public function removesMethodObject($object)
 	{
+		$this->properties['old' . ucfirst($object) . 'Ids'] = $this->{$object . 'Ids'};
 		$this->properties[$object . 'Ids'] = array();
-
 
 		$this->dirty['save' . ucfirst($object) . 's'] = true;
 
