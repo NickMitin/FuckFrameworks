@@ -63,7 +63,10 @@ abstract class bmCustomRemoteProcedure extends bmFFObject
 			switch ($this->type)
 			{
 				case BM_RP_TYPE_JSON:
-					header('Content-Type: application/json');
+					if (!defined('DO_NOT_SEND_HEADERS'))
+					{
+						header('Content-Type: application/json');
+					}
 
 					return json_encode($this->output, JSON_UNESCAPED_UNICODE);
 					break;
