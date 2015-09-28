@@ -205,10 +205,12 @@ abstract class bmDataObject extends bmFFObject
 
 		if ($param['fields'])
 		{
-			if(defined('USE_SEPARATE_DB_FOR_WRITE') &&  USE_SEPARATE_DB_FOR_WRITE == 1)
+			if (defined('USE_SEPARATE_DB_FOR_WRITE') && USE_SEPARATE_DB_FOR_WRITE == 1)
 			{
 				$dataLink = $this->application->dataLinkWrite;
-			} else {
+			}
+			else
+			{
 				$dataLink = $this->application->dataLink;
 			}
 			$cacheLink = $this->application->cacheLink;
@@ -297,10 +299,12 @@ abstract class bmDataObject extends bmFFObject
 		}
 		else
 		{
-			if(defined('USE_SEPARATE_DB_FOR_WRITE') &&  USE_SEPARATE_DB_FOR_WRITE == 1)
+			if (defined('USE_SEPARATE_DB_FOR_WRITE') && USE_SEPARATE_DB_FOR_WRITE == 1)
 			{
 				$dataLink = $this->application->dataLinkWrite;
-			} else {
+			}
+			else
+			{
 				$dataLink = $this->application->dataLink;
 			}
 			$cacheLink = $this->application->cacheLink;
@@ -858,10 +862,12 @@ abstract class bmDataObject extends bmFFObject
 				and `image`.`id` not in ({$excludeImgs})
 				and `image`.`deleted` <> " . BM_C_DELETE_OBJECT . "";
 
-		if(defined('USE_SEPARATE_DB_FOR_WRITE') &&  USE_SEPARATE_DB_FOR_WRITE == 1)
+		if (defined('USE_SEPARATE_DB_FOR_WRITE') && USE_SEPARATE_DB_FOR_WRITE == 1)
 		{
 			return $this->application->dataLinkWrite->query($sql);
-		} else {
+		}
+		else
+		{
 			return $this->application->dataLink->query($sql);
 		}
 
@@ -896,10 +902,12 @@ abstract class bmDataObject extends bmFFObject
 				and `file`.`id` not in ({$excludeImgs})
 				and `file`.`deleted` <> " . BM_C_DELETE_OBJECT . "";
 
-		if(defined('USE_SEPARATE_DB_FOR_WRITE') &&  USE_SEPARATE_DB_FOR_WRITE == 1)
+		if (defined('USE_SEPARATE_DB_FOR_WRITE') && USE_SEPARATE_DB_FOR_WRITE == 1)
 		{
 			return $this->application->dataLinkWrite->query($sql);
-		} else {
+		}
+		else
+		{
 			return $this->application->dataLink->query($sql);
 		}
 	}
@@ -1058,10 +1066,12 @@ abstract class bmDataObject extends bmFFObject
 	{
 		$saveIdentifier = $this->properties['identifier'];
 
-		if(defined('USE_SEPARATE_DB_FOR_WRITE') &&  USE_SEPARATE_DB_FOR_WRITE == 1)
+		if (defined('USE_SEPARATE_DB_FOR_WRITE') && USE_SEPARATE_DB_FOR_WRITE == 1)
 		{
 			$dataLink = $this->application->dataLinkWrite;
-		} else {
+		}
+		else
+		{
 			$dataLink = $this->application->dataLink;
 		}
 		if (($this->properties['identifier'] === 0) || ($this->properties['identifier'] == ''))
@@ -1550,11 +1560,14 @@ abstract class bmDataObject extends bmFFObject
 	 * значение полей объекта в виде массива
 	 * @return array
 	 */
-	public function toArray()
+	public function toArray($exludeKeys = [])
 	{
 		$output = [];
 		foreach ($this->map as $field => $fieldInfo)
 		{
+			if(in_array($field, $exludeKeys)) {
+				continue;
+			}
 			$output[$field] = $this->__get($field);
 		}
 

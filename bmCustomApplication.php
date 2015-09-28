@@ -396,7 +396,7 @@ abstract class bmCustomApplication extends bmFFObject
 					$where .= ' AND ';
 				}
 
-				$where .= " (`" . $fieldName . "` = '" . $this->dataLinkWrite->formatInput(
+				$where .= " (`" . $fieldName . "` = '" . $this->dataLink->formatInput(
 						$fieldValue,
 						BM_VT_STRING
 					) . "') ";
@@ -406,7 +406,7 @@ abstract class bmCustomApplication extends bmFFObject
 		if (mb_strlen($where) > 0)
 		{
 			$sql = "SELECT `id` AS `identifier` FROM `" . $objectName . "` WHERE " . $where . ";";
-			$result = $this->dataLinkWrite->getValue($sql);
+			$result = $this->dataLink->getValue($sql);
 		}
 
 		return ($result != null) ? $result : 0;
