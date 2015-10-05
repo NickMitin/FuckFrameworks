@@ -270,7 +270,9 @@ final class bmReferenceMap extends bmMetaDataObject
 			if ($key !== false)
 			{
 				$item = $this->properties['fieldIds'][$key];
-
+				
+				$typeMigrate = $item->type;
+				
 				if (in_array($item->type, array(1, 2)))
 				{
 					$indexStrings[] = 'ADD INDEX `' . $tableFieldName . '` (`' . $tableFieldName . '`)';
